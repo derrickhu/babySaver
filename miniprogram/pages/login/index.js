@@ -1,4 +1,4 @@
-// 登录注册页
+// 登录注册页（仅未注册用户可见，已注册用户自动跳转）
 const api = require('../../utils/api')
 
 Page({
@@ -6,6 +6,26 @@ Page({
     nickName: '',
     role: '', // 'parent' 或 'child'
     loading: false
+  },
+
+  onShow() {
+    // 已注册用户（微信号已绑定）直接进入，不再显示注册页
+    this.checkAlreadyRegistered()
+  },
+
+  // 检查是否已注册：已注册则用该身份自动登录并跳转
+  async checkAlreadyRegistered() {
+    try {
+      const res = await api.callCloud('getUserInfo')
+      if (res.code === 0 && res.data) {
+        const app = getApp()
+        app.globalData.userInfo = res.data
+        app.globalData.isLoggedIn = true
+        wx.switchTab({ url: '/pages/index/index' })
+      }
+    } catch (e) {
+      // 未注册或网络异常，继续显示注册表单
+    }
   },
 
   // 输入昵称
@@ -36,7 +56,7 @@ Page({
       api.hideLoading()
       api.showToast('注册成功')
 
-      // 更新全局用户信息
+      // 更新全局用户信息（与当前微信号绑定）
       const app = getApp()
       const userRes = await api.callCloud('getUserInfo')
       app.globalData.userInfo = userRes.data
@@ -48,7 +68,21 @@ Page({
       }, 800)
     } catch (err) {
       api.hideLoading()
-      api.showError(err.msg || '注册失败')
+      // 已注册：该微信号已绑定身份，直接登录并跳转
+      if (err.msg === '用户已注册') {
+        const app = getApp()
+        api.callCloud('getUserInfo').then(userRes => {
+          if (userRes.data) {
+            app.globalData.userInfo = userRes.data
+            app.globalData.isLoggedIn = true
+            wx.switchTab({ url: '/pages/index/index' })
+          } else {
+            api.showError('用户已注册')
+          }
+        }).catch(() => api.showError('用户已注册'))
+      } else {
+        api.showError(err.msg || '注册失败')
+      }
     } finally {
       this.setData({ loading: false })
     }
