@@ -117,28 +117,11 @@ Page({
       await this.loadAssetSummary(childId)
     }
 
-    // 家长首次进入时请求订阅消息权限（取现通知）
-    this.requestSubscribe()
-  },
-
-  // 请求订阅消息权限（家长：取现申请通知，小孩：审核结果通知）
-  requestSubscribe() {
-    api.callCloud('requestSubscribe', {}).then(res => {
-      const tmplIds = res.data && res.data.templateIds
-      if (!tmplIds || tmplIds.length === 0) return
-      wx.requestSubscribeMessage({
-        tmplIds,
-        success: () => {},
-        fail: () => {}
-      })
-    }).catch(() => {})
   },
 
   // 小孩：加载自己的数据
   async loadChildData() {
     await this.loadAssetSummary()
-    // 小孩也请求订阅（审核结果通知）
-    this.requestSubscribe()
   },
 
   // 加载资产总览

@@ -85,6 +85,17 @@ Page({
     if (amountNum > maxAmount) return api.showError(`最多可取 ¥${maxAmount.toFixed(2)}`)
     if (!remark || !remark.trim()) return api.showError('请填写备注')
 
+    // 在用户点击时请求订阅「审核结果通知」（一次授权一次推送）
+    try {
+      const subRes = await api.callCloud('requestSubscribe', {})
+      const tmplIds = subRes.data && subRes.data.templateIds
+      if (tmplIds && tmplIds.length > 0) {
+        await new Promise(resolve => {
+          wx.requestSubscribeMessage({ tmplIds, complete: resolve })
+        })
+      }
+    } catch (e) {}
+
     const confirmRes = await new Promise(resolve => {
       wx.showModal({
         title: '确认取现',

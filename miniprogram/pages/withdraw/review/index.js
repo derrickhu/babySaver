@@ -65,9 +65,25 @@ Page({
     this.setData({ activeTab: e.currentTarget.dataset.tab })
   },
 
+  // 在用户tap时请求订阅「待办事项提醒」（接收未来取现申请通知）
+  async _requestSubscribe() {
+    try {
+      const subRes = await api.callCloud('requestSubscribe', {})
+      const tmplIds = subRes.data && subRes.data.templateIds
+      if (tmplIds && tmplIds.length > 0) {
+        await new Promise(resolve => {
+          wx.requestSubscribeMessage({ tmplIds, complete: resolve })
+        })
+      }
+    } catch (e) {}
+  },
+
   async onApprove(e) {
     const txId = e.currentTarget.dataset.id
     const item = this.data.pendingList.find(t => t._id === txId)
+
+    // 在tap事件中请求订阅
+    await this._requestSubscribe()
 
     const confirmRes = await new Promise(resolve => {
       wx.showModal({
@@ -102,6 +118,8 @@ Page({
   async onReject(e) {
     const txId = e.currentTarget.dataset.id
     const item = this.data.pendingList.find(t => t._id === txId)
+
+    await this._requestSubscribe()
 
     const confirmRes = await new Promise(resolve => {
       wx.showModal({
