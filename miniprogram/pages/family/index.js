@@ -7,6 +7,7 @@ Page({
     userInfo: null,
     isParent: false,
     hasFamily: false,
+    isCreator: false,
     family: null,
     members: [],
     inviteCode: '',
@@ -49,14 +50,16 @@ Page({
         if (familyRes.code === 0) {
           this.setData({
             family: familyRes.data,
-            inviteCode: familyRes.data.inviteCode
+            inviteCode: familyRes.data.inviteCode,
+            isCreator: !!familyRes.data.isCreator
           })
         }
         if (membersRes.code === 0) {
           this.setData({
             members: membersRes.data.map(m => ({
               ...m,
-              roleText: util.getRoleText(m.role)
+              roleText: util.getMemberRoleText(m),
+              emoji: util.getMemberEmoji(m)
             }))
           })
         }
@@ -93,7 +96,7 @@ Page({
     this.setData({ inputCode: e.detail.value.toUpperCase() })
   },
 
-  // 加入家庭（小孩）
+  // 加入家庭（小孩或家长均可）
   async onJoinFamily() {
     const { inputCode } = this.data
     if (!inputCode || inputCode.length < 6) {
@@ -120,8 +123,11 @@ Page({
     }
   },
 
-  // 复制邀请码
+  // 复制邀请码（仅创建者可用）
   onCopyCode() {
+    if (!this.data.isCreator) {
+      return api.showToast('仅家庭创建者可分享邀请码')
+    }
     wx.setClipboardData({
       data: this.data.inviteCode,
       success: () => {

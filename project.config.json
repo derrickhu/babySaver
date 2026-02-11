@@ -46,7 +46,7 @@
   },
   "appid": "wx7a8deed6885553a7",
   "projectname": "babySaver",
-  "libVersion": "2.20.1",
+  "libVersion": "3.14.2",
   "cloudfunctionTemplateRoot": "cloudfunctionTemplate/",
   "condition": {
     "search": {

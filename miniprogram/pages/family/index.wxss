@@ -63,6 +63,21 @@
   color: var(--text-hint);
 }
 
+/* 非创建者提示 */
+.non-creator-tip {
+  width: 100%;
+  text-align: center;
+  padding: 20rpx 24rpx;
+  background: var(--bg-page);
+  border-radius: 12rpx;
+}
+
+.tip-text {
+  font-size: 24rpx;
+  color: var(--text-hint);
+  line-height: 1.6;
+}
+
 .section-title {
   padding: 24rpx 32rpx 8rpx;
   font-size: 30rpx;
@@ -93,11 +108,25 @@
   flex: 1;
 }
 
+.member-name-row {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+}
+
 .member-name {
-  display: block;
   font-size: 30rpx;
   font-weight: 500;
 }
+
+.creator-tag {
+  font-size: 20rpx;
+  color: var(--primary);
+  background: var(--primary-light);
+  padding: 2rpx 12rpx;
+  border-radius: 6rpx;
+}
+
 
 .member-role {
   display: block;
@@ -111,7 +140,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin: 80rpx 32rpx 0;
+  margin: 80rpx 32rpx 24rpx;
   padding: 64rpx 48rpx;
 }
 

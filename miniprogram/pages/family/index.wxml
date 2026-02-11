@@ -5,13 +5,20 @@
     <view class="family-header card">
       <text class="family-icon">🏠</text>
       <text class="family-name">{{family.familyName}}</text>
-      <view class="invite-section" wx:if="{{isParent}}">
+
+      <!-- 邀请码区域：仅创建者可见 -->
+      <view class="invite-section" wx:if="{{isCreator}}">
         <text class="invite-label">邀请码</text>
         <view class="invite-code-wrap">
           <text class="invite-code">{{inviteCode}}</text>
           <text class="copy-btn" bindtap="onCopyCode">复制</text>
         </view>
-        <text class="invite-tip">将邀请码分享给小孩，让 TA 加入家庭</text>
+        <text class="invite-tip">将邀请码分享给小孩或其他家长，让 TA 加入家庭</text>
+      </view>
+
+      <!-- 非创建者提示 -->
+      <view class="non-creator-tip" wx:elif="{{isParent && !isCreator}}">
+        <text class="tip-text">💡 如需邀请新成员，请联系家庭创建者分享邀请码</text>
       </view>
     </view>
 
@@ -19,16 +26,19 @@
     <view class="section-title">家庭成员</view>
     <view class="member-list card">
       <view class="member-item" wx:for="{{members}}" wx:key="_id">
-        <text class="member-avatar">{{item.role === 'parent' ? '👨‍👩‍👧' : '🧒'}}</text>
+        <text class="member-avatar">{{item.emoji}}</text>
         <view class="member-info">
-          <text class="member-name">{{item.nickName}}</text>
+          <view class="member-name-row">
+            <text class="member-name">{{item.nickName}}</text>
+            <text class="creator-tag" wx:if="{{item.isCreator}}">创建者</text>
+          </view>
           <text class="member-role">{{item.roleText}}</text>
         </view>
       </view>
-      <view class="member-item empty-member" wx:if="{{members.length <= 1 && isParent}}">
+      <view class="member-item empty-member" wx:if="{{members.length <= 1 && isCreator}}">
         <text class="member-avatar">➕</text>
         <view class="member-info">
-          <text class="member-name" style="color: var(--text-hint);">等待小孩加入...</text>
+          <text class="member-name" style="color: var(--text-hint);">等待成员加入...</text>
           <text class="member-role">分享邀请码即可加入</text>
         </view>
       </view>
@@ -39,13 +49,30 @@
 
   <!-- 未创建/加入家庭 -->
   <block wx:elif="{{!loading}}">
-    <!-- 家长 - 创建家庭 -->
+    <!-- 家长 - 创建家庭或加入家庭 -->
     <block wx:if="{{isParent}}">
       <view class="setup-card card">
         <text class="setup-icon">🏠</text>
         <text class="setup-title">创建您的家庭</text>
-        <text class="setup-desc">创建后，将生成邀请码\n小孩输入邀请码即可加入</text>
+        <text class="setup-desc">创建后，将生成邀请码\n小孩和其他家长输入邀请码即可加入</text>
         <button class="btn-primary" style="width: 100%; margin-top: 40rpx;" bindtap="onCreateFamily">创建家庭</button>
+      </view>
+
+      <!-- 家长也可以加入已有家庭 -->
+      <view class="setup-card card" style="margin-top: 0;">
+        <text class="setup-icon">🔗</text>
+        <text class="setup-title">加入已有家庭</text>
+        <text class="setup-desc">如果其他家长已创建家庭，输入邀请码即可加入</text>
+        <view class="code-input-wrap">
+          <input
+            class="code-input"
+            placeholder="请输入6位邀请码"
+            value="{{inputCode}}"
+            bindinput="onCodeInput"
+            maxlength="6"
+          />
+        </view>
+        <button class="btn-secondary" style="width: 100%; margin-top: 32rpx;" bindtap="onJoinFamily">加入家庭</button>
       </view>
     </block>
 

@@ -17,6 +17,7 @@ exports.main = async (event, context) => {
       // 用户相关
       case 'register': return await register(openid, data)
       case 'getUserInfo': return await getUserInfo(openid)
+      case 'updateParentTitle': return await updateParentTitle(openid, data)
       // 家庭相关
       case 'createFamily': return await createFamily(openid, data)
       case 'joinFamily': return await joinFamily(openid, data)
@@ -71,14 +72,24 @@ async function initCollections() {
 
 // ========== 用户相关 ==========
 
+// 家长身份可选值
+const PARENT_TITLES = ['爸爸', '妈妈', '爷爷', '奶奶', '外公', '外婆', '其他']
+
 // 注册用户
 async function register(openid, data) {
-  const { nickName, role } = data
+  const { nickName, role, parentTitle, avatarUrl } = data
   if (!nickName || !role) {
     return { code: -1, msg: '昵称和角色不能为空' }
   }
   if (!['parent', 'child'].includes(role)) {
     return { code: -1, msg: '角色类型无效' }
+  }
+
+  // 家长必须选择身份标识
+  if (role === 'parent') {
+    if (!parentTitle || !PARENT_TITLES.includes(parentTitle)) {
+      return { code: -1, msg: '请选择家长身份' }
+    }
   }
 
   // 检查是否已注册
@@ -88,17 +99,22 @@ async function register(openid, data) {
   }
 
   const now = new Date()
-  await db.collection('users').add({
-    data: {
-      _openid: openid,
-      nickName,
-      role,
-      familyId: '',
-      avatarUrl: '',
-      createdAt: now,
-      updatedAt: now
-    }
-  })
+  const userData = {
+    _openid: openid,
+    nickName,
+    role,
+    familyId: '',
+    avatarUrl: avatarUrl || '', // 支持从微信获取的头像
+    createdAt: now,
+    updatedAt: now
+  }
+
+  // 家长额外字段
+  if (role === 'parent') {
+    userData.parentTitle = parentTitle
+  }
+
+  await db.collection('users').add({ data: userData })
   return { code: 0, msg: '注册成功' }
 }
 
@@ -109,6 +125,29 @@ async function getUserInfo(openid) {
     return { code: 1, msg: '用户未注册', data: null }
   }
   return { code: 0, data: res.data[0] }
+}
+
+// 修改家长身份标识
+async function updateParentTitle(openid, data) {
+  const { parentTitle } = data
+  if (!parentTitle || !PARENT_TITLES.includes(parentTitle)) {
+    return { code: -1, msg: '请选择有效的家长身份' }
+  }
+
+  const user = await db.collection('users').where({ _openid: openid }).get()
+  if (user.data.length === 0) {
+    return { code: -1, msg: '用户不存在' }
+  }
+  if (user.data[0].role !== 'parent') {
+    return { code: -1, msg: '仅家长可修改身份标识' }
+  }
+
+  const now = new Date()
+  await db.collection('users').where({ _openid: openid }).update({
+    data: { parentTitle, updatedAt: now }
+  })
+
+  return { code: 0, msg: '身份修改成功' }
 }
 
 // ========== 家庭相关 ==========
@@ -149,7 +188,8 @@ async function createFamily(openid, data) {
     data: {
       familyName,
       inviteCode,
-      parentOpenId: openid,
+      creatorOpenId: openid,       // 创建者（只有创建者能分享邀请码）
+      parentOpenIds: [openid],     // 所有家长列表
       childOpenIds: [],
       createdAt: now
     }
@@ -163,7 +203,7 @@ async function createFamily(openid, data) {
   return { code: 0, msg: '家庭创建成功', data: { familyId: familyRes._id, inviteCode } }
 }
 
-// 小孩加入家庭
+// 加入家庭（小孩或家长均可）
 async function joinFamily(openid, data) {
   const { inviteCode } = data
   if (!inviteCode) {
@@ -171,8 +211,8 @@ async function joinFamily(openid, data) {
   }
 
   const user = await db.collection('users').where({ _openid: openid }).get()
-  if (user.data.length === 0 || user.data[0].role !== 'child') {
-    return { code: -1, msg: '仅小孩可加入家庭' }
+  if (user.data.length === 0) {
+    return { code: -1, msg: '用户不存在' }
   }
   if (user.data[0].familyId) {
     return { code: -1, msg: '您已加入家庭' }
@@ -184,12 +224,19 @@ async function joinFamily(openid, data) {
   }
 
   const familyId = family.data[0]._id
+  const userRole = user.data[0].role
   const now = new Date()
 
-  // 更新家庭成员列表
-  await db.collection('families').doc(familyId).update({
-    data: { childOpenIds: _.push(openid) }
-  })
+  // 根据角色加入不同列表
+  if (userRole === 'child') {
+    await db.collection('families').doc(familyId).update({
+      data: { childOpenIds: _.push(openid) }
+    })
+  } else if (userRole === 'parent') {
+    await db.collection('families').doc(familyId).update({
+      data: { parentOpenIds: _.push(openid) }
+    })
+  }
 
   // 更新用户 familyId
   await db.collection('users').where({ _openid: openid }).update({
@@ -210,7 +257,22 @@ async function getFamily(openid) {
   }
 
   const family = await db.collection('families').doc(user.data[0].familyId).get()
-  return { code: 0, data: family.data }
+  const familyData = family.data
+
+  // 标记当前用户是否为创建者
+  familyData.isCreator = (familyData.creatorOpenId === openid)
+
+  // 兼容旧数据：如果没有 creatorOpenId，使用 parentOpenId
+  if (!familyData.creatorOpenId && familyData.parentOpenId) {
+    familyData.creatorOpenId = familyData.parentOpenId
+    familyData.isCreator = (familyData.parentOpenId === openid)
+  }
+  // 兼容旧数据：如果没有 parentOpenIds，从 parentOpenId 生成
+  if (!familyData.parentOpenIds && familyData.parentOpenId) {
+    familyData.parentOpenIds = [familyData.parentOpenId]
+  }
+
+  return { code: 0, data: familyData }
 }
 
 // 获取家庭成员
@@ -224,12 +286,21 @@ async function getFamilyMembers(openid) {
     familyId: user.data[0].familyId
   }).get()
 
-  return { code: 0, data: members.data }
+  // 获取家庭信息以标注创建者
+  const family = await db.collection('families').doc(user.data[0].familyId).get()
+  const creatorOpenId = family.data.creatorOpenId || family.data.parentOpenId
+
+  const result = members.data.map(m => ({
+    ...m,
+    isCreator: m._openid === creatorOpenId
+  }))
+
+  return { code: 0, data: result }
 }
 
 // ========== 存款相关 ==========
 
-// 家长设置存款（新增或更新）
+// 家长设置存款（新增或更新）- 任一家长均可操作
 async function setDeposit(openid, data) {
   const { childOpenId, principal, rate } = data
   if (!childOpenId || principal === undefined || rate === undefined) {
@@ -319,7 +390,7 @@ async function getDeposit(openid, data) {
   return { code: 0, data: deposit.data[0] }
 }
 
-// 家长获取所有小孩的存款
+// 家长获取所有小孩的存款 - 任一家长均可查看
 async function getChildDeposits(openid) {
   const user = await db.collection('users').where({ _openid: openid }).get()
   if (user.data.length === 0 || user.data[0].role !== 'parent') {
@@ -337,7 +408,7 @@ async function getChildDeposits(openid) {
   // 获取小孩信息
   const childIds = [...new Set(deposits.data.map(d => d.childOpenId))]
   const children = await db.collection('users').where({
-    _openid: _.in(childIds)
+    _openid: _.in(childIds.length > 0 ? childIds : ['__none__'])
   }).get()
 
   const childMap = {}
@@ -524,7 +595,7 @@ async function getEarningsTrend(openid, data) {
 
 // ========== 取现相关 ==========
 
-// 小孩申请取现
+// 小孩申请取现 - 提交给家庭所有家长
 async function applyWithdraw(openid, data) {
   const { amount, reason = '' } = data
   if (!amount || amount <= 0) {
@@ -573,11 +644,14 @@ async function applyWithdraw(openid, data) {
   const family = await db.collection('families').doc(user.data[0].familyId).get()
   const now = new Date()
 
+  // 获取家庭所有家长列表
+  const parentOpenIds = family.data.parentOpenIds || [family.data.parentOpenId]
+
   await db.collection('withdrawals').add({
     data: {
       depositId: deposit.data[0]._id,
       childOpenId: openid,
-      parentOpenId: family.data.parentOpenId,
+      parentOpenIds: parentOpenIds,    // 所有家长都可以审批
       familyId: user.data[0].familyId,
       amount,
       reason,
@@ -591,7 +665,7 @@ async function applyWithdraw(openid, data) {
   return { code: 0, msg: '取现申请已提交，等待家长审批' }
 }
 
-// 家长审批取现
+// 家长审批取现 - 家庭内任一家长均可审批
 async function reviewWithdraw(openid, data) {
   const { withdrawId, action } = data // action: 'approve' | 'reject'
   if (!withdrawId || !['approve', 'reject'].includes(action)) {
@@ -605,9 +679,19 @@ async function reviewWithdraw(openid, data) {
   }
 
   const withdrawal = await db.collection('withdrawals').doc(withdrawId).get()
-  if (!withdrawal.data || withdrawal.data.parentOpenId !== openid) {
-    return { code: -1, msg: '审批记录不存在或无权审批' }
+  if (!withdrawal.data) {
+    return { code: -1, msg: '审批记录不存在' }
   }
+
+  // 检查该家长是否在该家庭中（支持多家长审批）
+  const parentOpenIds = withdrawal.data.parentOpenIds || [withdrawal.data.parentOpenId]
+  if (!parentOpenIds.includes(openid)) {
+    // 兼容：同一家庭的家长也可以审批
+    if (withdrawal.data.familyId !== user.data[0].familyId) {
+      return { code: -1, msg: '无权审批该申请' }
+    }
+  }
+
   if (withdrawal.data.status !== 'pending') {
     return { code: -1, msg: '该申请已处理' }
   }
@@ -647,6 +731,7 @@ async function reviewWithdraw(openid, data) {
   await db.collection('withdrawals').doc(withdrawId).update({
     data: {
       status: action === 'approve' ? 'approved' : 'rejected',
+      reviewedBy: openid,   // 记录审批人
       reviewedAt: now,
       updatedAt: now
     }
@@ -683,15 +768,20 @@ async function getWithdrawals(openid, data) {
   return { code: 0, data: res.data }
 }
 
-// 获取待审批数量
+// 获取待审批数量 - 任一家长均可看到
 async function getPendingCount(openid) {
   const user = await db.collection('users').where({ _openid: openid }).get()
   if (user.data.length === 0 || user.data[0].role !== 'parent') {
     return { code: 0, data: { count: 0 } }
   }
 
+  if (!user.data[0].familyId) {
+    return { code: 0, data: { count: 0 } }
+  }
+
+  // 查找同一家庭的所有待审批记录
   const res = await db.collection('withdrawals').where({
-    parentOpenId: openid,
+    familyId: user.data[0].familyId,
     status: 'pending'
   }).count()
 

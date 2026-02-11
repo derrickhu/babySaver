@@ -50,10 +50,103 @@
   font-size: 36rpx;
   font-weight: 600;
   color: var(--text-primary);
-  margin-bottom: 40rpx;
+  margin-bottom: 36rpx;
   text-align: center;
 }
 
+/* ===== 微信设置页风格单元格 ===== */
+.cell-group {
+  margin-bottom: 32rpx;
+}
+
+.cell {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 96rpx;
+  padding: 16rpx 0;
+  border-bottom: 1rpx solid #ECECEC;
+}
+
+.cell:last-child {
+  border-bottom: none;
+}
+
+/* button 作为 cell 时，重置全部默认样式 */
+.cell-btn {
+  width: 100%;
+  background: none;
+  border: none;
+  border-radius: 0;
+  margin: 0;
+  padding: 16rpx 0;
+  font-size: inherit;
+  font-weight: normal;
+  color: inherit;
+  text-align: left;
+  line-height: inherit;
+  box-sizing: border-box;
+  overflow: visible;
+}
+
+.cell-btn::after {
+  display: none;
+}
+
+.cell-label {
+  font-size: 30rpx;
+  color: #333;
+  flex-shrink: 0;
+}
+
+.cell-value {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+}
+
+.cell-arrow {
+  font-size: 36rpx;
+  color: #C0C0C0;
+}
+
+/* 头像（固定方形容器 + 圆裁剪） */
+.cell-avatar-box {
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: 8rpx;
+  overflow: hidden;
+  background: #F5F5F5;
+  flex-shrink: 0;
+}
+
+.cell-avatar {
+  width: 72rpx;
+  height: 72rpx;
+  display: block;
+}
+
+.cell-avatar-holder {
+  width: 72rpx;
+  height: 72rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 40rpx;
+}
+
+/* 昵称输入 */
+.cell-input {
+  flex: 1;
+  height: 64rpx;
+  font-size: 30rpx;
+  color: #333;
+  text-align: right;
+  background: transparent;
+  padding: 0;
+}
+
+/* ===== 表单区域 ===== */
 .form-item {
   margin-bottom: 36rpx;
 }
@@ -66,14 +159,7 @@
   font-weight: 500;
 }
 
-.form-input {
-  height: 88rpx;
-  background: var(--bg-page);
-  border-radius: 16rpx;
-  padding: 0 24rpx;
-  font-size: 30rpx;
-}
-
+/* 角色选择 */
 .role-selector {
   display: flex;
   gap: 24rpx;
@@ -114,6 +200,36 @@
 
 .role-option.active .role-name {
   color: var(--primary);
+}
+
+/* 家长身份选择器 */
+.parent-title-selector {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16rpx;
+}
+
+.title-option {
+  padding: 16rpx 28rpx;
+  border-radius: 32rpx;
+  border: 2rpx solid var(--border);
+  background: var(--bg-page);
+  transition: all 0.3s;
+}
+
+.title-option.active {
+  border-color: var(--primary);
+  background: var(--primary-light);
+}
+
+.title-option.active .title-text {
+  color: var(--primary);
+  font-weight: 600;
+}
+
+.title-text {
+  font-size: 28rpx;
+  color: var(--text-secondary);
 }
 
 .register-btn {

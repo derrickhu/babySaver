@@ -80,7 +80,7 @@ Page({
     }
   },
 
-  // 加载家长数据
+  // 加载家长数据（任一家长都可看到所有小孩的存款）
   async loadParentData() {
     try {
       const [depositsRes, pendingRes] = await Promise.all([

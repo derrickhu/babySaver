@@ -22,7 +22,7 @@
     <view class="welcome-banner">
       <view class="welcome-info">
         <text class="welcome-text">👋 你好，{{userInfo.nickName}}</text>
-        <text class="welcome-role">家长账户</text>
+        <text class="welcome-role">{{userInfo.parentTitle || '家长'}}账户</text>
       </view>
       <!-- 待审批 -->
       <view class="pending-badge" bindtap="goReview" wx:if="{{pendingCount > 0}}">

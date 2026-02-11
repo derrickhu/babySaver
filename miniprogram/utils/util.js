@@ -104,6 +104,52 @@ function getRoleText(role) {
   return map[role] || role
 }
 
+// 家长身份标识映射（获取显示文字）
+function getParentTitleText(parentTitle) {
+  const titles = ['爸爸', '妈妈', '爷爷', '奶奶', '外公', '外婆', '其他']
+  if (titles.includes(parentTitle)) return parentTitle
+  return '家长'
+}
+
+// 获取家长身份对应的表情图标
+function getParentTitleEmoji(parentTitle) {
+  const map = {
+    '爸爸': '👨',
+    '妈妈': '👩',
+    '爷爷': '👴',
+    '奶奶': '👵',
+    '外公': '👴',
+    '外婆': '👵',
+    '其他': '👤'
+  }
+  return map[parentTitle] || '👨‍👩‍👧'
+}
+
+// 获取成员显示的角色文字（含家长身份标识）
+function getMemberRoleText(member) {
+  if (member.role === 'child') return '小孩'
+  if (member.role === 'parent') {
+    const title = member.parentTitle ? getParentTitleText(member.parentTitle) : '家长'
+    if (member.isCreator) return title + '（创建者）'
+    return title
+  }
+  return getRoleText(member.role)
+}
+
+// 获取成员显示的表情图标
+function getMemberEmoji(member) {
+  if (member.role === 'child') return '🧒'
+  if (member.role === 'parent') {
+    return getParentTitleEmoji(member.parentTitle)
+  }
+  return '👤'
+}
+
+// 家长身份可选列表
+function getParentTitleOptions() {
+  return ['爸爸', '妈妈', '爷爷', '奶奶', '外公', '外婆', '其他']
+}
+
 module.exports = {
   formatDate,
   formatDateTime,
@@ -113,5 +159,10 @@ module.exports = {
   generateCalendarData,
   relativeTime,
   getStatusText,
-  getRoleText
+  getRoleText,
+  getParentTitleText,
+  getParentTitleEmoji,
+  getMemberRoleText,
+  getMemberEmoji,
+  getParentTitleOptions
 }

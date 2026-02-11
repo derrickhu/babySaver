@@ -13,16 +13,33 @@
   <view class="login-form card">
     <view class="form-title">创建账号</view>
 
-    <!-- 昵称输入 -->
-    <view class="form-item">
-      <text class="form-label">昵称</text>
-      <input
-        class="form-input"
-        placeholder="请输入您的昵称"
-        value="{{nickName}}"
-        bindinput="onNickNameInput"
-        maxlength="12"
-      />
+    <!-- 头像 + 昵称（微信设置页风格） -->
+    <view class="cell-group">
+      <button class="cell cell-btn" open-type="chooseAvatar" bindchooseavatar="onChooseAvatar">
+        <text class="cell-label">头像</text>
+        <view class="cell-value">
+          <view class="cell-avatar-box">
+            <image class="cell-avatar" src="{{avatarUrl}}" wx:if="{{avatarUrl}}" mode="aspectFill"></image>
+            <text class="cell-avatar-holder" wx:else>👤</text>
+          </view>
+          <text class="cell-arrow">›</text>
+        </view>
+      </button>
+      <view class="cell">
+        <text class="cell-label">昵称</text>
+        <view class="cell-value">
+          <input
+            class="cell-input"
+            type="nickname"
+            placeholder="未设置"
+            value="{{nickName}}"
+            bindinput="onNickNameInput"
+            bindblur="onNickNameBlur"
+            focus="{{focusNickname}}"
+            maxlength="20"
+          />
+        </view>
+      </view>
     </view>
 
     <!-- 角色选择 -->
@@ -46,6 +63,22 @@
           <text class="role-icon">🧒</text>
           <text class="role-name">小孩</text>
           <text class="role-desc">查看存款和取现</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 家长身份选择（仅家长角色时显示） -->
+    <view class="form-item" wx:if="{{role === 'parent'}}">
+      <text class="form-label">我的身份</text>
+      <view class="parent-title-selector">
+        <view
+          class="title-option {{parentTitle === item ? 'active' : ''}}"
+          wx:for="{{parentTitleOptions}}"
+          wx:key="*this"
+          data-title="{{item}}"
+          bindtap="onSelectParentTitle"
+        >
+          <text class="title-text">{{item}}</text>
         </view>
       </view>
     </view>

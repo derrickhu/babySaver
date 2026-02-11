@@ -36,8 +36,19 @@
   margin-bottom: 12rpx;
 }
 
-.user-role {
+.user-role-wrap {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
   margin-bottom: 20rpx;
+}
+
+.user-role {
+  /* 继承 tag 样式 */
+}
+
+.verified-badge, .unverified-badge {
+  font-size: 22rpx;
 }
 
 .user-stats {
@@ -120,4 +131,78 @@
   text-align: center;
   border-radius: 36rpx;
   padding: 0 8rpx;
+}
+
+/* 弹窗 */
+.modal-mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 999;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.modal-content {
+  width: 100%;
+  background: #fff;
+  border-radius: 24rpx 24rpx 0 0;
+  padding: 40rpx 32rpx;
+  padding-bottom: calc(40rpx + env(safe-area-inset-bottom));
+}
+
+.modal-title {
+  font-size: 34rpx;
+  font-weight: 600;
+  text-align: center;
+  margin-bottom: 32rpx;
+}
+
+.title-picker-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20rpx;
+  margin-bottom: 40rpx;
+}
+
+.title-picker-item {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  padding: 20rpx 36rpx;
+  border-radius: 40rpx;
+  border: 2rpx solid var(--border);
+  background: var(--bg-page);
+}
+
+.title-picker-item.active {
+  border-color: var(--primary);
+  background: var(--primary-light);
+}
+
+.title-picker-text {
+  font-size: 30rpx;
+  color: var(--text-primary);
+}
+
+.title-picker-item.active .title-picker-text {
+  color: var(--primary);
+  font-weight: 600;
+}
+
+.title-picker-check {
+  font-size: 28rpx;
+  color: var(--primary);
+  font-weight: 700;
+}
+
+.modal-cancel {
+  text-align: center;
+  font-size: 30rpx;
+  color: var(--text-hint);
+  padding: 20rpx;
 }
