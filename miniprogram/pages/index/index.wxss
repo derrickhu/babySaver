@@ -1,297 +1,249 @@
-/* 首页样式 */
+/* 首页 - 微众银行风格 */
 .page-container {
   min-height: 100vh;
-  padding-bottom: 40rpx;
+  background-color: #f5f6fa;
+  padding-bottom: 120rpx;
 }
 
-/* 加载中 */
+/* 加载 */
 .loading-wrap {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding-top: 300rpx;
+  padding-top: 200rpx;
 }
-
 .loading-spinner {
-  width: 64rpx;
-  height: 64rpx;
-  border: 4rpx solid var(--border);
-  border-top-color: var(--primary);
+  width: 48rpx; height: 48rpx;
+  border: 4rpx solid #e0e0e0;
+  border-top-color: #4a7cf7;
   border-radius: 50%;
-  animation: spin 0.8s linear infinite;
+  animation: spin 0.6s linear infinite;
 }
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
+@keyframes spin { to { transform: rotate(360deg); } }
 .loading-text {
-  color: var(--text-hint);
-  font-size: 28rpx;
   margin-top: 16rpx;
+  font-size: 26rpx;
+  color: #999;
 }
 
-/* 欢迎横幅 */
-.welcome-banner {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 32rpx 32rpx 16rpx;
-}
-
-.welcome-text {
-  font-size: 34rpx;
-  font-weight: 600;
-  display: block;
-}
-
-.welcome-role {
-  font-size: 24rpx;
-  color: var(--text-hint);
-  margin-top: 4rpx;
-  display: block;
-}
-
-.pending-badge {
+/* 空状态 */
+.empty-state {
   display: flex;
   flex-direction: column;
   align-items: center;
-  background: var(--danger);
-  color: #fff;
-  padding: 12rpx 24rpx;
-  border-radius: 16rpx;
+  padding-top: 160rpx;
 }
+.empty-icon { font-size: 80rpx; margin-bottom: 24rpx; }
+.empty-text { font-size: 28rpx; color: #999; line-height: 1.6; }
 
+/* 小孩切换器 */
+.child-switcher {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24rpx 32rpx;
+  background: #fff;
+}
+.child-switcher-inner {
+  display: flex;
+  align-items: center;
+}
+.child-switcher-emoji { font-size: 36rpx; margin-right: 12rpx; }
+.child-switcher-name { font-size: 30rpx; font-weight: 600; color: #333; }
+.child-switcher-arrow { font-size: 22rpx; color: #999; margin-left: 8rpx; }
+.pending-dot {
+  display: flex;
+  align-items: center;
+  background: #ff5b5b;
+  padding: 8rpx 20rpx;
+  border-radius: 32rpx;
+}
 .pending-num {
-  font-size: 36rpx;
-  font-weight: 700;
-}
-
-.pending-label {
-  font-size: 20rpx;
-}
-
-/* 区域标题 */
-.section-title {
-  padding: 24rpx 32rpx 8rpx;
-  font-size: 30rpx;
-  font-weight: 600;
-  color: var(--text-primary);
-}
-
-/* 存款卡片 */
-.deposit-card {
-  margin: 16rpx 24rpx;
-}
-
-.deposit-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 24rpx;
-}
-
-.child-info {
-  display: flex;
-  align-items: center;
-}
-
-.child-avatar {
-  font-size: 44rpx;
-  margin-right: 12rpx;
-}
-
-.child-name {
-  font-size: 32rpx;
-  font-weight: 600;
-}
-
-.deposit-body {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 24rpx;
-}
-
-.deposit-item {
-  flex: 1;
-  text-align: center;
-}
-
-.deposit-label {
-  display: block;
-  font-size: 24rpx;
-  color: var(--text-hint);
-  margin-bottom: 8rpx;
-}
-
-.deposit-value {
-  display: block;
   font-size: 28rpx;
-  font-weight: 600;
-}
-
-.deposit-actions {
-  display: flex;
-  gap: 16rpx;
-}
-
-/* 操作入口卡片 */
-.action-card {
-  display: flex;
-  align-items: center;
-  margin: 16rpx 24rpx;
-}
-
-.action-icon {
-  font-size: 48rpx;
-  margin-right: 20rpx;
-}
-
-.action-info {
-  flex: 1;
-}
-
-.action-title {
-  display: block;
-  font-size: 30rpx;
-  font-weight: 500;
-}
-
-.action-desc {
-  display: block;
-  font-size: 24rpx;
-  color: var(--text-hint);
-  margin-top: 4rpx;
-}
-
-.action-arrow {
-  font-size: 40rpx;
-  color: var(--text-hint);
-}
-
-/* ===== 小孩视图 ===== */
-
-/* 总览卡片 */
-.overview-card {
-  position: relative;
-  margin: 24rpx;
-  border-radius: 24rpx;
-  overflow: hidden;
   color: #fff;
+  font-weight: 600;
+  margin-right: 6rpx;
 }
+.pending-label { font-size: 22rpx; color: #fff; }
 
-.overview-bg {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(135deg, #5B8FF9 0%, #7B68EE 100%);
-}
-
-.overview-content {
+/* 资产卡片 */
+.asset-card {
+  margin: 24rpx 24rpx 0;
+  border-radius: 24rpx;
   position: relative;
+  overflow: hidden;
+}
+.asset-card-bg {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: linear-gradient(135deg, #4a7cf7 0%, #6c5ce7 100%);
+}
+.asset-card-content {
+  position: relative;
+  z-index: 1;
   padding: 40rpx 36rpx;
 }
-
-.overview-label {
-  font-size: 26rpx;
-  opacity: 0.85;
-  display: block;
+.asset-label {
+  font-size: 24rpx;
+  color: rgba(255,255,255,0.7);
 }
-
-.overview-amount {
-  font-size: 72rpx;
+.asset-amount {
+  display: block;
+  margin-top: 12rpx;
+  font-size: 56rpx;
   font-weight: 700;
-  display: block;
-  margin: 16rpx 0 32rpx;
-  letter-spacing: 2rpx;
+  color: #fff;
+  font-family: 'DIN', 'Helvetica Neue', sans-serif;
 }
-
-.overview-detail {
+.asset-detail {
   display: flex;
   align-items: center;
-  background: rgba(255, 255, 255, 0.15);
-  border-radius: 16rpx;
-  padding: 20rpx 0;
+  margin-top: 32rpx;
+  padding-top: 24rpx;
+  border-top: 1rpx solid rgba(255,255,255,0.2);
 }
-
-.detail-item {
+.asset-detail-item {
   flex: 1;
-  text-align: center;
-}
-
-.detail-label {
-  display: block;
-  font-size: 22rpx;
-  opacity: 0.8;
-  margin-bottom: 8rpx;
-}
-
-.detail-value {
-  display: block;
-  font-size: 28rpx;
-  font-weight: 600;
-}
-
-.detail-divider {
-  width: 1rpx;
-  height: 48rpx;
-  background: rgba(255, 255, 255, 0.3);
-}
-
-/* 利率卡片 */
-.rate-card {
   display: flex;
-  justify-content: space-around;
-  padding: 28rpx 24rpx;
+  flex-direction: column;
 }
-
-.rate-info {
-  text-align: center;
+.asset-detail-divider {
+  width: 1rpx;
+  height: 56rpx;
+  background: rgba(255,255,255,0.2);
+  margin: 0 24rpx;
 }
-
-.rate-label {
-  display: block;
-  font-size: 24rpx;
-  color: var(--text-hint);
-  margin-bottom: 8rpx;
+.asset-detail-label {
+  font-size: 22rpx;
+  color: rgba(255,255,255,0.6);
 }
-
-.rate-value {
-  display: block;
-  font-size: 36rpx;
-  font-weight: 700;
-  color: var(--primary);
+.asset-detail-value {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #fff;
+  margin-top: 4rpx;
 }
 
 /* 快捷操作 */
 .quick-actions {
   display: flex;
-  padding: 24rpx;
-  gap: 24rpx;
+  padding: 32rpx 24rpx;
+  margin: 0 24rpx;
+  background: #fff;
+  border-radius: 16rpx;
+  margin-top: 24rpx;
+  justify-content: space-around;
 }
-
 .quick-item {
-  flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  background: var(--bg-card);
+  width: 100rpx;
+}
+.quick-icon { font-size: 44rpx; margin-bottom: 8rpx; }
+.quick-label { font-size: 22rpx; color: #666; }
+
+/* 通用卡片 */
+.card {
+  margin: 20rpx 24rpx 0;
+  background: #fff;
   border-radius: 16rpx;
-  padding: 32rpx;
-  box-shadow: var(--shadow);
+  overflow: hidden;
 }
 
-.quick-icon {
-  font-size: 48rpx;
-  margin-bottom: 12rpx;
+/* 产品卡片 */
+.product-card {
+  padding: 28rpx 24rpx;
 }
-
-.quick-label {
-  font-size: 26rpx;
-  color: var(--text-secondary);
+.product-card-header {
+  display: flex;
+  align-items: center;
+}
+.product-icon-wrap {
+  width: 72rpx; height: 72rpx;
+  border-radius: 16rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 20rpx;
+  flex-shrink: 0;
+}
+.product-icon-blue { background: #e8effe; }
+.product-icon-orange { background: #fff4e6; }
+.product-icon-green { background: #e6f9f0; }
+.product-icon-text { font-size: 36rpx; }
+.product-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+.product-name {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #333;
+}
+.product-desc {
+  font-size: 22rpx;
+  color: #999;
+  margin-top: 4rpx;
+}
+.product-amount-wrap {
+  text-align: right;
+  flex-shrink: 0;
+}
+.product-amount {
+  font-size: 30rpx;
+  font-weight: 700;
+  color: #333;
+  font-family: 'DIN', 'Helvetica Neue', sans-serif;
+}
+.product-sub {
+  display: block;
+  font-size: 20rpx;
+  color: #999;
+  margin-top: 4rpx;
+}
+.product-sub-green { color: #07c160; }
+.product-matured-tag {
+  margin-top: 16rpx;
+  padding-top: 16rpx;
+  border-top: 1rpx solid #f5f5f5;
+  text-align: center;
+}
+.matured-text {
+  font-size: 24rpx;
+  color: #07c160;
   font-weight: 500;
+}
+
+/* 段落标题 */
+.section-title {
+  padding: 32rpx 32rpx 0;
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #333;
+}
+
+/* 浏览理财 */
+.browse-products {
+  display: flex;
+  align-items: center;
+  padding: 28rpx 24rpx;
+}
+.browse-icon { font-size: 36rpx; margin-right: 16rpx; }
+.browse-text { flex: 1; font-size: 28rpx; color: #333; font-weight: 500; }
+.browse-arrow { font-size: 36rpx; color: #ccc; }
+
+/* 主按钮 */
+.btn-primary {
+  background: linear-gradient(135deg, #4a7cf7, #6c5ce7);
+  color: #fff;
+  border: none;
+  border-radius: 48rpx;
+  padding: 0 48rpx;
+  height: 88rpx;
+  line-height: 88rpx;
+  font-size: 30rpx;
+  font-weight: 600;
 }

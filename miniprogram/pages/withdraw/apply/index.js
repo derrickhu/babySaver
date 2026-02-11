@@ -1,12 +1,12 @@
-// 取现申请页（小孩）
+// 取现申请页（小孩 → 从默认账户取现）
 const api = require('../../../utils/api')
 const util = require('../../../utils/util')
 
 Page({
   data: {
-    deposit: null,
+    account: null,
     amount: '',
-    reason: '',
+    remark: '',
     maxAmount: 0,
     submitting: false,
     history: [],
@@ -18,12 +18,9 @@ Page({
   },
 
   onShow() {
-    if (!this.data.loading) {
-      this.loadData()
-    }
+    if (!this.data.loading) this.loadData()
   },
 
-  // 加载数据
   async loadData() {
     const app = getApp()
     const userInfo = app.globalData.userInfo
@@ -35,34 +32,34 @@ Page({
 
     try {
       // 先计算收益
-      await api.callCloud('calcEarnings', {}).catch(() => {})
+      await api.callCloud('calcAllEarnings', {}).catch(() => {})
 
-      const [depositRes, historyRes] = await Promise.all([
-        api.callCloud('getDeposit', {}),
-        api.callCloud('getWithdrawals', { page: 1, pageSize: 20 })
+      const [accRes, txRes] = await Promise.all([
+        api.callCloud('getAccount', {}),
+        api.callCloud('getTransactions', { type: 'withdraw', page: 1, pageSize: 20 })
       ])
 
-      if (depositRes.code === 0 && depositRes.data) {
-        const d = depositRes.data
-        const maxAmount = Math.round((d.balance + d.totalEarnings) * 100) / 100
+      if (accRes.code === 0 && accRes.data) {
+        const a = accRes.data
+        const maxAmount = Math.round((a.balance + a.totalEarnings) * 100) / 100
         this.setData({
-          deposit: {
-            ...d,
-            balanceStr: util.formatMoney(d.balance),
-            earningsStr: util.formatMoney(d.totalEarnings),
+          account: {
+            ...a,
+            balanceStr: util.formatMoney(a.balance),
+            earningsStr: util.formatMoney(a.totalEarnings),
             totalStr: util.formatMoney(maxAmount)
           },
           maxAmount
         })
       }
 
-      if (historyRes.code === 0) {
+      if (txRes.code === 0) {
         this.setData({
-          history: (historyRes.data || []).map(w => ({
-            ...w,
-            amountStr: util.formatMoney(w.amount),
-            statusText: util.getStatusText(w.status),
-            timeStr: util.relativeTime(w.createdAt)
+          history: (txRes.data || []).map(t => ({
+            ...t,
+            amountStr: util.formatMoney(t.amount),
+            statusText: util.getStatusText(t.status),
+            timeStr: util.relativeTime(t.createdAt)
           }))
         })
       }
@@ -73,43 +70,29 @@ Page({
     }
   },
 
-  // 输入金额
-  onAmountInput(e) {
-    this.setData({ amount: e.detail.value })
-  },
+  onAmountInput(e) { this.setData({ amount: e.detail.value }) },
+  onRemarkInput(e) { this.setData({ remark: e.detail.value }) },
 
-  // 输入原因
-  onReasonInput(e) {
-    this.setData({ reason: e.detail.value })
-  },
-
-  // 全部取出
   onTakeAll() {
     this.setData({ amount: String(this.data.maxAmount) })
   },
 
-  // 提交申请
   async onSubmit() {
-    const { amount, reason, maxAmount } = this.data
+    const { amount, remark, maxAmount } = this.data
     const amountNum = parseFloat(amount)
 
-    if (isNaN(amountNum) || amountNum <= 0) {
-      return api.showToast('请输入正确的取现金额')
-    }
-    if (amountNum > maxAmount) {
-      return api.showToast(`最多可取 ${maxAmount.toFixed(2)} 元`)
-    }
+    if (isNaN(amountNum) || amountNum <= 0) return api.showError('请输入正确的取现金额')
+    if (amountNum > maxAmount) return api.showError(`最多可取 ¥${maxAmount.toFixed(2)}`)
+    if (!remark || !remark.trim()) return api.showError('请填写备注')
 
-    // 确认弹窗
     const confirmRes = await new Promise(resolve => {
       wx.showModal({
         title: '确认取现',
-        content: `申请取现 ¥${amountNum.toFixed(2)}，提交后需要家长审批通过。`,
+        content: `申请取现 ¥${amountNum.toFixed(2)}，提交后需要家长审批。`,
         confirmText: '确认提交',
         success: resolve
       })
     })
-
     if (!confirmRes.confirm) return
 
     this.setData({ submitting: true })
@@ -118,13 +101,11 @@ Page({
     try {
       const res = await api.callCloud('applyWithdraw', {
         amount: amountNum,
-        reason: reason || ''
+        remark: remark.trim()
       })
       api.hideLoading()
       api.showToast(res.msg || '提交成功')
-
-      // 清空表单并刷新
-      this.setData({ amount: '', reason: '' })
+      this.setData({ amount: '', remark: '' })
       this.loadData()
     } catch (err) {
       api.hideLoading()

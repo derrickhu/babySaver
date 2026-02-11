@@ -7,18 +7,19 @@ Page({
     userInfo: null,
     isParent: false,
     hasFamily: false,
+    isCreator: false,
     family: null,
-    deposit: null,
+    account: null,
     pendingCount: 0,
     loading: true,
     parentTitleOptions: [],
-    showTitlePicker: false
+    showTitlePicker: false,
+    showRateModal: false,
+    baseRate: ''
   },
 
   onLoad() {
-    this.setData({
-      parentTitleOptions: util.getParentTitleOptions()
-    })
+    this.setData({ parentTitleOptions: util.getParentTitleOptions() })
     this.loadData()
   },
 
@@ -32,11 +33,9 @@ Page({
     }
   },
 
-  // 加载数据
   async loadData() {
     const app = getApp()
 
-    // 先刷新用户信息
     try {
       const userRes = await api.callCloud('getUserInfo')
       if (userRes.code === 0 && userRes.data) {
@@ -45,7 +44,6 @@ Page({
     } catch (e) {}
 
     const userInfo = app.globalData.userInfo
-
     if (!userInfo) {
       this.setData({ loading: false })
       return
@@ -64,23 +62,28 @@ Page({
         if (userInfo.role === 'parent') {
           promises.push(api.callCloud('getPendingCount'))
         } else {
-          promises.push(api.callCloud('getDeposit', {}))
+          promises.push(api.callCloud('getAccount', {}))
         }
 
         const results = await Promise.all(promises)
 
         if (results[0].code === 0) {
-          this.setData({ family: results[0].data })
+          const family = results[0].data
+          this.setData({
+            family,
+            isCreator: family.isCreator,
+            baseRate: String(family.baseRate || 2.0)
+          })
         }
 
         if (userInfo.role === 'parent' && results[1].code === 0) {
           this.setData({ pendingCount: results[1].data.count })
         } else if (userInfo.role === 'child' && results[1].code === 0 && results[1].data) {
-          const d = results[1].data
+          const a = results[1].data
           this.setData({
-            deposit: {
-              ...d,
-              totalStr: util.formatMoney(d.balance + d.totalEarnings)
+            account: {
+              ...a,
+              totalStr: util.formatMoney(a.balance + a.totalEarnings)
             }
           })
         }
@@ -92,37 +95,35 @@ Page({
     this.setData({ loading: false })
   },
 
-  // 跳转家庭管理
   goFamily() {
     wx.navigateTo({ url: '/pages/family/index' })
   },
 
-  // 跳转存款设置
   goDeposit() {
     wx.navigateTo({ url: '/pages/deposit/index' })
   },
 
-  // 跳转取现审批
   goReview() {
     wx.navigateTo({ url: '/pages/withdraw/review/index' })
   },
 
-  // 跳转取现申请
   goWithdraw() {
     wx.navigateTo({ url: '/pages/withdraw/apply/index' })
   },
 
-  // 显示修改家长身份弹窗
+  goProducts() {
+    wx.navigateTo({ url: '/pages/product/manage/index' })
+  },
+
+  // 家长身份修改
   onShowTitlePicker() {
     this.setData({ showTitlePicker: true })
   },
 
-  // 隐藏修改家长身份弹窗
   onHideTitlePicker() {
     this.setData({ showTitlePicker: false })
   },
 
-  // 选择新的家长身份
   async onChangeParentTitle(e) {
     const newTitle = e.currentTarget.dataset.title
     if (!newTitle) return
@@ -133,15 +134,11 @@ Page({
       api.hideLoading()
       api.showToast('身份修改成功')
 
-      // 刷新用户信息
       const app = getApp()
       const userRes = await api.callCloud('getUserInfo')
       if (userRes.code === 0 && userRes.data) {
         app.globalData.userInfo = userRes.data
-        this.setData({
-          userInfo: userRes.data,
-          showTitlePicker: false
-        })
+        this.setData({ userInfo: userRes.data, showTitlePicker: false })
       }
     } catch (err) {
       api.hideLoading()
@@ -149,11 +146,42 @@ Page({
     }
   },
 
-  // 关于
+  // 基础利率设置
+  onShowRateModal() {
+    this.setData({ showRateModal: true })
+  },
+
+  onHideRateModal() {
+    this.setData({ showRateModal: false })
+  },
+
+  onBaseRateInput(e) {
+    this.setData({ baseRate: e.detail.value })
+  },
+
+  async onSaveBaseRate() {
+    const rate = parseFloat(this.data.baseRate)
+    if (isNaN(rate) || rate < 0 || rate > 100) {
+      return api.showError('请输入0-100的利率')
+    }
+
+    api.showLoading('保存中...')
+    try {
+      await api.callCloud('setBaseRate', { baseRate: rate })
+      api.hideLoading()
+      api.showToast('利率设置成功')
+      this.setData({ showRateModal: false })
+      this.loadData()
+    } catch (err) {
+      api.hideLoading()
+      api.showError(err.msg || '设置失败')
+    }
+  },
+
   onAbout() {
     wx.showModal({
       title: '关于小孩存钱宝',
-      content: '小孩存钱宝是一款帮助家长培养孩子理财意识的小程序。\n\n家长可以为小孩设置虚拟存款和利率，让孩子直观感受存钱的收益。\n\n版本 1.1.0',
+      content: '小孩存钱宝是一款帮助家长培养孩子理财意识的小程序。\n\n家长可以为小孩设置虚拟存款，并通过理财产品培养孩子的理财观念。\n\n版本 2.0.0',
       showCancel: false,
       confirmText: '知道了'
     })

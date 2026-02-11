@@ -90,9 +90,46 @@ function getStatusText(status) {
   const map = {
     pending: '待审核',
     approved: '已通过',
-    rejected: '已拒绝'
+    rejected: '已拒绝',
+    success: '成功'
   }
   return map[status] || status
+}
+
+// 账单类型映射
+function getTransactionTypeText(type) {
+  const map = {
+    deposit: '存入',
+    withdraw: '取现',
+    buy: '买入理财',
+    redeem: '赎回理财',
+    interest: '利息'
+  }
+  return map[type] || type
+}
+
+// 账单类型图标
+function getTransactionTypeIcon(type) {
+  const map = {
+    deposit: '💰',
+    withdraw: '💳',
+    buy: '📈',
+    redeem: '🔄',
+    interest: '✨'
+  }
+  return map[type] || '📄'
+}
+
+// 风险等级映射
+function getRiskLabel(riskLevel) {
+  const map = { low: '低风险', medium: '中风险', high: '高风险' }
+  return map[riskLevel] || riskLevel
+}
+
+// 风险等级颜色
+function getRiskColor(riskLevel) {
+  const map = { low: '#07c160', medium: '#ff9800', high: '#ff4d4f' }
+  return map[riskLevel] || '#999'
 }
 
 // 角色文字映射
@@ -159,6 +196,10 @@ module.exports = {
   generateCalendarData,
   relativeTime,
   getStatusText,
+  getTransactionTypeText,
+  getTransactionTypeIcon,
+  getRiskLabel,
+  getRiskColor,
   getRoleText,
   getParentTitleText,
   getParentTitleEmoji,

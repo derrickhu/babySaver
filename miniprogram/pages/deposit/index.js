@@ -1,34 +1,27 @@
-// 存款设置页（家长专属）
+// 存入页（家长 → 小孩默认账户）
 const api = require('../../utils/api')
 const util = require('../../utils/util')
 
 Page({
   data: {
+    children: [],
+    selectedChildIndex: 0,
     childOpenId: '',
     childName: '',
-    currentDeposit: null,
-    principal: '',
-    rate: '',
-    estimateDaily: '0.0000',
-    estimateMonthly: '0.00',
-    estimateYearly: '0.00',
-    loading: true,
-    saving: false,
-    children: [],
-    selectedChildIndex: -1
+    amount: '',
+    remark: '',
+    accountBalance: '0.00',
+    submitting: false,
+    loading: true
   },
 
   onLoad(options) {
-    const childOpenId = options.childOpenId || ''
-    this.setData({ childOpenId })
-    this.loadData(childOpenId)
+    this.loadData(options.childOpenId || '')
   },
 
-  // 加载数据
-  async loadData(childOpenId) {
+  async loadData(targetChildId) {
     const app = getApp()
     const userInfo = app.globalData.userInfo
-
     if (!userInfo || userInfo.role !== 'parent') {
       api.showToast('仅家长可操作')
       setTimeout(() => wx.navigateBack(), 1000)
@@ -36,7 +29,6 @@ Page({
     }
 
     try {
-      // 获取家庭成员
       const membersRes = await api.callCloud('getFamilyMembers')
       const children = (membersRes.data || []).filter(m => m.role === 'child')
       this.setData({ children })
@@ -46,23 +38,20 @@ Page({
         return
       }
 
-      // 如果没有指定小孩，默认选第一个
-      let targetChildId = childOpenId
       let selectedIndex = 0
       if (targetChildId) {
         selectedIndex = children.findIndex(c => c._openid === targetChildId)
         if (selectedIndex === -1) selectedIndex = 0
       }
-      targetChildId = children[selectedIndex]._openid
 
+      const child = children[selectedIndex]
       this.setData({
-        childOpenId: targetChildId,
-        childName: children[selectedIndex].nickName,
-        selectedChildIndex: selectedIndex
+        selectedChildIndex: selectedIndex,
+        childOpenId: child._openid,
+        childName: child.nickName
       })
 
-      // 获取当前存款
-      await this.loadDeposit(targetChildId)
+      await this.loadAccount(child._openid)
     } catch (err) {
       console.error('加载失败:', err)
     } finally {
@@ -70,106 +59,57 @@ Page({
     }
   },
 
-  // 加载存款
-  async loadDeposit(childOpenId) {
+  async loadAccount(childOpenId) {
     try {
-      const depositRes = await api.callCloud('getDeposit', { childOpenId })
-      if (depositRes.code === 0 && depositRes.data) {
-        const d = depositRes.data
-        const principal = String(d.principal)
-        const rate = String(d.rate)
+      const res = await api.callCloud('getAccount', { childOpenId })
+      if (res.code === 0 && res.data) {
         this.setData({
-          currentDeposit: d,
-          principal,
-          rate
-        })
-        this.updateEstimate(principal, rate)
-      } else {
-        this.setData({
-          currentDeposit: null,
-          principal: '',
-          rate: '',
-          estimateDaily: '0.0000',
-          estimateMonthly: '0.00',
-          estimateYearly: '0.00'
+          accountBalance: util.formatMoney(res.data.balance)
         })
       }
-    } catch (err) {
-      console.error('加载存款失败:', err)
-    }
+    } catch (err) { /* ignore */ }
   },
 
-  // 切换小孩
   onChildChange(e) {
     const index = e.detail.value
     const child = this.data.children[index]
     this.setData({
-      selectedChildIndex: index,
+      selectedChildIndex: parseInt(index),
       childOpenId: child._openid,
       childName: child.nickName
     })
-    this.loadDeposit(child._openid)
+    this.loadAccount(child._openid)
   },
 
-  // 输入本金
-  onPrincipalInput(e) {
-    const principal = e.detail.value
-    this.setData({ principal })
-    this.updateEstimate(principal, this.data.rate)
-  },
+  onAmountInput(e) { this.setData({ amount: e.detail.value }) },
+  onRemarkInput(e) { this.setData({ remark: e.detail.value }) },
 
-  // 输入利率
-  onRateInput(e) {
-    const rate = e.detail.value
-    this.setData({ rate })
-    this.updateEstimate(this.data.principal, rate)
-  },
+  async onSubmit() {
+    const { childOpenId, amount, remark } = this.data
+    const amountNum = parseFloat(amount)
 
-  // 更新收益预估（WXML 不支持 .toFixed，需在 JS 中计算）
-  updateEstimate(principal, rate) {
-    const p = parseFloat(principal) || 0
-    const r = parseFloat(rate) || 0
-    const estimateDaily = p && r ? (p * r / 100 / 365).toFixed(4) : '0.0000'
-    const estimateMonthly = p && r ? (p * r / 100 / 12).toFixed(2) : '0.00'
-    const estimateYearly = p && r ? (p * r / 100).toFixed(2) : '0.00'
-    this.setData({ estimateDaily, estimateMonthly, estimateYearly })
-  },
+    if (!childOpenId) return api.showError('请选择小孩')
+    if (isNaN(amountNum) || amountNum <= 0) return api.showError('请输入正确的金额')
+    if (!remark || !remark.trim()) return api.showError('请填写备注')
 
-  // 保存存款设置
-  async onSave() {
-    const { childOpenId, principal, rate } = this.data
-    const principalNum = parseFloat(principal)
-    const rateNum = parseFloat(rate)
-
-    if (!childOpenId) {
-      return api.showToast('请选择小孩')
-    }
-    if (isNaN(principalNum) || principalNum < 0) {
-      return api.showToast('请输入正确的本金金额')
-    }
-    if (isNaN(rateNum) || rateNum < 0 || rateNum > 100) {
-      return api.showToast('利率请填写0-100之间的数字')
-    }
-
-    this.setData({ saving: true })
-    api.showLoading('保存中...')
+    this.setData({ submitting: true })
+    api.showLoading('存入中...')
 
     try {
-      const res = await api.callCloud('setDeposit', {
+      const res = await api.callCloud('depositToAccount', {
         childOpenId,
-        principal: principalNum,
-        rate: rateNum
+        amount: amountNum,
+        remark: remark.trim()
       })
       api.hideLoading()
-      api.showToast(res.msg || '保存成功')
-
-      // 重新加载
-      await this.loadDeposit(childOpenId)
+      api.showToast(res.msg || '存入成功')
+      this.setData({ amount: '', remark: '' })
+      this.loadAccount(childOpenId)
     } catch (err) {
       api.hideLoading()
-      api.showError(err.msg || '保存失败')
+      api.showError(err.msg || '存入失败')
     } finally {
-      this.setData({ saving: false })
+      this.setData({ submitting: false })
     }
   }
 })

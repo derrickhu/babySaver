@@ -3,7 +3,8 @@
   <!-- 用户信息卡 -->
   <view class="user-card" wx:if="{{userInfo}}">
     <view class="user-avatar-wrap">
-      <text class="user-avatar-emoji">{{isParent ? '👨‍👩‍👧' : '🧒'}}</text>
+      <image class="user-avatar-img" wx:if="{{userInfo.avatarUrl}}" src="{{userInfo.avatarUrl}}" mode="aspectFill"></image>
+      <text class="user-avatar-emoji" wx:else>{{isParent ? '👨‍👩‍👧' : '🧒'}}</text>
     </view>
     <text class="user-name">{{userInfo.nickName}}</text>
     <view class="user-role-wrap">
@@ -11,9 +12,9 @@
         {{isParent ? (userInfo.parentTitle || '家长') : '小孩'}}
       </text>
     </view>
-    <view class="user-stats" wx:if="{{deposit && !isParent}}">
+    <view class="user-stats" wx:if="{{account && !isParent}}">
       <text class="stats-label">总资产</text>
-      <text class="stats-value">¥{{deposit.totalStr}}</text>
+      <text class="stats-value">¥{{account.totalStr}}</text>
     </view>
   </view>
 
@@ -26,7 +27,7 @@
   <!-- 菜单列表 -->
   <view class="menu-section">
     <view class="menu-card card">
-      <!-- 修改家长身份（仅家长显示） -->
+      <!-- 修改家长身份 -->
       <view class="menu-item" bindtap="onShowTitlePicker" wx:if="{{isParent}}">
         <text class="menu-icon">👤</text>
         <text class="menu-label">我的身份</text>
@@ -48,10 +49,28 @@
       </view>
 
       <!-- 家长菜单 -->
-      <block wx:if="{{isParent}}">
+      <block wx:if="{{isParent && hasFamily}}">
+        <!-- 基础利率设置（仅创建者） -->
+        <view class="menu-item" bindtap="onShowRateModal" wx:if="{{isCreator}}">
+          <text class="menu-icon">📊</text>
+          <text class="menu-label">默认利率设置</text>
+          <view class="menu-right">
+            <text class="menu-desc">{{family.baseRate || 2.0}}%</text>
+            <text class="menu-arrow">›</text>
+          </view>
+        </view>
+
         <view class="menu-item" bindtap="goDeposit">
           <text class="menu-icon">💰</text>
-          <text class="menu-label">存款设置</text>
+          <text class="menu-label">存入</text>
+          <view class="menu-right">
+            <text class="menu-arrow">›</text>
+          </view>
+        </view>
+
+        <view class="menu-item" bindtap="goProducts">
+          <text class="menu-icon">⚙️</text>
+          <text class="menu-label">理财产品管理</text>
           <view class="menu-right">
             <text class="menu-arrow">›</text>
           </view>
@@ -69,6 +88,14 @@
 
       <!-- 小孩菜单 -->
       <block wx:if="{{!isParent && hasFamily}}">
+        <view class="menu-item" bindtap="goProducts">
+          <text class="menu-icon">📈</text>
+          <text class="menu-label">理财产品</text>
+          <view class="menu-right">
+            <text class="menu-arrow">›</text>
+          </view>
+        </view>
+
         <view class="menu-item" bindtap="goWithdraw">
           <text class="menu-icon">💳</text>
           <text class="menu-label">申请取现</text>
@@ -85,7 +112,7 @@
         <text class="menu-icon">ℹ️</text>
         <text class="menu-label">关于</text>
         <view class="menu-right">
-          <text class="menu-desc">v1.1.0</text>
+          <text class="menu-desc">v2.0.0</text>
           <text class="menu-arrow">›</text>
         </view>
       </view>
@@ -109,6 +136,22 @@
         </view>
       </view>
       <view class="modal-cancel" bindtap="onHideTitlePicker">取消</view>
+    </view>
+  </view>
+
+  <!-- 基础利率设置弹窗 -->
+  <view class="modal-mask" wx:if="{{showRateModal}}" bindtap="onHideRateModal">
+    <view class="modal-content" catchtap="">
+      <view class="modal-title">设置默认账户基础利率</view>
+      <view class="rate-tip">该利率将应用于家庭内所有小孩的默认账户</view>
+      <view class="rate-input-wrap">
+        <input class="rate-input" type="digit" placeholder="如 2.5" value="{{baseRate}}" bindinput="onBaseRateInput" focus="{{showRateModal}}" />
+        <text class="rate-suffix">%</text>
+      </view>
+      <view class="rate-actions">
+        <view class="rate-cancel" bindtap="onHideRateModal">取消</view>
+        <view class="rate-confirm" bindtap="onSaveBaseRate">确认</view>
+      </view>
     </view>
   </view>
 </view>

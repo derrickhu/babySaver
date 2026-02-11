@@ -206,3 +206,62 @@
   color: var(--text-hint);
   padding: 20rpx;
 }
+
+/* 用户头像图片 */
+.user-avatar-img {
+  width: 140rpx;
+  height: 140rpx;
+  border-radius: 50%;
+}
+
+/* 利率设置弹窗 */
+.rate-tip {
+  font-size: 24rpx;
+  color: #999;
+  text-align: center;
+  margin-bottom: 32rpx;
+}
+.rate-input-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20rpx 0;
+  margin-bottom: 32rpx;
+}
+.rate-input {
+  width: 200rpx;
+  font-size: 48rpx;
+  font-weight: 700;
+  color: #333;
+  text-align: center;
+  border-bottom: 4rpx solid #4a7cf7;
+  padding-bottom: 12rpx;
+}
+.rate-suffix {
+  font-size: 36rpx;
+  color: #999;
+  margin-left: 12rpx;
+}
+.rate-actions {
+  display: flex;
+  gap: 24rpx;
+}
+.rate-cancel {
+  flex: 1;
+  text-align: center;
+  padding: 24rpx;
+  font-size: 30rpx;
+  color: #999;
+  background: #f5f5f5;
+  border-radius: 48rpx;
+}
+.rate-confirm {
+  flex: 1;
+  text-align: center;
+  padding: 24rpx;
+  font-size: 30rpx;
+  color: #fff;
+  background: linear-gradient(135deg, #4a7cf7, #6c5ce7);
+  border-radius: 48rpx;
+  font-weight: 600;
+}

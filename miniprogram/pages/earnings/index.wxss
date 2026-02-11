@@ -1,313 +1,141 @@
-/* 收益查询页样式 */
-.earnings-page {
+/* 账单明细页 */
+.page-container {
   min-height: 100vh;
-  padding-bottom: 40rpx;
+  background: #f5f6fa;
+  padding-bottom: 120rpx;
 }
 
-.loading-wrap {
-  display: flex;
+/* 小孩筛选 */
+.child-filter {
+  padding: 20rpx 24rpx 0;
+}
+.child-filter-btn {
+  display: inline-flex;
   align-items: center;
-  justify-content: center;
+  padding: 12rpx 24rpx;
+  background: #fff;
+  border-radius: 32rpx;
+  font-size: 26rpx;
+  color: #333;
+}
+.filter-arrow {
+  font-size: 20rpx;
+  color: #999;
+  margin-left: 8rpx;
 }
 
-/* 小孩选择器 */
-.child-picker {
-  margin: 16rpx 24rpx;
+/* 类型过滤 */
+.filter-bar {
+  display: flex;
   padding: 20rpx 24rpx;
+  gap: 16rpx;
+  overflow-x: auto;
 }
-
-.picker-display {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  font-size: 30rpx;
+.filter-item {
+  flex-shrink: 0;
+  padding: 10rpx 28rpx;
+  border-radius: 32rpx;
+  font-size: 26rpx;
+  color: #666;
+  background: #fff;
 }
-
-.picker-arrow {
-  font-size: 24rpx;
-  color: var(--text-hint);
-}
-
-/* 概览 */
-.summary-card {
-  margin: 16rpx 24rpx;
-  padding: 24rpx;
-}
-
-.summary-row {
-  display: flex;
-  justify-content: space-around;
-}
-
-.summary-item {
-  text-align: center;
-}
-
-.summary-label {
-  display: block;
-  font-size: 24rpx;
-  color: var(--text-hint);
-  margin-bottom: 8rpx;
-}
-
-.summary-value {
-  display: block;
-  font-size: 32rpx;
-  font-weight: 600;
-}
-
-/* Tab */
-.tab-bar {
-  display: flex;
-  background: var(--bg-card);
-  margin: 16rpx 24rpx;
-  border-radius: 16rpx;
-  padding: 6rpx;
-}
-
-.tab-item {
-  flex: 1;
-  text-align: center;
-  padding: 20rpx 0;
-  font-size: 28rpx;
-  color: var(--text-secondary);
-  border-radius: 12rpx;
-  transition: all 0.3s;
-}
-
-.tab-item.active {
-  background: var(--primary);
+.filter-item.active {
+  background: #4a7cf7;
   color: #fff;
   font-weight: 500;
 }
 
-/* ===== 日历 ===== */
-
-.month-nav {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 20rpx 0 8rpx;
+/* 账单列表 */
+.tx-list {
+  padding: 0 24rpx;
 }
-
-.nav-btn {
+.tx-item {
+  display: flex;
+  align-items: flex-start;
+  padding: 24rpx;
+  background: #fff;
+  border-radius: 12rpx;
+  margin-bottom: 12rpx;
+}
+.tx-icon-wrap {
   width: 64rpx;
   height: 64rpx;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 40rpx;
-  color: var(--primary);
-  font-weight: 600;
-}
-
-.month-text {
-  font-size: 32rpx;
-  font-weight: 600;
-  margin: 0 24rpx;
-}
-
-.month-total {
-  text-align: center;
-  font-size: 26rpx;
-  color: var(--text-secondary);
-  margin-bottom: 16rpx;
-}
-
-.calendar-grid {
-  background: var(--bg-card);
-  margin: 0 24rpx;
   border-radius: 16rpx;
-  padding: 16rpx;
-  box-shadow: var(--shadow);
-}
-
-.calendar-header {
+  background: #f5f7ff;
   display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 20rpx;
+  flex-shrink: 0;
 }
-
-.calendar-weekday {
-  flex: 1;
-  text-align: center;
-  font-size: 24rpx;
-  color: var(--text-hint);
-  padding: 12rpx 0;
-}
-
-.calendar-week {
-  display: flex;
-}
-
-.calendar-day {
+.tx-icon { font-size: 32rpx; }
+.tx-info {
   flex: 1;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 12rpx 2rpx;
-  min-height: 80rpx;
-  border-radius: 12rpx;
-  transition: all 0.2s;
+  min-width: 0;
 }
-
-.calendar-day.empty {
-  visibility: hidden;
-}
-
-.calendar-day.selected {
-  background: var(--primary-light);
-}
-
-.calendar-day.has-earning .day-num {
-  color: var(--primary);
-  font-weight: 600;
-}
-
-.day-num {
+.tx-type {
   font-size: 28rpx;
-  color: var(--text-primary);
+  font-weight: 600;
+  color: #333;
 }
-
-.day-earning {
-  font-size: 18rpx;
-  color: #52C41A;
-  margin-top: 2rpx;
+.tx-detail {
+  font-size: 22rpx;
+  color: #999;
+  margin-top: 4rpx;
 }
-
-/* 日期详情 */
-.day-detail {
-  margin: 16rpx 24rpx;
+.tx-remark {
+  font-size: 22rpx;
+  color: #666;
+  margin-top: 4rpx;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
-
-.detail-date {
+.tx-time {
+  font-size: 20rpx;
+  color: #bbb;
+  margin-top: 4rpx;
+}
+.tx-right {
+  text-align: right;
+  flex-shrink: 0;
+  margin-left: 16rpx;
+}
+.tx-amount {
+  font-size: 30rpx;
+  font-weight: 700;
+  font-family: 'DIN', 'Helvetica Neue', sans-serif;
+}
+.tx-amount.income { color: #07c160; }
+.tx-amount.expense { color: #ff4d4f; }
+.tx-status {
   display: block;
-  font-size: 28rpx;
-  font-weight: 600;
-  margin-bottom: 16rpx;
-  color: var(--text-primary);
+  font-size: 20rpx;
+  margin-top: 4rpx;
 }
+.tx-status-success { color: #07c160; }
+.tx-status-pending { color: #ff9800; }
+.tx-status-approved { color: #07c160; }
+.tx-status-rejected { color: #ff4d4f; }
 
-.detail-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 10rpx 0;
-  font-size: 28rpx;
-  color: var(--text-secondary);
-}
-
-/* ===== 趋势 ===== */
-
-.trend-tabs {
-  display: flex;
-  justify-content: center;
-  gap: 24rpx;
-  padding: 16rpx 24rpx;
-}
-
-.trend-tab {
-  padding: 12rpx 32rpx;
-  border-radius: 32rpx;
-  font-size: 26rpx;
-  color: var(--text-secondary);
-  background: var(--bg-card);
-}
-
-.trend-tab.active {
-  background: var(--primary);
-  color: #fff;
-}
-
-/* 趋势图 */
-.trend-chart {
-  margin: 16rpx 24rpx;
-  padding: 24rpx 12rpx;
-}
-
-.chart-scroll {
-  width: 100%;
-  white-space: nowrap;
-}
-
-.chart-container {
-  min-width: 100%;
-}
-
-.chart-bars {
-  display: flex;
-  align-items: flex-end;
-  height: 300rpx;
-  padding: 0 12rpx;
-}
-
-.chart-bar-wrap {
-  flex: 1;
+/* 空/加载 */
+.empty-state {
   display: flex;
   flex-direction: column;
   align-items: center;
-  min-width: 60rpx;
+  padding-top: 200rpx;
 }
-
-.bar-value {
-  font-size: 18rpx;
-  color: var(--text-hint);
-  margin-bottom: 8rpx;
-  white-space: nowrap;
+.empty-icon { font-size: 80rpx; margin-bottom: 24rpx; }
+.empty-text { font-size: 28rpx; color: #999; }
+.loading-wrap {
+  display: flex; justify-content: center; padding-top: 200rpx;
 }
-
-.chart-bar {
-  width: 32rpx;
-  background: linear-gradient(180deg, #5B8FF9, #7B68EE);
-  border-radius: 8rpx 8rpx 0 0;
-  min-height: 8rpx;
-  transition: height 0.3s;
-}
-
-.bar-label {
-  font-size: 18rpx;
-  color: var(--text-hint);
-  margin-top: 8rpx;
-  white-space: nowrap;
-}
-
-/* 收益列表 */
-.trend-list {
-  margin: 16rpx 24rpx;
-}
-
-.list-title {
-  font-size: 28rpx;
-  font-weight: 600;
-  margin-bottom: 16rpx;
-}
-
-.list-item {
-  display: flex;
-  align-items: center;
-  padding: 16rpx 0;
-  border-bottom: 1rpx solid var(--border);
-}
-
-.list-item:last-child {
-  border-bottom: none;
-}
-
-.list-date {
-  font-size: 26rpx;
-  color: var(--text-secondary);
-  width: 180rpx;
-}
-
-.list-info {
-  flex: 1;
-}
-
-.list-balance {
+.loading-text { font-size: 26rpx; color: #999; }
+.load-more {
+  text-align: center;
+  padding: 24rpx;
   font-size: 24rpx;
-  color: var(--text-hint);
-}
-
-.list-earning {
-  font-size: 28rpx;
-  font-weight: 600;
+  color: #bbb;
 }

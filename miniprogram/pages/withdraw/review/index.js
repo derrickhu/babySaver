@@ -16,12 +16,9 @@ Page({
   },
 
   onShow() {
-    if (!this.data.loading) {
-      this.loadData()
-    }
+    if (!this.data.loading) this.loadData()
   },
 
-  // 加载数据
   async loadData() {
     const app = getApp()
     const userInfo = app.globalData.userInfo
@@ -32,16 +29,20 @@ Page({
     }
 
     try {
-      const [pendingRes, historyRes] = await Promise.all([
-        api.callCloud('getWithdrawals', { status: 'pending' }),
-        api.callCloud('getWithdrawals', {})
+      const [pendingRes, allRes] = await Promise.all([
+        api.callCloud('getTransactions', { type: 'withdraw', page: 1, pageSize: 50 }),
+        api.callCloud('getTransactions', { type: 'withdraw', page: 1, pageSize: 50 })
       ])
 
+      const allTx = allRes.data || []
+
       this.setData({
-        pendingList: (pendingRes.data || []).map(w => this.formatWithdrawal(w)),
-        historyList: (historyRes.data || [])
-          .filter(w => w.status !== 'pending')
-          .map(w => this.formatWithdrawal(w))
+        pendingList: allTx
+          .filter(t => t.status === 'pending')
+          .map(t => this.formatTx(t)),
+        historyList: allTx
+          .filter(t => t.status !== 'pending')
+          .map(t => this.formatTx(t))
       })
     } catch (err) {
       console.error('加载失败:', err)
@@ -50,37 +51,33 @@ Page({
     }
   },
 
-  // 格式化取现记录
-  formatWithdrawal(w) {
+  formatTx(t) {
     return {
-      ...w,
-      amountStr: util.formatMoney(w.amount),
-      statusText: util.getStatusText(w.status),
-      timeStr: util.formatDateTime(w.createdAt),
-      reviewTimeStr: w.reviewedAt ? util.formatDateTime(w.reviewedAt) : ''
+      ...t,
+      amountStr: util.formatMoney(t.amount),
+      statusText: util.getStatusText(t.status),
+      timeStr: util.formatDateTime(t.createdAt),
+      reviewTimeStr: t.reviewedAt ? util.formatDateTime(t.reviewedAt) : ''
     }
   },
 
-  // 切换Tab
   onTabChange(e) {
     this.setData({ activeTab: e.currentTarget.dataset.tab })
   },
 
-  // 审批通过
   async onApprove(e) {
-    const withdrawId = e.currentTarget.dataset.id
-    const item = this.data.pendingList.find(w => w._id === withdrawId)
+    const txId = e.currentTarget.dataset.id
+    const item = this.data.pendingList.find(t => t._id === txId)
 
     const confirmRes = await new Promise(resolve => {
       wx.showModal({
         title: '确认通过',
-        content: `通过 ${item.childName} 的取现申请 ¥${item.amountStr}？通过后将从存款中扣减对应金额。`,
+        content: `通过 ${item.childName || '小孩'} 的取现申请 ¥${item.amountStr}？通过后将从默认账户扣减。`,
         confirmText: '通过',
         confirmColor: '#52C41A',
         success: resolve
       })
     })
-
     if (!confirmRes.confirm) return
 
     this.setData({ processing: true })
@@ -88,7 +85,7 @@ Page({
 
     try {
       const res = await api.callCloud('reviewWithdraw', {
-        withdrawId,
+        transactionId: txId,
         action: 'approve'
       })
       api.hideLoading()
@@ -102,21 +99,19 @@ Page({
     }
   },
 
-  // 审批拒绝
   async onReject(e) {
-    const withdrawId = e.currentTarget.dataset.id
-    const item = this.data.pendingList.find(w => w._id === withdrawId)
+    const txId = e.currentTarget.dataset.id
+    const item = this.data.pendingList.find(t => t._id === txId)
 
     const confirmRes = await new Promise(resolve => {
       wx.showModal({
         title: '确认拒绝',
-        content: `拒绝 ${item.childName} 的取现申请 ¥${item.amountStr}？`,
+        content: `拒绝 ${item.childName || '小孩'} 的取现申请 ¥${item.amountStr}？`,
         confirmText: '拒绝',
         confirmColor: '#FF4D4F',
         success: resolve
       })
     })
-
     if (!confirmRes.confirm) return
 
     this.setData({ processing: true })
@@ -124,7 +119,7 @@ Page({
 
     try {
       const res = await api.callCloud('reviewWithdraw', {
-        withdrawId,
+        transactionId: txId,
         action: 'reject'
       })
       api.hideLoading()

@@ -27,9 +27,9 @@
         <text class="amount-value">¥{{item.amountStr}}</text>
       </view>
 
-      <view class="review-reason" wx:if="{{item.reason}}">
-        <text class="reason-label">原因：</text>
-        <text class="reason-text">{{item.reason}}</text>
+      <view class="review-reason" wx:if="{{item.remark}}">
+        <text class="reason-label">备注：</text>
+        <text class="reason-text">{{item.remark}}</text>
       </view>
 
       <view class="review-time">
@@ -71,8 +71,8 @@
         <text class="history-amount">¥{{item.amountStr}}</text>
         <text class="history-time">{{item.timeStr}}</text>
       </view>
-      <view class="history-reason" wx:if="{{item.reason}}">
-        <text>原因：{{item.reason}}</text>
+      <view class="history-reason" wx:if="{{item.remark}}">
+        <text>备注：{{item.remark}}</text>
       </view>
     </view>
 

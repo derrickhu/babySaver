@@ -1,4 +1,4 @@
-// 收益页 - 日历 + 趋势
+// 账单明细页（全员可见）
 const api = require('../../utils/api')
 const util = require('../../utils/util')
 
@@ -6,37 +6,28 @@ Page({
   data: {
     userInfo: null,
     isParent: false,
-    deposit: null,
-    // 日历相关
-    currentYear: 0,
-    currentMonth: 0,
-    calendarWeeks: [],
-    weekDays: ['日', '一', '二', '三', '四', '五', '六'],
-    earningsMap: {},
-    selectedDate: '',
-    selectedEarning: null,
-    monthTotal: '0.00',
-    // 趋势相关
-    trendData: [],
-    maxEarning: 0,
-    trendDays: 30,
-    // Tab
-    activeTab: 'calendar',
+    transactions: [],
     loading: true,
-    // 家长视图
+    hasMore: true,
+    page: 1,
+    pageSize: 20,
+    // 过滤
+    activeFilter: 'all',
+    filters: [
+      { key: 'all', label: '全部' },
+      { key: 'deposit', label: '存入' },
+      { key: 'withdraw', label: '取现' },
+      { key: 'buy', label: '买入' },
+      { key: 'redeem', label: '赎回' }
+    ],
+    // 家长选择小孩
     children: [],
+    selectedChildIndex: -1,
     selectedChildId: '',
-    selectedChildIndex: 0
+    selectedChildName: ''
   },
 
-  onLoad() {
-    const now = new Date()
-    this.setData({
-      currentYear: now.getFullYear(),
-      currentMonth: now.getMonth() + 1,
-      selectedDate: util.formatDate(now)
-    })
-  },
+  onLoad() {},
 
   onShow() {
     if (typeof this.getTabBar === 'function' && this.getTabBar()) {
@@ -45,7 +36,6 @@ Page({
     this.initData()
   },
 
-  // 初始化数据
   async initData() {
     const app = getApp()
     const userInfo = app.globalData.userInfo
@@ -58,187 +48,95 @@ Page({
     this.setData({ userInfo, isParent })
 
     if (isParent) {
-      // 家长: 获取家庭中的小孩列表
       try {
         const membersRes = await api.callCloud('getFamilyMembers')
         const children = (membersRes.data || []).filter(m => m.role === 'child')
-        if (children.length > 0) {
-          this.setData({
-            children,
-            selectedChildId: children[0]._openid,
-            selectedChildIndex: 0
-          })
-          await this.loadAllData(children[0]._openid)
-        }
+        // 全部 + 各个小孩
+        this.setData({ children })
       } catch (err) {
-        console.error('加载失败:', err)
+        console.error('获取成员失败:', err)
       }
-    } else {
-      // 小孩: 直接加载自己的数据
-      await this.loadAllData('')
     }
 
-    this.setData({ loading: false })
+    this.setData({ page: 1, transactions: [], hasMore: true })
+    await this.loadTransactions()
   },
 
-  // 加载全部数据
-  async loadAllData(childOpenId) {
-    await Promise.all([
-      this.loadCalendarData(childOpenId),
-      this.loadTrendData(childOpenId),
-      this.loadDeposit(childOpenId)
-    ])
-  },
+  async loadTransactions() {
+    const { page, pageSize, activeFilter, selectedChildId, isParent, userInfo } = this.data
 
-  // 加载存款信息
-  async loadDeposit(childOpenId) {
     try {
-      const res = await api.callCloud('getDeposit', { childOpenId })
-      if (res.code === 0 && res.data) {
+      const params = { page, pageSize }
+      if (activeFilter !== 'all') params.type = activeFilter
+      if (selectedChildId) params.childOpenId = selectedChildId
+
+      const res = await api.callCloud('getTransactions', params)
+      if (res.code === 0) {
+        const newData = (res.data || []).map(t => ({
+          ...t,
+          amountStr: util.formatMoney(t.amount),
+          typeText: util.getTransactionTypeText(t.type),
+          typeIcon: util.getTransactionTypeIcon(t.type),
+          statusText: util.getStatusText(t.status),
+          timeStr: util.formatDateTime(t.createdAt),
+          isIncome: ['deposit', 'redeem'].includes(t.type),
+          showChildName: isParent && t.childName
+        }))
+
+        const merged = page === 1 ? newData : [...this.data.transactions, ...newData]
         this.setData({
-          deposit: {
-            ...res.data,
-            principalStr: util.formatMoney(res.data.principal),
-            balanceStr: util.formatMoney(res.data.balance),
-            earningsStr: util.formatMoney(res.data.totalEarnings),
-            rateStr: res.data.rate + '%'
-          }
+          transactions: merged,
+          hasMore: newData.length >= pageSize
         })
-      }
-    } catch (err) { /* 忽略 */ }
-  },
-
-  // 加载日历数据
-  async loadCalendarData(childOpenId) {
-    const { currentYear, currentMonth } = this.data
-
-    // 生成日历网格
-    const calendarWeeks = util.generateCalendarData(currentYear, currentMonth)
-
-    try {
-      // 先触发收益计算
-      await api.callCloud('calcEarnings', { childOpenId }).catch(() => {})
-
-      const res = await api.callCloud('getEarningsCalendar', {
-        childOpenId,
-        year: currentYear,
-        month: currentMonth
-      })
-
-      const earningsMap = {}
-      let monthTotal = 0
-      if (res.data) {
-        res.data.forEach(e => {
-          earningsMap[e.date] = e
-          monthTotal += e.dailyEarning
-        })
-      }
-
-      // 为日历添加收益标记
-      calendarWeeks.forEach(week => {
-        week.forEach(day => {
-          if (day.date && earningsMap[day.date]) {
-            day.hasEarning = true
-            day.earning = earningsMap[day.date].dailyEarning
-          }
-        })
-      })
-
-      // 检查选中日期的收益
-      const selectedEarning = earningsMap[this.data.selectedDate] || null
-
-      this.setData({
-        calendarWeeks,
-        earningsMap,
-        monthTotal: util.formatMoney(monthTotal),
-        selectedEarning
-      })
-    } catch (err) {
-      this.setData({ calendarWeeks })
-      console.error('加载日历数据失败:', err)
-    }
-  },
-
-  // 加载趋势数据
-  async loadTrendData(childOpenId) {
-    try {
-      const res = await api.callCloud('getEarningsTrend', {
-        childOpenId,
-        days: this.data.trendDays
-      })
-      if (res.data && res.data.length > 0) {
-        const maxEarning = Math.max(...res.data.map(e => e.dailyEarning))
-        this.setData({
-          trendData: res.data.map(e => ({
-            ...e,
-            dateShort: e.date.substring(5),
-            earningStr: util.formatMoney(e.dailyEarning),
-            barHeight: maxEarning > 0 ? Math.max((e.dailyEarning / maxEarning) * 100, 5) : 5
-          })),
-          maxEarning
-        })
-      } else {
-        this.setData({ trendData: [], maxEarning: 0 })
       }
     } catch (err) {
-      console.error('加载趋势数据失败:', err)
+      console.error('加载账单失败:', err)
+    } finally {
+      this.setData({ loading: false })
     }
   },
 
-  // 切换Tab
-  onTabChange(e) {
-    this.setData({ activeTab: e.currentTarget.dataset.tab })
-  },
-
-  // 上一月
-  onPrevMonth() {
-    let { currentYear, currentMonth } = this.data
-    if (currentMonth === 1) {
-      currentMonth = 12
-      currentYear--
-    } else {
-      currentMonth--
-    }
-    this.setData({ currentYear, currentMonth })
-    this.loadCalendarData(this.data.selectedChildId)
-  },
-
-  // 下一月
-  onNextMonth() {
-    let { currentYear, currentMonth } = this.data
-    if (currentMonth === 12) {
-      currentMonth = 1
-      currentYear++
-    } else {
-      currentMonth++
-    }
-    this.setData({ currentYear, currentMonth })
-    this.loadCalendarData(this.data.selectedChildId)
-  },
-
-  // 选择日期
-  onDateTap(e) {
-    const { date } = e.currentTarget.dataset
-    if (!date) return
-    const selectedEarning = this.data.earningsMap[date] || null
-    this.setData({ selectedDate: date, selectedEarning })
-  },
-
-  // 切换趋势天数
-  onTrendDaysChange(e) {
-    const days = parseInt(e.currentTarget.dataset.days)
-    this.setData({ trendDays: days })
-    this.loadTrendData(this.data.selectedChildId)
-  },
-
-  // 切换小孩（家长视图）
-  onChildChange(e) {
-    const index = e.detail.value
-    const child = this.data.children[index]
+  // 切换过滤
+  onFilterChange(e) {
+    const key = e.currentTarget.dataset.key
     this.setData({
-      selectedChildIndex: index,
-      selectedChildId: child._openid
+      activeFilter: key,
+      page: 1,
+      transactions: [],
+      hasMore: true,
+      loading: true
     })
-    this.loadAllData(child._openid)
+    this.loadTransactions()
+  },
+
+  // 家长切换小孩
+  showChildPicker() {
+    const names = ['全部小孩', ...this.data.children.map(c => c.nickName)]
+    wx.showActionSheet({
+      itemList: names,
+      success: (res) => {
+        const tapIndex = res.tapIndex
+        if (tapIndex === 0) {
+          this.setData({ selectedChildId: '', selectedChildName: '' })
+        } else {
+          const child = this.data.children[tapIndex - 1]
+          this.setData({ selectedChildId: child._openid, selectedChildName: child.nickName })
+        }
+        this.setData({ page: 1, transactions: [], hasMore: true, loading: true })
+        this.loadTransactions()
+      }
+    })
+  },
+
+  // 加载更多
+  onReachBottom() {
+    if (!this.data.hasMore || this.data.loading) return
+    this.setData({ page: this.data.page + 1, loading: true })
+    this.loadTransactions()
+  },
+
+  onPullDownRefresh() {
+    this.setData({ page: 1, transactions: [], hasMore: true })
+    this.loadTransactions().then(() => wx.stopPullDownRefresh())
   }
 })

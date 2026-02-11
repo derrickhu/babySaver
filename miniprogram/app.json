@@ -7,7 +7,10 @@
     "pages/family/index",
     "pages/deposit/index",
     "pages/withdraw/apply/index",
-    "pages/withdraw/review/index"
+    "pages/withdraw/review/index",
+    "pages/product/manage/index",
+    "pages/product/detail/index",
+    "pages/product/create/index"
   ],
   "window": {
     "backgroundColor": "#F5F7FA",
@@ -30,7 +33,7 @@
       },
       {
         "pagePath": "pages/earnings/index",
-        "text": "收益",
+        "text": "账单",
         "iconPath": "images/icons/goods.png",
         "selectedIconPath": "images/icons/goods-active.png"
       },

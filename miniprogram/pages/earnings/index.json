@@ -1,3 +1,4 @@
 {
-  "navigationBarTitleText": "收益查询"
+  "navigationBarTitleText": "账单明细",
+  "enablePullDownRefresh": true
 }

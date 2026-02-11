@@ -1,0 +1,53 @@
+<!-- 创建/编辑理财产品 -->
+<view class="page-container">
+  <view class="form-group">
+    <view class="form-item">
+      <text class="form-label">产品名称</text>
+      <input class="form-input" placeholder="如：小金库" value="{{name}}" bindinput="onNameInput" maxlength="20" />
+    </view>
+
+    <view class="form-item">
+      <text class="form-label">风险等级</text>
+      <picker mode="selector" range="{{riskLabels}}" value="{{riskLevelIndex}}" bindchange="onRiskChange">
+        <view class="form-picker">
+          <text>{{riskLabels[riskLevelIndex]}}</text>
+          <text class="picker-arrow">›</text>
+        </view>
+      </picker>
+    </view>
+
+    <view class="form-item">
+      <text class="form-label">产品类型</text>
+      <picker mode="selector" range="{{typeLabels}}" value="{{typeIndex}}" bindchange="onTypeChange">
+        <view class="form-picker">
+          <text>{{typeLabels[typeIndex]}}</text>
+          <text class="picker-arrow">›</text>
+        </view>
+      </picker>
+    </view>
+
+    <view class="form-item">
+      <text class="form-label">年化利率(%)</text>
+      <input class="form-input" type="digit" placeholder="如：3.5" value="{{rate}}" bindinput="onRateInput" />
+    </view>
+
+    <view class="form-item" wx:if="{{types[typeIndex] === 'fixed'}}">
+      <text class="form-label">投资天数</text>
+      <input class="form-input" type="number" placeholder="如：90" value="{{termDays}}" bindinput="onTermDaysInput" />
+    </view>
+
+    <view class="form-item">
+      <text class="form-label">起购金额(元)</text>
+      <input class="form-input" type="digit" placeholder="0为不限" value="{{minAmount}}" bindinput="onMinAmountInput" />
+    </view>
+
+    <view class="form-item-textarea">
+      <text class="form-label">产品说明</text>
+      <textarea class="form-textarea" placeholder="可选，简要描述产品特点" value="{{description}}" bindinput="onDescInput" maxlength="200" />
+    </view>
+  </view>
+
+  <button class="btn-submit" bindtap="onSubmit" disabled="{{submitting}}">
+    {{isEdit ? '保存修改' : '创建产品'}}
+  </button>
+</view>

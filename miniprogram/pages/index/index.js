@@ -1,4 +1,4 @@
-// 首页 - 存款概览
+// 首页 - 资产总览（参考微众银行）
 const api = require('../../utils/api')
 const util = require('../../utils/util')
 
@@ -6,12 +6,19 @@ Page({
   data: {
     userInfo: null,
     isParent: false,
-    deposit: null,
-    childDeposits: [],
     hasFamily: false,
-    pendingCount: 0,
     loading: true,
-    todayEarning: '0.00'
+    // 资产数据
+    totalAssets: '0.00',
+    totalEarnings: '0.00',
+    yesterdayEarnings: '0.00',
+    account: null,
+    investments: [],
+    pendingCount: 0,
+    // 家长：小孩列表和当前选中
+    children: [],
+    selectedChildIndex: 0,
+    selectedChildId: ''
   },
 
   onLoad() {
@@ -28,19 +35,16 @@ Page({
     }
   },
 
-  // 检查登录状态
   checkLoginAndLoad() {
     const app = getApp()
     if (app.globalData.isLoggedIn) {
       this.setData({ userInfo: app.globalData.userInfo })
       this.loadData()
     } else {
-      // 等待登录回调
       app.loginCallback = (userInfo) => {
         this.setData({ userInfo })
         this.loadData()
       }
-      // 延迟检测，如果仍未登录则跳转
       setTimeout(() => {
         if (!app.globalData.isLoggedIn) {
           this.setData({ loading: false })
@@ -50,7 +54,6 @@ Page({
     }
   },
 
-  // 加载数据
   async loadData() {
     const app = getApp()
     const userInfo = app.globalData.userInfo
@@ -80,112 +83,116 @@ Page({
     }
   },
 
-  // 加载家长数据（任一家长都可看到所有小孩的存款）
+  // 家长：加载小孩列表，默认展示第一个小孩
   async loadParentData() {
-    try {
-      const [depositsRes, pendingRes] = await Promise.all([
-        api.callCloud('getChildDeposits'),
-        api.callCloud('getPendingCount')
-      ])
+    const [membersRes, pendingRes] = await Promise.all([
+      api.callCloud('getFamilyMembers'),
+      api.callCloud('getPendingCount')
+    ])
 
-      // 为每个小孩计算收益
-      const childDeposits = depositsRes.data || []
-      for (let d of childDeposits) {
-        try {
-          await api.callCloud('calcEarnings', { childOpenId: d.childOpenId })
-        } catch (e) { /* 忽略 */ }
-      }
+    const children = (membersRes.data || []).filter(m => m.role === 'child')
+    this.setData({
+      children,
+      pendingCount: pendingRes.data ? pendingRes.data.count : 0
+    })
 
-      // 重新获取最新数据
-      const updatedRes = await api.callCloud('getChildDeposits')
-
-      this.setData({
-        childDeposits: (updatedRes.data || []).map(d => ({
-          ...d,
-          principalStr: util.formatMoney(d.principal),
-          balanceStr: util.formatMoney(d.balance),
-          earningsStr: util.formatMoney(d.totalEarnings),
-          rateStr: d.rate + '%'
-        })),
-        pendingCount: pendingRes.data ? pendingRes.data.count : 0
-      })
-    } catch (err) {
-      console.error('加载家长数据失败:', err)
+    if (children.length > 0) {
+      const childId = children[this.data.selectedChildIndex]?._openid || children[0]._openid
+      this.setData({ selectedChildId: childId })
+      await this.loadAssetSummary(childId)
     }
   },
 
-  // 加载小孩数据
+  // 小孩：加载自己的数据
   async loadChildData() {
+    await this.loadAssetSummary()
+  },
+
+  // 加载资产总览
+  async loadAssetSummary(childOpenId) {
     try {
-      // 先触发收益计算
-      await api.callCloud('calcEarnings', {}).catch(() => {})
-
-      const depositRes = await api.callCloud('getDeposit', {})
-      if (depositRes.code === 0 && depositRes.data) {
-        const d = depositRes.data
-        // 获取今日收益
-        const today = util.formatDate(new Date())
-        let todayEarning = '0.00'
-        try {
-          const calendarRes = await api.callCloud('getEarningsCalendar', {
-            year: new Date().getFullYear(),
-            month: new Date().getMonth() + 1
-          })
-          if (calendarRes.data) {
-            const todayRecord = calendarRes.data.find(e => e.date === today)
-            if (todayRecord) {
-              todayEarning = util.formatMoney(todayRecord.dailyEarning)
-            }
-          }
-        } catch (e) { /* 忽略 */ }
-
+      const params = childOpenId ? { childOpenId } : {}
+      const res = await api.callCloud('getAssetSummary', params)
+      if (res.code === 0 && res.data) {
+        const d = res.data
         this.setData({
-          deposit: {
-            ...d,
-            principalStr: util.formatMoney(d.principal),
-            balanceStr: util.formatMoney(d.balance),
-            earningsStr: util.formatMoney(d.totalEarnings),
-            totalStr: util.formatMoney(d.balance + d.totalEarnings),
-            rateStr: d.rate + '%'
-          },
-          todayEarning
+          totalAssets: util.formatMoney(d.totalAssets),
+          totalEarnings: util.formatMoney(d.totalEarnings),
+          yesterdayEarnings: util.formatMoney(d.yesterdayEarnings),
+          account: d.account ? {
+            ...d.account,
+            balanceStr: util.formatMoney(d.account.balance),
+            earningsStr: util.formatMoney(d.account.totalEarnings),
+            totalValueStr: util.formatMoney(d.account.totalValue)
+          } : null,
+          investments: (d.investments || []).map(inv => ({
+            ...inv,
+            amountStr: util.formatMoney(inv.amount),
+            earningsStr: util.formatMoney(inv.earnings),
+            totalValueStr: util.formatMoney(inv.totalValue),
+            rateStr: inv.rate + '%'
+          }))
         })
       }
     } catch (err) {
-      console.error('加载小孩数据失败:', err)
+      console.error('加载资产失败:', err)
     }
   },
 
-  // 跳转家庭管理
-  goFamily() {
-    wx.navigateTo({ url: '/pages/family/index' })
+  // 家长切换小孩
+  onChildChange(e) {
+    const index = e.detail.value
+    const child = this.data.children[index]
+    if (child) {
+      this.setData({
+        selectedChildIndex: parseInt(index),
+        selectedChildId: child._openid,
+        loading: true
+      })
+      this.loadAssetSummary(child._openid).then(() => {
+        this.setData({ loading: false })
+      })
+    }
   },
 
-  // 跳转存款设置
-  goDeposit(e) {
-    const childOpenId = e.currentTarget.dataset.childid || ''
-    wx.navigateTo({ url: `/pages/deposit/index?childOpenId=${childOpenId}` })
+  // 导航
+  goBills() {
+    const childId = this.data.isParent ? this.data.selectedChildId : ''
+    wx.switchTab({ url: '/pages/earnings/index' })
   },
 
-  // 跳转取现审批
-  goReview() {
-    wx.navigateTo({ url: '/pages/withdraw/review/index' })
+  goDeposit() {
+    const childId = this.data.selectedChildId
+    wx.navigateTo({ url: `/pages/deposit/index?childOpenId=${childId}` })
   },
 
-  // 跳转取现申请
   goWithdraw() {
     wx.navigateTo({ url: '/pages/withdraw/apply/index' })
   },
 
-  // 跳转收益
-  goEarnings() {
-    wx.switchTab({ url: '/pages/earnings/index' })
+  goProductManage() {
+    wx.navigateTo({ url: '/pages/product/manage/index' })
   },
 
-  // 下拉刷新
+  goProductDetail(e) {
+    const productId = e.currentTarget.dataset.productid
+    const investmentId = e.currentTarget.dataset.investmentid || ''
+    wx.navigateTo({ url: `/pages/product/detail/index?productId=${productId}&investmentId=${investmentId}` })
+  },
+
+  goReview() {
+    wx.navigateTo({ url: '/pages/withdraw/review/index' })
+  },
+
+  goFamily() {
+    wx.navigateTo({ url: '/pages/family/index' })
+  },
+
+  goProducts() {
+    wx.navigateTo({ url: '/pages/product/manage/index' })
+  },
+
   onPullDownRefresh() {
-    this.loadData().then(() => {
-      wx.stopPullDownRefresh()
-    })
+    this.loadData().then(() => wx.stopPullDownRefresh())
   }
 })
