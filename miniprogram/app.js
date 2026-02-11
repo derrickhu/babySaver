@@ -16,8 +16,23 @@ App({
       traceUser: true
     })
 
+    // 初始化数据库集合（首次使用时自动创建）
+    this.initDB()
+
     // 尝试获取用户信息
     this.checkLogin()
+  },
+
+  // 初始化数据库集合
+  initDB: function () {
+    wx.cloud.callFunction({
+      name: 'babySaver',
+      data: { type: 'initCollections' }
+    }).then(res => {
+      console.log('数据库集合初始化:', res.result)
+    }).catch(err => {
+      console.error('数据库初始化失败:', err)
+    })
   },
 
   // 检查登录状态

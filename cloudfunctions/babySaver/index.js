@@ -12,6 +12,8 @@ exports.main = async (event, context) => {
 
   try {
     switch (type) {
+      // 初始化
+      case 'initCollections': return await initCollections()
       // 用户相关
       case 'register': return await register(openid, data)
       case 'getUserInfo': return await getUserInfo(openid)
@@ -41,6 +43,30 @@ exports.main = async (event, context) => {
     console.error(`[babySaver] type=${type} error:`, err)
     return { code: -1, msg: err.message || '服务器错误' }
   }
+}
+
+// ========== 初始化集合 ==========
+
+// 自动创建所有需要的数据库集合
+async function initCollections() {
+  const collections = ['users', 'families', 'deposits', 'earnings', 'withdrawals']
+  const results = []
+
+  for (const name of collections) {
+    try {
+      await db.createCollection(name)
+      results.push({ name, status: 'created' })
+    } catch (err) {
+      // -502014 表示集合已存在，忽略
+      if (err.errCode === -502014) {
+        results.push({ name, status: 'exists' })
+      } else {
+        results.push({ name, status: 'error', msg: err.message })
+      }
+    }
+  }
+
+  return { code: 0, msg: '集合初始化完成', data: results }
 }
 
 // ========== 用户相关 ==========
