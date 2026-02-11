@@ -1,0 +1,313 @@
+/* 收益查询页样式 */
+.earnings-page {
+  min-height: 100vh;
+  padding-bottom: 40rpx;
+}
+
+.loading-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 小孩选择器 */
+.child-picker {
+  margin: 16rpx 24rpx;
+  padding: 20rpx 24rpx;
+}
+
+.picker-display {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 30rpx;
+}
+
+.picker-arrow {
+  font-size: 24rpx;
+  color: var(--text-hint);
+}
+
+/* 概览 */
+.summary-card {
+  margin: 16rpx 24rpx;
+  padding: 24rpx;
+}
+
+.summary-row {
+  display: flex;
+  justify-content: space-around;
+}
+
+.summary-item {
+  text-align: center;
+}
+
+.summary-label {
+  display: block;
+  font-size: 24rpx;
+  color: var(--text-hint);
+  margin-bottom: 8rpx;
+}
+
+.summary-value {
+  display: block;
+  font-size: 32rpx;
+  font-weight: 600;
+}
+
+/* Tab */
+.tab-bar {
+  display: flex;
+  background: var(--bg-card);
+  margin: 16rpx 24rpx;
+  border-radius: 16rpx;
+  padding: 6rpx;
+}
+
+.tab-item {
+  flex: 1;
+  text-align: center;
+  padding: 20rpx 0;
+  font-size: 28rpx;
+  color: var(--text-secondary);
+  border-radius: 12rpx;
+  transition: all 0.3s;
+}
+
+.tab-item.active {
+  background: var(--primary);
+  color: #fff;
+  font-weight: 500;
+}
+
+/* ===== 日历 ===== */
+
+.month-nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20rpx 0 8rpx;
+}
+
+.nav-btn {
+  width: 64rpx;
+  height: 64rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 40rpx;
+  color: var(--primary);
+  font-weight: 600;
+}
+
+.month-text {
+  font-size: 32rpx;
+  font-weight: 600;
+  margin: 0 24rpx;
+}
+
+.month-total {
+  text-align: center;
+  font-size: 26rpx;
+  color: var(--text-secondary);
+  margin-bottom: 16rpx;
+}
+
+.calendar-grid {
+  background: var(--bg-card);
+  margin: 0 24rpx;
+  border-radius: 16rpx;
+  padding: 16rpx;
+  box-shadow: var(--shadow);
+}
+
+.calendar-header {
+  display: flex;
+}
+
+.calendar-weekday {
+  flex: 1;
+  text-align: center;
+  font-size: 24rpx;
+  color: var(--text-hint);
+  padding: 12rpx 0;
+}
+
+.calendar-week {
+  display: flex;
+}
+
+.calendar-day {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 12rpx 2rpx;
+  min-height: 80rpx;
+  border-radius: 12rpx;
+  transition: all 0.2s;
+}
+
+.calendar-day.empty {
+  visibility: hidden;
+}
+
+.calendar-day.selected {
+  background: var(--primary-light);
+}
+
+.calendar-day.has-earning .day-num {
+  color: var(--primary);
+  font-weight: 600;
+}
+
+.day-num {
+  font-size: 28rpx;
+  color: var(--text-primary);
+}
+
+.day-earning {
+  font-size: 18rpx;
+  color: #52C41A;
+  margin-top: 2rpx;
+}
+
+/* 日期详情 */
+.day-detail {
+  margin: 16rpx 24rpx;
+}
+
+.detail-date {
+  display: block;
+  font-size: 28rpx;
+  font-weight: 600;
+  margin-bottom: 16rpx;
+  color: var(--text-primary);
+}
+
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10rpx 0;
+  font-size: 28rpx;
+  color: var(--text-secondary);
+}
+
+/* ===== 趋势 ===== */
+
+.trend-tabs {
+  display: flex;
+  justify-content: center;
+  gap: 24rpx;
+  padding: 16rpx 24rpx;
+}
+
+.trend-tab {
+  padding: 12rpx 32rpx;
+  border-radius: 32rpx;
+  font-size: 26rpx;
+  color: var(--text-secondary);
+  background: var(--bg-card);
+}
+
+.trend-tab.active {
+  background: var(--primary);
+  color: #fff;
+}
+
+/* 趋势图 */
+.trend-chart {
+  margin: 16rpx 24rpx;
+  padding: 24rpx 12rpx;
+}
+
+.chart-scroll {
+  width: 100%;
+  white-space: nowrap;
+}
+
+.chart-container {
+  min-width: 100%;
+}
+
+.chart-bars {
+  display: flex;
+  align-items: flex-end;
+  height: 300rpx;
+  padding: 0 12rpx;
+}
+
+.chart-bar-wrap {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 60rpx;
+}
+
+.bar-value {
+  font-size: 18rpx;
+  color: var(--text-hint);
+  margin-bottom: 8rpx;
+  white-space: nowrap;
+}
+
+.chart-bar {
+  width: 32rpx;
+  background: linear-gradient(180deg, #5B8FF9, #7B68EE);
+  border-radius: 8rpx 8rpx 0 0;
+  min-height: 8rpx;
+  transition: height 0.3s;
+}
+
+.bar-label {
+  font-size: 18rpx;
+  color: var(--text-hint);
+  margin-top: 8rpx;
+  white-space: nowrap;
+}
+
+/* 收益列表 */
+.trend-list {
+  margin: 16rpx 24rpx;
+}
+
+.list-title {
+  font-size: 28rpx;
+  font-weight: 600;
+  margin-bottom: 16rpx;
+}
+
+.list-item {
+  display: flex;
+  align-items: center;
+  padding: 16rpx 0;
+  border-bottom: 1rpx solid var(--border);
+}
+
+.list-item:last-child {
+  border-bottom: none;
+}
+
+.list-date {
+  font-size: 26rpx;
+  color: var(--text-secondary);
+  width: 180rpx;
+}
+
+.list-info {
+  flex: 1;
+}
+
+.list-balance {
+  font-size: 24rpx;
+  color: var(--text-hint);
+}
+
+.list-earning {
+  font-size: 28rpx;
+  font-weight: 600;
+}

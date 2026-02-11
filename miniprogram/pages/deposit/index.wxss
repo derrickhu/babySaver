@@ -1,0 +1,136 @@
+/* 存款设置页样式 */
+.deposit-page {
+  min-height: 100vh;
+  padding-bottom: 60rpx;
+}
+
+.child-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32rpx;
+}
+
+.child-avatar {
+  font-size: 48rpx;
+  margin-right: 12rpx;
+}
+
+.child-name {
+  font-size: 34rpx;
+  font-weight: 600;
+}
+
+/* 当前存款信息 */
+.current-info {
+  margin: 16rpx 24rpx;
+}
+
+.info-title {
+  font-size: 28rpx;
+  font-weight: 600;
+  margin-bottom: 20rpx;
+  color: var(--text-secondary);
+}
+
+.info-grid {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.info-item {
+  width: 50%;
+  margin-bottom: 16rpx;
+}
+
+.info-label {
+  display: block;
+  font-size: 24rpx;
+  color: var(--text-hint);
+  margin-bottom: 4rpx;
+}
+
+.info-value {
+  display: block;
+  font-size: 30rpx;
+  font-weight: 600;
+}
+
+/* 表单卡片 */
+.form-card {
+  margin: 16rpx 24rpx;
+}
+
+.form-title {
+  font-size: 32rpx;
+  font-weight: 600;
+  margin-bottom: 32rpx;
+}
+
+.form-item {
+  margin-bottom: 28rpx;
+}
+
+.form-label {
+  display: block;
+  font-size: 28rpx;
+  color: var(--text-secondary);
+  margin-bottom: 12rpx;
+  font-weight: 500;
+}
+
+.form-input {
+  height: 88rpx;
+  background: var(--bg-page);
+  border-radius: 16rpx;
+  padding: 0 24rpx;
+  font-size: 30rpx;
+}
+
+.form-tip {
+  display: block;
+  font-size: 22rpx;
+  color: var(--text-hint);
+  margin-top: 8rpx;
+}
+
+/* Picker */
+.picker-display {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 88rpx;
+  background: var(--bg-page);
+  border-radius: 16rpx;
+  padding: 0 24rpx;
+  font-size: 30rpx;
+}
+
+.picker-arrow {
+  font-size: 24rpx;
+  color: var(--text-hint);
+}
+
+/* 收益预估 */
+.estimate-box {
+  background: var(--accent-light);
+  border-radius: 16rpx;
+  padding: 24rpx;
+  margin-top: 24rpx;
+}
+
+.estimate-title {
+  display: block;
+  font-size: 26rpx;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 16rpx;
+}
+
+.estimate-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8rpx 0;
+  font-size: 28rpx;
+}

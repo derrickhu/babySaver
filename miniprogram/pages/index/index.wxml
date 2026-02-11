@@ -1,29 +1,143 @@
-<!--index.wxml-->
-<view class="container">
-  <view class="title">快速了解云开发</view>
-  <view class="top_tip">免鉴权接口调用 免部署后台 高并发</view>
-  <view class="power" wx:key="title" wx:for="{{powerList}}" wx:for-item="power">
-    <view class="power_info" data-index="{{index}}" data-type="{{ power.type }}" bindtap="onClickPowerInfo">
-      <view class="power_info_text">
-        <view class="power_info_text_title">
-          {{power.title}}
-          <view class="power_info_text_tag" wx:if="{{power.tag}}">{{power.tag}}</view>
-        </view>
-        <view class="power_info_text_tip">{{power.tip}}</view>
-      </view>
-      <image wx:if="{{!power.showItem && power.item.length}}" class="power_info_more" src="../../images/arrow.svg"></image>
-      <image wx:if="{{power.showItem && power.item.length}}" class="power_info_less" src="../../images/arrow.svg"></image>
-      <image wx:if="{{!power.item.length}}" class="power_item_icon" src="../../images/arrow.svg"></image>
-    </view>
-    <view wx:if="{{power.showItem}}">
-      <view wx:key="title" wx:for="{{power.item}}">
-        <view class="line"></view>
-        <view class="power_item" bindtap="jumpPage" data-type="{{ item.type }}" data-page="{{item.page}}">
-          <view class="power_item_title">{{item.title}}</view>
-          <image class="power_item_icon" src="../../images/arrow.svg"></image>
-        </view>
-      </view>
-    </view>
+<!-- 首页 - 存款概览 -->
+<view class="page-container">
+  <!-- 加载中 -->
+  <view class="loading-wrap" wx:if="{{loading}}">
+    <view class="loading-spinner"></view>
+    <text class="loading-text">加载中...</text>
   </view>
-  <cloud-tip-modal showTipProps="{{showTip}}" title="{{title}}" content="{{content}}"></cloud-tip-modal>
+
+  <!-- 未加入家庭 -->
+  <view wx:elif="{{!hasFamily}}" class="empty-state">
+    <text class="empty-icon">🏠</text>
+    <text class="empty-text">您还未加入家庭</text>
+    <text class="empty-text" style="margin-bottom: 40rpx;">请先{{isParent ? '创建' : '加入'}}家庭</text>
+    <button class="btn-primary" style="width: 400rpx;" bindtap="goFamily">
+      {{isParent ? '创建家庭' : '加入家庭'}}
+    </button>
+  </view>
+
+  <!-- 家长视图 -->
+  <block wx:elif="{{isParent}}">
+    <!-- 顶部欢迎 -->
+    <view class="welcome-banner">
+      <view class="welcome-info">
+        <text class="welcome-text">👋 你好，{{userInfo.nickName}}</text>
+        <text class="welcome-role">家长账户</text>
+      </view>
+      <!-- 待审批 -->
+      <view class="pending-badge" bindtap="goReview" wx:if="{{pendingCount > 0}}">
+        <text class="pending-num">{{pendingCount}}</text>
+        <text class="pending-label">待审批</text>
+      </view>
+    </view>
+
+    <!-- 小孩存款列表 -->
+    <view class="section-title" wx:if="{{childDeposits.length > 0}}">
+      <text>小孩存款</text>
+    </view>
+
+    <view class="deposit-card card" wx:for="{{childDeposits}}" wx:key="_id">
+      <view class="deposit-header">
+        <view class="child-info">
+          <text class="child-avatar">🧒</text>
+          <text class="child-name">{{item.childName}}</text>
+        </view>
+        <view class="deposit-rate tag tag-pending">年利率 {{item.rateStr}}</view>
+      </view>
+      <view class="deposit-body">
+        <view class="deposit-item">
+          <text class="deposit-label">本金</text>
+          <text class="deposit-value money">¥{{item.principalStr}}</text>
+        </view>
+        <view class="deposit-item">
+          <text class="deposit-label">当前余额</text>
+          <text class="deposit-value money">¥{{item.balanceStr}}</text>
+        </view>
+        <view class="deposit-item">
+          <text class="deposit-label">累计收益</text>
+          <text class="deposit-value" style="color: #52C41A;">+¥{{item.earningsStr}}</text>
+        </view>
+      </view>
+      <view class="deposit-actions">
+        <button class="btn-secondary" style="height: 64rpx; line-height: 64rpx; font-size: 26rpx; flex: 1;" data-childid="{{item.childOpenId}}" bindtap="goDeposit">调整存款</button>
+      </view>
+    </view>
+
+    <!-- 空列表 -->
+    <view class="empty-state" wx:if="{{childDeposits.length === 0}}">
+      <text class="empty-icon">📦</text>
+      <text class="empty-text">还没有小孩加入家庭</text>
+      <text class="empty-text">请让小孩使用邀请码加入</text>
+      <button class="btn-primary" style="width: 400rpx; margin-top: 32rpx;" bindtap="goFamily">查看邀请码</button>
+    </view>
+
+    <!-- 审批入口 -->
+    <view class="action-card card" bindtap="goReview">
+      <text class="action-icon">📋</text>
+      <view class="action-info">
+        <text class="action-title">取现审批</text>
+        <text class="action-desc">查看和处理小孩的取现申请</text>
+      </view>
+      <text class="action-arrow">›</text>
+    </view>
+  </block>
+
+  <!-- 小孩视图 -->
+  <block wx:else>
+    <!-- 存款总览卡片 -->
+    <view class="overview-card" wx:if="{{deposit}}">
+      <view class="overview-bg"></view>
+      <view class="overview-content">
+        <text class="overview-label">总资产（元）</text>
+        <text class="overview-amount">{{deposit.totalStr}}</text>
+        <view class="overview-detail">
+          <view class="detail-item">
+            <text class="detail-label">本金</text>
+            <text class="detail-value">¥{{deposit.principalStr}}</text>
+          </view>
+          <view class="detail-divider"></view>
+          <view class="detail-item">
+            <text class="detail-label">累计收益</text>
+            <text class="detail-value">+¥{{deposit.earningsStr}}</text>
+          </view>
+          <view class="detail-divider"></view>
+          <view class="detail-item">
+            <text class="detail-label">今日收益</text>
+            <text class="detail-value">+¥{{todayEarning}}</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 利率信息 -->
+    <view class="rate-card card" wx:if="{{deposit}}">
+      <view class="rate-info">
+        <text class="rate-label">年化利率</text>
+        <text class="rate-value">{{deposit.rateStr}}</text>
+      </view>
+      <view class="rate-info">
+        <text class="rate-label">当前余额</text>
+        <text class="rate-value" style="color: var(--accent);">¥{{deposit.balanceStr}}</text>
+      </view>
+    </view>
+
+    <!-- 快捷操作 -->
+    <view class="quick-actions" wx:if="{{deposit}}">
+      <view class="quick-item" bindtap="goEarnings">
+        <text class="quick-icon">📊</text>
+        <text class="quick-label">收益明细</text>
+      </view>
+      <view class="quick-item" bindtap="goWithdraw">
+        <text class="quick-icon">💰</text>
+        <text class="quick-label">申请取现</text>
+      </view>
+    </view>
+
+    <!-- 无存款 -->
+    <view class="empty-state" wx:if="{{!deposit}}">
+      <text class="empty-icon">🐷</text>
+      <text class="empty-text">还没有存款记录</text>
+      <text class="empty-text">请等待家长为你设置存款吧</text>
+    </view>
+  </block>
 </view>

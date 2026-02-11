@@ -1,0 +1,151 @@
+<!-- 收益查询页 -->
+<view class="earnings-page">
+  <!-- 加载中 -->
+  <view class="loading-wrap" wx:if="{{loading}}">
+    <text style="color: var(--text-hint); padding-top: 200rpx;">加载中...</text>
+  </view>
+
+  <block wx:else>
+    <!-- 家长选择小孩 -->
+    <view class="child-picker card" wx:if="{{isParent && children.length > 0}}">
+      <picker bindchange="onChildChange" value="{{selectedChildIndex}}" range="{{children}}" range-key="nickName">
+        <view class="picker-display">
+          <text>🧒 {{children[selectedChildIndex].nickName}} 的收益</text>
+          <text class="picker-arrow">▼</text>
+        </view>
+      </picker>
+    </view>
+
+    <!-- 存款概览 -->
+    <view class="summary-card card" wx:if="{{deposit}}">
+      <view class="summary-row">
+        <view class="summary-item">
+          <text class="summary-label">当前余额</text>
+          <text class="summary-value money">¥{{deposit.balanceStr}}</text>
+        </view>
+        <view class="summary-item">
+          <text class="summary-label">年利率</text>
+          <text class="summary-value" style="color: var(--primary);">{{deposit.rateStr}}</text>
+        </view>
+        <view class="summary-item">
+          <text class="summary-label">累计收益</text>
+          <text class="summary-value" style="color: #52C41A;">+¥{{deposit.earningsStr}}</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- Tab 切换 -->
+    <view class="tab-bar">
+      <view class="tab-item {{activeTab === 'calendar' ? 'active' : ''}}" data-tab="calendar" bindtap="onTabChange">
+        <text>收益日历</text>
+      </view>
+      <view class="tab-item {{activeTab === 'trend' ? 'active' : ''}}" data-tab="trend" bindtap="onTabChange">
+        <text>收益趋势</text>
+      </view>
+    </view>
+
+    <!-- 日历视图 -->
+    <view class="calendar-section" wx:if="{{activeTab === 'calendar'}}">
+      <!-- 月份导航 -->
+      <view class="month-nav">
+        <view class="nav-btn" bindtap="onPrevMonth">‹</view>
+        <text class="month-text">{{currentYear}}年{{currentMonth}}月</text>
+        <view class="nav-btn" bindtap="onNextMonth">›</view>
+      </view>
+
+      <!-- 本月总收益 -->
+      <view class="month-total">
+        本月收益：<text class="money">+¥{{monthTotal}}</text>
+      </view>
+
+      <!-- 日历 -->
+      <view class="calendar-grid">
+        <!-- 星期头 -->
+        <view class="calendar-header">
+          <view class="calendar-weekday" wx:for="{{weekDays}}" wx:key="*this">{{item}}</view>
+        </view>
+        <!-- 日期 -->
+        <view class="calendar-week" wx:for="{{calendarWeeks}}" wx:key="index">
+          <view
+            class="calendar-day {{item.date === selectedDate ? 'selected' : ''}} {{item.hasEarning ? 'has-earning' : ''}} {{item.day === 0 ? 'empty' : ''}}"
+            wx:for="{{item}}"
+            wx:for-item="day"
+            wx:key="date"
+            data-date="{{day.date}}"
+            bindtap="onDateTap"
+          >
+            <text class="day-num" wx:if="{{day.day > 0}}">{{day.day}}</text>
+            <text class="day-earning" wx:if="{{day.hasEarning}}">+{{day.earning}}</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- 选中日期详情 -->
+      <view class="day-detail card" wx:if="{{selectedEarning}}">
+        <text class="detail-date">{{selectedDate}}</text>
+        <view class="detail-row">
+          <text>当日本金</text>
+          <text class="money">¥{{selectedEarning.balance}}</text>
+        </view>
+        <view class="detail-row">
+          <text>年利率</text>
+          <text>{{selectedEarning.rate}}%</text>
+        </view>
+        <view class="detail-row">
+          <text>当日收益</text>
+          <text style="color: #52C41A; font-weight: 600;">+¥{{selectedEarning.dailyEarning}}</text>
+        </view>
+        <view class="detail-row">
+          <text>累计收益</text>
+          <text class="money">¥{{selectedEarning.totalEarnings}}</text>
+        </view>
+      </view>
+
+      <view class="day-detail card" wx:elif="{{selectedDate}}" style="text-align: center;">
+        <text style="color: var(--text-hint);">{{selectedDate}} 暂无收益记录</text>
+      </view>
+    </view>
+
+    <!-- 趋势视图 -->
+    <view class="trend-section" wx:if="{{activeTab === 'trend'}}">
+      <!-- 天数切换 -->
+      <view class="trend-tabs">
+        <view class="trend-tab {{trendDays === 7 ? 'active' : ''}}" data-days="7" bindtap="onTrendDaysChange">近7天</view>
+        <view class="trend-tab {{trendDays === 30 ? 'active' : ''}}" data-days="30" bindtap="onTrendDaysChange">近30天</view>
+        <view class="trend-tab {{trendDays === 90 ? 'active' : ''}}" data-days="90" bindtap="onTrendDaysChange">近90天</view>
+      </view>
+
+      <!-- 趋势图 -->
+      <view class="trend-chart card" wx:if="{{trendData.length > 0}}">
+        <scroll-view scroll-x class="chart-scroll">
+          <view class="chart-container" style="width: {{trendData.length * 80 + 40}}rpx;">
+            <view class="chart-bars">
+              <view class="chart-bar-wrap" wx:for="{{trendData}}" wx:key="date">
+                <text class="bar-value">{{item.earningStr}}</text>
+                <view class="chart-bar" style="height: {{item.barHeight}}%;"></view>
+                <text class="bar-label">{{item.dateShort}}</text>
+              </view>
+            </view>
+          </view>
+        </scroll-view>
+      </view>
+
+      <!-- 收益列表 -->
+      <view class="trend-list card" wx:if="{{trendData.length > 0}}">
+        <view class="list-title">收益明细</view>
+        <view class="list-item" wx:for="{{trendData}}" wx:key="date">
+          <view class="list-date">{{item.date}}</view>
+          <view class="list-info">
+            <text class="list-balance">余额 ¥{{item.balance}}</text>
+          </view>
+          <text class="list-earning" style="color: #52C41A;">+¥{{item.earningStr}}</text>
+        </view>
+      </view>
+
+      <view class="empty-state" wx:if="{{trendData.length === 0}}">
+        <text class="empty-icon">📊</text>
+        <text class="empty-text">暂无收益数据</text>
+      </view>
+    </view>
+  </block>
+</view>

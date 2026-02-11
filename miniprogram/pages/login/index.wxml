@@ -1,0 +1,62 @@
+<!-- 登录注册页 -->
+<view class="login-page">
+  <!-- 顶部装饰 -->
+  <view class="login-header">
+    <view class="logo-wrapper">
+      <text class="logo-icon">🐷</text>
+    </view>
+    <text class="app-name">小孩存钱宝</text>
+    <text class="app-desc">培养孩子的理财好习惯</text>
+  </view>
+
+  <!-- 注册表单 -->
+  <view class="login-form card">
+    <view class="form-title">创建账号</view>
+
+    <!-- 昵称输入 -->
+    <view class="form-item">
+      <text class="form-label">昵称</text>
+      <input
+        class="form-input"
+        placeholder="请输入您的昵称"
+        value="{{nickName}}"
+        bindinput="onNickNameInput"
+        maxlength="12"
+      />
+    </view>
+
+    <!-- 角色选择 -->
+    <view class="form-item">
+      <text class="form-label">我是</text>
+      <view class="role-selector">
+        <view
+          class="role-option {{role === 'parent' ? 'active' : ''}}"
+          data-role="parent"
+          bindtap="onSelectRole"
+        >
+          <text class="role-icon">👨‍👩‍👧</text>
+          <text class="role-name">家长</text>
+          <text class="role-desc">管理存款和审批</text>
+        </view>
+        <view
+          class="role-option {{role === 'child' ? 'active' : ''}}"
+          data-role="child"
+          bindtap="onSelectRole"
+        >
+          <text class="role-icon">🧒</text>
+          <text class="role-name">小孩</text>
+          <text class="role-desc">查看存款和取现</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 注册按钮 -->
+    <button
+      class="btn-primary register-btn"
+      bindtap="onRegister"
+      disabled="{{loading}}"
+    >
+      {{loading ? '注册中...' : '开始使用'}}
+    </button>
+  </view>
+</view>

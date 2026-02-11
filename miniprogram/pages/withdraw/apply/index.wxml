@@ -1,0 +1,75 @@
+<!-- 取现申请页 -->
+<view class="withdraw-page">
+  <!-- 可用余额 -->
+  <view class="balance-card" wx:if="{{deposit}}">
+    <text class="balance-label">可取金额（元）</text>
+    <text class="balance-amount">{{deposit.totalStr}}</text>
+    <view class="balance-detail">
+      <text>本金余额 ¥{{deposit.balanceStr}}</text>
+      <text style="margin-left: 24rpx;">收益 ¥{{deposit.earningsStr}}</text>
+    </view>
+  </view>
+
+  <!-- 申请表单 -->
+  <view class="card form-card" wx:if="{{deposit}}">
+    <view class="form-item">
+      <view class="form-label-row">
+        <text class="form-label">取现金额（元）</text>
+        <text class="link" bindtap="onTakeAll">全部取出</text>
+      </view>
+      <input
+        class="form-input amount-input"
+        type="digit"
+        placeholder="请输入取现金额"
+        value="{{amount}}"
+        bindinput="onAmountInput"
+      />
+    </view>
+
+    <view class="form-item">
+      <text class="form-label">取现原因（选填）</text>
+      <textarea
+        class="form-textarea"
+        placeholder="说说为什么要取钱呢..."
+        value="{{reason}}"
+        bindinput="onReasonInput"
+        maxlength="100"
+      />
+    </view>
+
+    <button
+      class="btn-primary"
+      style="margin-top: 32rpx;"
+      bindtap="onSubmit"
+      disabled="{{submitting}}"
+    >
+      {{submitting ? '提交中...' : '提交取现申请'}}
+    </button>
+
+    <text class="form-tip" style="text-align: center; margin-top: 16rpx; display: block;">
+      提交后需要家长审批通过才可取现
+    </text>
+  </view>
+
+  <!-- 无存款 -->
+  <view class="empty-state" wx:if="{{!deposit && !loading}}">
+    <text class="empty-icon">🐷</text>
+    <text class="empty-text">暂无可取现的存款</text>
+  </view>
+
+  <!-- 历史记录 -->
+  <view class="history-section" wx:if="{{history.length > 0}}">
+    <view class="section-title">取现记录</view>
+    <view class="card">
+      <view class="history-item" wx:for="{{history}}" wx:key="_id">
+        <view class="history-info">
+          <text class="history-amount">¥{{item.amountStr}}</text>
+          <text class="history-time">{{item.timeStr}}</text>
+        </view>
+        <view class="history-right">
+          <text class="tag tag-{{item.status}}">{{item.statusText}}</text>
+        </view>
+      </view>
+    </view>
+  </view>
+</view>

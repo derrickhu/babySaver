@@ -1,0 +1,111 @@
+<!-- 存款设置页（家长专属） -->
+<view class="deposit-page">
+  <view class="loading-wrap" wx:if="{{loading}}">
+    <text style="color: var(--text-hint); padding-top: 200rpx;">加载中...</text>
+  </view>
+
+  <!-- 无小孩 -->
+  <view class="empty-state" wx:elif="{{children.length === 0}}">
+    <text class="empty-icon">🧒</text>
+    <text class="empty-text">还没有小孩加入家庭</text>
+    <text class="empty-text">请先让小孩使用邀请码加入</text>
+  </view>
+
+  <block wx:else>
+    <!-- 选择小孩 -->
+    <view class="card" wx:if="{{children.length > 1}}">
+      <view class="form-item">
+        <text class="form-label">选择小孩</text>
+        <picker bindchange="onChildChange" value="{{selectedChildIndex}}" range="{{children}}" range-key="nickName">
+          <view class="picker-display">
+            <text>🧒 {{childName}}</text>
+            <text class="picker-arrow">▼</text>
+          </view>
+        </picker>
+      </view>
+    </view>
+
+    <!-- 小孩信息 -->
+    <view class="child-header" wx:if="{{children.length === 1}}">
+      <text class="child-avatar">🧒</text>
+      <text class="child-name">{{childName}} 的存款</text>
+    </view>
+
+    <!-- 当前存款信息 -->
+    <view class="card current-info" wx:if="{{currentDeposit}}">
+      <view class="info-title">当前存款状态</view>
+      <view class="info-grid">
+        <view class="info-item">
+          <text class="info-label">本金</text>
+          <text class="info-value money">¥{{currentDeposit.principal}}</text>
+        </view>
+        <view class="info-item">
+          <text class="info-label">余额</text>
+          <text class="info-value money">¥{{currentDeposit.balance}}</text>
+        </view>
+        <view class="info-item">
+          <text class="info-label">利率</text>
+          <text class="info-value">{{currentDeposit.rate}}%</text>
+        </view>
+        <view class="info-item">
+          <text class="info-label">累计收益</text>
+          <text class="info-value" style="color: #52C41A;">+¥{{currentDeposit.totalEarnings}}</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 设置表单 -->
+    <view class="card form-card">
+      <view class="form-title">{{currentDeposit ? '调整设置' : '新增存款'}}</view>
+
+      <view class="form-item">
+        <text class="form-label">本金（元）</text>
+        <input
+          class="form-input"
+          type="digit"
+          placeholder="请输入存款本金"
+          value="{{principal}}"
+          bindinput="onPrincipalInput"
+        />
+      </view>
+
+      <view class="form-item">
+        <text class="form-label">年利率（%）</text>
+        <input
+          class="form-input"
+          type="digit"
+          placeholder="请输入年利率，如 3.5"
+          value="{{rate}}"
+          bindinput="onRateInput"
+        />
+        <text class="form-tip">利率范围 0-100%，收益按天计算</text>
+      </view>
+
+      <!-- 收益预估 -->
+      <view class="estimate-box" wx:if="{{principal && rate}}">
+        <text class="estimate-title">预估收益</text>
+        <view class="estimate-row">
+          <text>日收益</text>
+          <text class="money">≈ ¥{{(principal * rate / 100 / 365).toFixed(4)}}</text>
+        </view>
+        <view class="estimate-row">
+          <text>月收益</text>
+          <text class="money">≈ ¥{{(principal * rate / 100 / 12).toFixed(2)}}</text>
+        </view>
+        <view class="estimate-row">
+          <text>年收益</text>
+          <text class="money">≈ ¥{{(principal * rate / 100).toFixed(2)}}</text>
+        </view>
+      </view>
+
+      <button
+        class="btn-primary"
+        style="margin-top: 40rpx;"
+        bindtap="onSave"
+        disabled="{{saving}}"
+      >
+        {{saving ? '保存中...' : '保存设置'}}
+      </button>
+    </view>
+  </block>
+</view>

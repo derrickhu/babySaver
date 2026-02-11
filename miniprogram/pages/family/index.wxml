@@ -1,0 +1,71 @@
+<!-- 家庭管理页 -->
+<view class="family-page">
+  <!-- 已有家庭 -->
+  <block wx:if="{{hasFamily && family}}">
+    <view class="family-header card">
+      <text class="family-icon">🏠</text>
+      <text class="family-name">{{family.familyName}}</text>
+      <view class="invite-section" wx:if="{{isParent}}">
+        <text class="invite-label">邀请码</text>
+        <view class="invite-code-wrap">
+          <text class="invite-code">{{inviteCode}}</text>
+          <text class="copy-btn" bindtap="onCopyCode">复制</text>
+        </view>
+        <text class="invite-tip">将邀请码分享给小孩，让 TA 加入家庭</text>
+      </view>
+    </view>
+
+    <!-- 家庭成员 -->
+    <view class="section-title">家庭成员</view>
+    <view class="member-list card">
+      <view class="member-item" wx:for="{{members}}" wx:key="_id">
+        <text class="member-avatar">{{item.role === 'parent' ? '👨‍👩‍👧' : '🧒'}}</text>
+        <view class="member-info">
+          <text class="member-name">{{item.nickName}}</text>
+          <text class="member-role">{{item.roleText}}</text>
+        </view>
+      </view>
+      <view class="member-item empty-member" wx:if="{{members.length <= 1 && isParent}}">
+        <text class="member-avatar">➕</text>
+        <view class="member-info">
+          <text class="member-name" style="color: var(--text-hint);">等待小孩加入...</text>
+          <text class="member-role">分享邀请码即可加入</text>
+        </view>
+      </view>
+    </view>
+
+    <button class="btn-primary" style="margin: 40rpx 32rpx;" bindtap="goHome">返回首页</button>
+  </block>
+
+  <!-- 未创建/加入家庭 -->
+  <block wx:elif="{{!loading}}">
+    <!-- 家长 - 创建家庭 -->
+    <block wx:if="{{isParent}}">
+      <view class="setup-card card">
+        <text class="setup-icon">🏠</text>
+        <text class="setup-title">创建您的家庭</text>
+        <text class="setup-desc">创建后，将生成邀请码\n小孩输入邀请码即可加入</text>
+        <button class="btn-primary" style="width: 100%; margin-top: 40rpx;" bindtap="onCreateFamily">创建家庭</button>
+      </view>
+    </block>
+
+    <!-- 小孩 - 加入家庭 -->
+    <block wx:else>
+      <view class="setup-card card">
+        <text class="setup-icon">🔗</text>
+        <text class="setup-title">加入家庭</text>
+        <text class="setup-desc">输入家长分享的邀请码加入家庭</text>
+        <view class="code-input-wrap">
+          <input
+            class="code-input"
+            placeholder="请输入6位邀请码"
+            value="{{inputCode}}"
+            bindinput="onCodeInput"
+            maxlength="6"
+          />
+        </view>
+        <button class="btn-primary" style="width: 100%; margin-top: 32rpx;" bindtap="onJoinFamily">加入家庭</button>
+      </view>
+    </block>
+  </block>
+</view>

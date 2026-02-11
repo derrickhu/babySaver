@@ -1,27 +1,175 @@
-/**app.wxss**/
+/**
+ * 小孩存钱宝 - 全局样式
+ */
+
+/* 主题色变量 */
+page {
+  --primary: #5B8FF9;
+  --primary-light: #E8F0FE;
+  --accent: #FFB800;
+  --accent-light: #FFF8E7;
+  --success: #52C41A;
+  --danger: #FF4D4F;
+  --warning: #FAAD14;
+  --text-primary: #333333;
+  --text-secondary: #666666;
+  --text-hint: #999999;
+  --border: #E8E8E8;
+  --bg-page: #F5F7FA;
+  --bg-card: #FFFFFF;
+  --shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.06);
+
+  background: var(--bg-page);
+  font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Helvetica Neue', sans-serif;
+  color: var(--text-primary);
+  font-size: 28rpx;
+  line-height: 1.6;
+}
+
+/* 容器 */
 .container {
   display: flex;
   flex-direction: column;
-  align-items: center;
+  min-height: 100vh;
   box-sizing: border-box;
-} 
-
-button {
-  background: initial;
 }
 
-button:focus{
+/* 卡片 */
+.card {
+  background: var(--bg-card);
+  border-radius: 16rpx;
+  padding: 32rpx;
+  margin: 24rpx;
+  box-shadow: var(--shadow);
+}
+
+/* 按钮样式重置 */
+button {
+  background: initial;
+  padding: 0;
+  margin: 0;
+  font-size: inherit;
+  line-height: inherit;
+}
+
+button:focus {
   outline: 0;
 }
 
-button::after{
+button::after {
   border: none;
 }
 
+/* 主按钮 */
+.btn-primary {
+  background: var(--primary) !important;
+  color: #fff !important;
+  border-radius: 48rpx !important;
+  height: 88rpx;
+  line-height: 88rpx;
+  font-size: 32rpx;
+  font-weight: 500;
+  text-align: center;
+}
 
-page {
-  background: #f6f6f6;
+.btn-primary:active {
+  opacity: 0.85;
+}
+
+/* 次要按钮 */
+.btn-secondary {
+  background: var(--primary-light) !important;
+  color: var(--primary) !important;
+  border-radius: 48rpx !important;
+  height: 88rpx;
+  line-height: 88rpx;
+  font-size: 32rpx;
+  font-weight: 500;
+  text-align: center;
+}
+
+/* 警告按钮 */
+.btn-danger {
+  background: var(--danger) !important;
+  color: #fff !important;
+  border-radius: 48rpx !important;
+  height: 88rpx;
+  line-height: 88rpx;
+  font-size: 32rpx;
+  font-weight: 500;
+  text-align: center;
+}
+
+/* 文字链接 */
+.link {
+  color: var(--primary);
+  font-size: 28rpx;
+}
+
+/* 标签 */
+.tag {
+  display: inline-block;
+  padding: 4rpx 16rpx;
+  border-radius: 8rpx;
+  font-size: 22rpx;
+  line-height: 1.5;
+}
+
+.tag-pending {
+  background: #FFF7E6;
+  color: #FA8C16;
+}
+
+.tag-approved {
+  background: #F6FFED;
+  color: #52C41A;
+}
+
+.tag-rejected {
+  background: #FFF1F0;
+  color: #FF4D4F;
+}
+
+/* 空状态 */
+.empty-state {
   display: flex;
   flex-direction: column;
-  justify-content: flex-start;
+  align-items: center;
+  justify-content: center;
+  padding: 120rpx 60rpx;
+}
+
+.empty-state .empty-icon {
+  font-size: 120rpx;
+  margin-bottom: 24rpx;
+}
+
+.empty-state .empty-text {
+  color: var(--text-hint);
+  font-size: 28rpx;
+  text-align: center;
+}
+
+/* 分割线 */
+.divider {
+  height: 1rpx;
+  background: var(--border);
+  margin: 24rpx 0;
+}
+
+/* 金额文字 */
+.money {
+  font-weight: 600;
+  color: var(--accent);
+}
+
+.money-large {
+  font-size: 56rpx;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+/* 安全底部 */
+.safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
 }

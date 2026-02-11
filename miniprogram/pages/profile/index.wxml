@@ -1,0 +1,82 @@
+<!-- 个人中心页 -->
+<view class="profile-page">
+  <!-- 用户信息卡 -->
+  <view class="user-card" wx:if="{{userInfo}}">
+    <view class="user-avatar-wrap">
+      <text class="user-avatar-emoji">{{isParent ? '👨‍👩‍👧' : '🧒'}}</text>
+    </view>
+    <text class="user-name">{{userInfo.nickName}}</text>
+    <text class="user-role tag {{isParent ? 'tag-approved' : 'tag-pending'}}">
+      {{isParent ? '家长' : '小孩'}}
+    </text>
+    <view class="user-stats" wx:if="{{deposit && !isParent}}">
+      <text class="stats-label">总资产</text>
+      <text class="stats-value">¥{{deposit.totalStr}}</text>
+    </view>
+  </view>
+
+  <!-- 未登录 -->
+  <view class="user-card" wx:else>
+    <text class="user-avatar-emoji">🐷</text>
+    <text class="user-name" style="margin-top: 16rpx;">未登录</text>
+  </view>
+
+  <!-- 菜单列表 -->
+  <view class="menu-section">
+    <view class="menu-card card">
+      <!-- 家庭管理 -->
+      <view class="menu-item" bindtap="goFamily">
+        <text class="menu-icon">🏠</text>
+        <text class="menu-label">家庭管理</text>
+        <view class="menu-right">
+          <text class="menu-desc" wx:if="{{family}}">{{family.familyName}}</text>
+          <text class="menu-desc" wx:else>{{isParent ? '创建家庭' : '加入家庭'}}</text>
+          <text class="menu-arrow">›</text>
+        </view>
+      </view>
+
+      <!-- 家长菜单 -->
+      <block wx:if="{{isParent}}">
+        <view class="menu-item" bindtap="goDeposit">
+          <text class="menu-icon">💰</text>
+          <text class="menu-label">存款设置</text>
+          <view class="menu-right">
+            <text class="menu-arrow">›</text>
+          </view>
+        </view>
+
+        <view class="menu-item" bindtap="goReview">
+          <text class="menu-icon">📋</text>
+          <text class="menu-label">取现审批</text>
+          <view class="menu-right">
+            <text class="menu-badge" wx:if="{{pendingCount > 0}}">{{pendingCount}}</text>
+            <text class="menu-arrow">›</text>
+          </view>
+        </view>
+      </block>
+
+      <!-- 小孩菜单 -->
+      <block wx:if="{{!isParent && hasFamily}}">
+        <view class="menu-item" bindtap="goWithdraw">
+          <text class="menu-icon">💳</text>
+          <text class="menu-label">申请取现</text>
+          <view class="menu-right">
+            <text class="menu-arrow">›</text>
+          </view>
+        </view>
+      </block>
+    </view>
+
+    <!-- 其他 -->
+    <view class="menu-card card">
+      <view class="menu-item" bindtap="onAbout">
+        <text class="menu-icon">ℹ️</text>
+        <text class="menu-label">关于</text>
+        <view class="menu-right">
+          <text class="menu-desc">v1.0.0</text>
+          <text class="menu-arrow">›</text>
+        </view>
+      </view>
+    </view>
+  </view>
+</view>

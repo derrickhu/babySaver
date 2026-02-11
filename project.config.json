@@ -45,7 +45,7 @@
     "disableSWC": true
   },
   "appid": "wx7a8deed6885553a7",
-  "projectname": "quickstart-wx-cloud",
+  "projectname": "babySaver",
   "libVersion": "2.20.1",
   "cloudfunctionTemplateRoot": "cloudfunctionTemplate/",
   "condition": {

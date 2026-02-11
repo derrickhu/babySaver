@@ -1,0 +1,84 @@
+<!-- 取现审批页（家长专属） -->
+<view class="review-page">
+  <!-- Tab -->
+  <view class="tab-bar">
+    <view class="tab-item {{activeTab === 'pending' ? 'active' : ''}}" data-tab="pending" bindtap="onTabChange">
+      <text>待审批</text>
+      <text class="tab-badge" wx:if="{{pendingList.length > 0}}">{{pendingList.length}}</text>
+    </view>
+    <view class="tab-item {{activeTab === 'history' ? 'active' : ''}}" data-tab="history" bindtap="onTabChange">
+      <text>已处理</text>
+    </view>
+  </view>
+
+  <!-- 待审批列表 -->
+  <view wx:if="{{activeTab === 'pending'}}">
+    <view class="review-card card" wx:for="{{pendingList}}" wx:key="_id">
+      <view class="review-header">
+        <view class="review-child">
+          <text class="child-avatar">🧒</text>
+          <text class="child-name">{{item.childName}}</text>
+        </view>
+        <text class="tag tag-pending">{{item.statusText}}</text>
+      </view>
+
+      <view class="review-amount">
+        <text class="amount-label">申请取现</text>
+        <text class="amount-value">¥{{item.amountStr}}</text>
+      </view>
+
+      <view class="review-reason" wx:if="{{item.reason}}">
+        <text class="reason-label">原因：</text>
+        <text class="reason-text">{{item.reason}}</text>
+      </view>
+
+      <view class="review-time">
+        <text>申请时间：{{item.timeStr}}</text>
+      </view>
+
+      <view class="review-actions">
+        <button
+          class="action-btn reject-btn"
+          data-id="{{item._id}}"
+          bindtap="onReject"
+          disabled="{{processing}}"
+        >拒绝</button>
+        <button
+          class="action-btn approve-btn"
+          data-id="{{item._id}}"
+          bindtap="onApprove"
+          disabled="{{processing}}"
+        >通过</button>
+      </view>
+    </view>
+
+    <view class="empty-state" wx:if="{{pendingList.length === 0 && !loading}}">
+      <text class="empty-icon">✅</text>
+      <text class="empty-text">暂无待审批的申请</text>
+    </view>
+  </view>
+
+  <!-- 已处理列表 -->
+  <view wx:if="{{activeTab === 'history'}}">
+    <view class="history-card card" wx:for="{{historyList}}" wx:key="_id">
+      <view class="history-header">
+        <view class="history-child">
+          <text>🧒 {{item.childName}}</text>
+        </view>
+        <text class="tag tag-{{item.status}}">{{item.statusText}}</text>
+      </view>
+      <view class="history-body">
+        <text class="history-amount">¥{{item.amountStr}}</text>
+        <text class="history-time">{{item.timeStr}}</text>
+      </view>
+      <view class="history-reason" wx:if="{{item.reason}}">
+        <text>原因：{{item.reason}}</text>
+      </view>
+    </view>
+
+    <view class="empty-state" wx:if="{{historyList.length === 0 && !loading}}">
+      <text class="empty-icon">📋</text>
+      <text class="empty-text">暂无处理记录</text>
+    </view>
+  </view>
+</view>
