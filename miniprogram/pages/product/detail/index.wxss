@@ -225,6 +225,13 @@
   color: #333;
   margin-bottom: 32rpx;
 }
+.modal-estimate {
+  padding: 16rpx 0 24rpx;
+}
+.modal-estimate-text {
+  font-size: 24rpx;
+  color: #07c160;
+}
 .modal-btn {
   background: linear-gradient(135deg, #4a7cf7, #6c5ce7);
   color: #fff;
@@ -234,4 +241,10 @@
   line-height: 88rpx;
   font-size: 30rpx;
   font-weight: 600;
+}
+.holding-daily { color: #ff6b35; }
+.matured-badge {
+  font-size: 24rpx;
+  color: #07c160;
+  font-weight: 500;
 }

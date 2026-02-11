@@ -16,7 +16,8 @@ Page({
     termDays: '',
     minAmount: '',
     description: '',
-    submitting: false
+    submitting: false,
+    exampleText: ''
   },
 
   onLoad(options) {
@@ -39,8 +40,9 @@ Page({
           rate: String(p.rate),
           termDays: p.termDays ? String(p.termDays) : '',
           minAmount: p.minAmount ? String(p.minAmount) : '',
-          description: p.description || ''
+          description: p.description ? p.description.split('\n').filter(l => !l.startsWith('例：')).join('\n').trim() : ''
         })
+        this.updateExample()
       }
     } catch (err) {
       api.showError(err.msg)
@@ -48,10 +50,34 @@ Page({
   },
 
   onNameInput(e) { this.setData({ name: e.detail.value }) },
-  onRateInput(e) { this.setData({ rate: e.detail.value }) },
-  onTermDaysInput(e) { this.setData({ termDays: e.detail.value }) },
+  onRateInput(e) {
+    this.setData({ rate: e.detail.value })
+    this.updateExample()
+  },
+  onTermDaysInput(e) {
+    this.setData({ termDays: e.detail.value })
+    this.updateExample()
+  },
   onMinAmountInput(e) { this.setData({ minAmount: e.detail.value }) },
   onDescInput(e) { this.setData({ description: e.detail.value }) },
+
+  updateExample() {
+    const r = parseFloat(this.data.rate) || 0
+    const type = this.data.types[this.data.typeIndex]
+    const td = parseInt(this.data.termDays) || 0
+    if (r <= 0) {
+      this.setData({ exampleText: '' })
+      return
+    }
+    const daily = (1000 * r / 100 / 365).toFixed(4)
+    const monthly = (1000 * r / 100 / 12).toFixed(2)
+    let text = `存入1000元，每天收益约${daily}元，每月约${monthly}元`
+    if (type === 'fixed' && td > 0) {
+      const total = (1000 * r / 100 / 365 * td).toFixed(2)
+      text += `，${td}天到期总收益约${total}元`
+    }
+    this.setData({ exampleText: text })
+  },
 
   onRiskChange(e) {
     this.setData({ riskLevelIndex: e.detail.value })
@@ -59,6 +85,7 @@ Page({
 
   onTypeChange(e) {
     this.setData({ typeIndex: e.detail.value })
+    this.updateExample()
   },
 
   async onSubmit() {

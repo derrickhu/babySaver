@@ -10,7 +10,9 @@
     "pages/withdraw/review/index",
     "pages/product/manage/index",
     "pages/product/detail/index",
-    "pages/product/create/index"
+    "pages/product/create/index",
+    "pages/product/logs/index",
+    "pages/earnings/calendar/index"
   ],
   "window": {
     "backgroundColor": "#F5F7FA",

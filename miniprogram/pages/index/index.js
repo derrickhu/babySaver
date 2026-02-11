@@ -123,14 +123,16 @@ Page({
             ...d.account,
             balanceStr: util.formatMoney(d.account.balance),
             earningsStr: util.formatMoney(d.account.totalEarnings),
-            totalValueStr: util.formatMoney(d.account.totalValue)
+            totalValueStr: util.formatMoney(d.account.totalValue),
+            dailyEarningStr: (d.account.balance * d.account.baseRate / 100 / 365).toFixed(4)
           } : null,
           investments: (d.investments || []).map(inv => ({
             ...inv,
             amountStr: util.formatMoney(inv.amount),
             earningsStr: util.formatMoney(inv.earnings),
             totalValueStr: util.formatMoney(inv.totalValue),
-            rateStr: inv.rate + '%'
+            rateStr: inv.rate + '%',
+            dailyEarningStr: (inv.amount * inv.rate / 100 / 365).toFixed(4)
           }))
         })
       }
@@ -156,8 +158,12 @@ Page({
   },
 
   // 导航
-  goBills() {
+  goEarningsCalendar() {
     const childId = this.data.isParent ? this.data.selectedChildId : ''
+    wx.navigateTo({ url: `/pages/earnings/calendar/index?childOpenId=${childId}` })
+  },
+
+  goBills() {
     wx.switchTab({ url: '/pages/earnings/index' })
   },
 

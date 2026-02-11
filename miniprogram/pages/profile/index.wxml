@@ -7,11 +7,7 @@
       <text class="user-avatar-emoji" wx:else>{{isParent ? '👨‍👩‍👧' : '🧒'}}</text>
     </view>
     <text class="user-name">{{userInfo.nickName}}</text>
-    <view class="user-role-wrap">
-      <text class="user-role tag {{isParent ? 'tag-approved' : 'tag-pending'}}">
-        {{isParent ? (userInfo.parentTitle || '家长') : '小孩'}}
-      </text>
-    </view>
+    <text class="user-role-text">{{isParent ? (userInfo.parentTitle || '家长') : '小孩'}}</text>
     <view class="user-stats" wx:if="{{account && !isParent}}">
       <text class="stats-label">总资产</text>
       <text class="stats-value">¥{{account.totalStr}}</text>

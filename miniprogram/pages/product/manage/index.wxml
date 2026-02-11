@@ -18,6 +18,7 @@
           <view class="product-name-row">
             <text class="product-name">{{item.name}}</text>
             <text class="risk-tag" style="color: {{item.riskColor}}; border-color: {{item.riskColor}};">{{item.riskLabel}}</text>
+            <text class="offline-tag" wx:if="{{item.status === 'inactive'}}">已下线</text>
           </view>
           <text class="product-desc" wx:if="{{item.description}}">{{item.description}}</text>
         </view>
@@ -31,11 +32,18 @@
             <text class="stat-label">产品类型</text>
           </view>
           <view class="stat-item">
-            <text class="stat-value">¥{{item.minAmount || 0}}</text>
-            <text class="stat-label">起购金额</text>
+            <text class="stat-value">{{item.dailyPer1000}}</text>
+            <text class="stat-label">每千元日收益</text>
           </view>
         </view>
       </view>
+    </view>
+
+    <!-- 变更记录入口（家长） -->
+    <view class="logs-entry" bindtap="goAllLogs" wx:if="{{isParent}}">
+      <text class="logs-icon">📋</text>
+      <text class="logs-text">产品变更记录</text>
+      <text class="logs-arrow">›</text>
     </view>
 
     <!-- 空状态 -->

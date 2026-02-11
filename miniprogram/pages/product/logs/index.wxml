@@ -1,0 +1,32 @@
+<!-- 产品变更记录 -->
+<view class="page-container">
+  <view class="loading-wrap" wx:if="{{loading && logs.length === 0}}">
+    <text class="loading-text">加载中...</text>
+  </view>
+
+  <view class="log-list">
+    <view class="log-item" wx:for="{{logs}}" wx:key="_id">
+      <view class="log-timeline">
+        <view class="log-dot" style="background: {{item.actionColor}};"></view>
+        <view class="log-line" wx:if="{{index < logs.length - 1}}"></view>
+      </view>
+      <view class="log-content">
+        <view class="log-header">
+          <text class="log-action" style="color: {{item.actionColor}};">{{item.actionLabel}}</text>
+          <text class="log-time">{{item.timeStr}}</text>
+        </view>
+        <text class="log-detail">{{item.detail}}</text>
+        <text class="log-operator">操作人：{{item.operatorName || '未知'}}</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="empty-state" wx:if="{{!loading && logs.length === 0}}">
+    <text class="empty-icon">📋</text>
+    <text class="empty-text">暂无变更记录</text>
+  </view>
+
+  <view class="load-more" wx:if="{{!hasMore && logs.length > 0}}">
+    <text>没有更多了</text>
+  </view>
+</view>

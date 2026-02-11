@@ -36,6 +36,14 @@
   border: 1rpx solid;
   border-radius: 4rpx;
 }
+.offline-tag {
+  font-size: 20rpx;
+  padding: 2rpx 12rpx;
+  border: 1rpx solid #ff4d4f;
+  border-radius: 4rpx;
+  color: #ff4d4f;
+  margin-left: 8rpx;
+}
 .product-desc {
   font-size: 24rpx;
   color: #999;
@@ -62,6 +70,19 @@
   color: #999;
   margin-top: 4rpx;
 }
+
+/* 变更记录入口 */
+.logs-entry {
+  display: flex;
+  align-items: center;
+  margin: 0 24rpx 20rpx;
+  background: #fff;
+  border-radius: 16rpx;
+  padding: 24rpx;
+}
+.logs-icon { font-size: 32rpx; margin-right: 12rpx; }
+.logs-text { flex: 1; font-size: 28rpx; color: #333; }
+.logs-arrow { font-size: 32rpx; color: #ccc; }
 
 /* 空状态 */
 .empty-state {

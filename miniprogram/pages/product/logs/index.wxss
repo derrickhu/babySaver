@@ -1,0 +1,80 @@
+/* 产品变更记录 */
+.page-container {
+  min-height: 100vh;
+  background: #f5f6fa;
+  padding: 24rpx;
+}
+.loading-wrap {
+  display: flex; justify-content: center; padding-top: 200rpx;
+}
+.loading-text { font-size: 26rpx; color: #999; }
+.empty-state {
+  display: flex; flex-direction: column; align-items: center; padding-top: 200rpx;
+}
+.empty-icon { font-size: 80rpx; margin-bottom: 24rpx; }
+.empty-text { font-size: 28rpx; color: #999; }
+
+.log-list { padding: 0 8rpx; }
+.log-item {
+  display: flex;
+  min-height: 120rpx;
+}
+.log-timeline {
+  width: 40rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex-shrink: 0;
+}
+.log-dot {
+  width: 20rpx;
+  height: 20rpx;
+  border-radius: 50%;
+  margin-top: 8rpx;
+  flex-shrink: 0;
+}
+.log-line {
+  width: 2rpx;
+  flex: 1;
+  background: #e0e0e0;
+  margin-top: 8rpx;
+}
+.log-content {
+  flex: 1;
+  background: #fff;
+  border-radius: 12rpx;
+  padding: 20rpx 24rpx;
+  margin-left: 16rpx;
+  margin-bottom: 16rpx;
+}
+.log-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8rpx;
+}
+.log-action {
+  font-size: 26rpx;
+  font-weight: 600;
+}
+.log-time {
+  font-size: 22rpx;
+  color: #bbb;
+}
+.log-detail {
+  font-size: 26rpx;
+  color: #333;
+  line-height: 1.5;
+  display: block;
+  margin-bottom: 8rpx;
+}
+.log-operator {
+  font-size: 22rpx;
+  color: #999;
+}
+.load-more {
+  text-align: center;
+  padding: 24rpx;
+  font-size: 24rpx;
+  color: #bbb;
+}

@@ -54,6 +54,25 @@
   border-radius: 8rpx;
   box-sizing: border-box;
 }
+/* 自动举例 */
+.example-box {
+  padding: 20rpx 28rpx;
+  background: #f0f7ff;
+  border-radius: 0 0 16rpx 16rpx;
+  margin-top: -1rpx;
+}
+.example-label {
+  font-size: 22rpx;
+  color: #4a7cf7;
+  display: block;
+  margin-bottom: 8rpx;
+}
+.example-text {
+  font-size: 26rpx;
+  color: #333;
+  line-height: 1.5;
+}
+
 .btn-submit {
   margin-top: 48rpx;
   background: linear-gradient(135deg, #4a7cf7, #6c5ce7);

@@ -64,6 +64,10 @@
 
       <!-- 快捷操作 -->
       <view class="quick-actions">
+        <view class="quick-item" bindtap="goEarningsCalendar">
+          <text class="quick-icon">📅</text>
+          <text class="quick-label">收益</text>
+        </view>
         <view class="quick-item" bindtap="goBills">
           <text class="quick-icon">📄</text>
           <text class="quick-label">账单</text>
@@ -94,11 +98,11 @@
           </view>
           <view class="product-info">
             <text class="product-name">默认账户</text>
-            <text class="product-desc">年化 {{account.baseRate}}%</text>
+            <text class="product-desc">年化 {{account.baseRate}}%  日收益 +{{account.dailyEarningStr}}</text>
           </view>
           <view class="product-amount-wrap">
             <text class="product-amount">{{account.totalValueStr}}</text>
-            <text class="product-sub" wx:if="{{account.totalEarnings > 0}}">收益 +{{account.earningsStr}}</text>
+            <text class="product-sub" wx:if="{{account.totalEarnings > 0}}">累计收益 +{{account.earningsStr}}</text>
           </view>
         </view>
       </view>
@@ -122,15 +126,15 @@
           </view>
           <view class="product-info">
             <text class="product-name">{{item.productName}}</text>
-            <text class="product-desc">年化 {{item.rateStr}}{{item.endDate ? '  到期 ' + item.endDate : ''}}</text>
+            <text class="product-desc">年化 {{item.rateStr}}  日收益 +{{item.dailyEarningStr}}{{item.endDate ? '  到期 ' + item.endDate : ''}}</text>
           </view>
           <view class="product-amount-wrap">
             <text class="product-amount">{{item.totalValueStr}}</text>
-            <text class="product-sub product-sub-green">收益 +{{item.earningsStr}}</text>
+            <text class="product-sub product-sub-green">累计收益 +{{item.earningsStr}}</text>
           </view>
         </view>
         <view class="product-matured-tag" wx:if="{{item.status === 'matured'}}">
-          <text class="matured-text">已到期，可赎回</text>
+          <text class="matured-text">已到期，收益持续中，可随时赎回</text>
         </view>
       </view>
 

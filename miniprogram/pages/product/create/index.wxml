@@ -45,6 +45,12 @@
       <text class="form-label">产品说明</text>
       <textarea class="form-textarea" placeholder="可选，简要描述产品特点" value="{{description}}" bindinput="onDescInput" maxlength="200" />
     </view>
+
+    <!-- 自动生成的举例说明 -->
+    <view class="example-box" wx:if="{{exampleText}}">
+      <text class="example-label">自动举例（将附加到说明中）</text>
+      <text class="example-text">{{exampleText}}</text>
+    </view>
   </view>
 
   <button class="btn-submit" bindtap="onSubmit" disabled="{{submitting}}">

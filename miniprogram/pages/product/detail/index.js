@@ -11,11 +11,9 @@ Page({
     productId: '',
     investmentId: '',
     buyAmount: '',
-    redeemRemark: '',
+    buyEstimate: '',
     loading: true,
     showBuyModal: false,
-    showRedeemModal: false,
-    buyRemark: '',
     accountBalance: 0,
     accountBalanceStr: '0.00'
   },
@@ -32,11 +30,14 @@ Page({
     this.loadData()
   },
 
+  onShow() {
+    if (!this.data.loading) this.loadData()
+  },
+
   async loadData() {
     try {
       const { productId, investmentId, isChild } = this.data
 
-      // 加载产品详情
       if (productId) {
         const res = await api.callCloud('getProductDetail', { productId })
         if (res.code === 0 && res.data) {
@@ -47,13 +48,14 @@ Page({
               rateStr: p.rate + '%',
               riskLabel: util.getRiskLabel(p.riskLevel),
               riskColor: util.getRiskColor(p.riskLevel),
-              typeLabel: p.type === 'demand' ? '活期' : `定期${p.termDays}天`
+              typeLabel: p.type === 'demand' ? '活期' : `定期${p.termDays}天`,
+              // 每日收益预估
+              dailyEarning1000: (1000 * p.rate / 100 / 365).toFixed(4)
             }
           })
         }
       }
 
-      // 如果有投资ID，加载投资信息
       if (investmentId) {
         const invRes = await api.callCloud('getInvestments', {})
         if (invRes.code === 0) {
@@ -65,6 +67,7 @@ Page({
                 amountStr: util.formatMoney(inv.amount),
                 earningsStr: util.formatMoney(inv.earnings),
                 totalValueStr: util.formatMoney(inv.amount + inv.earnings),
+                dailyEarningStr: (inv.amount * inv.rate / 100 / 365).toFixed(4),
                 canRedeem: inv.status === 'matured' || (inv.status === 'active' && !inv.endDate)
               }
             })
@@ -72,7 +75,6 @@ Page({
         }
       }
 
-      // 小孩：加载默认账户余额
       if (isChild) {
         const accRes = await api.callCloud('getAccount', {})
         if (accRes.code === 0 && accRes.data) {
@@ -89,12 +91,14 @@ Page({
     }
   },
 
-  // 编辑产品（家长）
   goEdit() {
     wx.navigateTo({ url: `/pages/product/create/index?productId=${this.data.productId}` })
   },
 
-  // 停售/上架产品（家长）
+  goLogs() {
+    wx.navigateTo({ url: `/pages/product/logs/index?productId=${this.data.productId}` })
+  },
+
   async toggleStatus() {
     const product = this.data.product
     if (!product) return
@@ -118,9 +122,8 @@ Page({
     })
   },
 
-  // 打开买入弹窗（小孩）
   openBuyModal() {
-    this.setData({ showBuyModal: true, buyAmount: '', buyRemark: '' })
+    this.setData({ showBuyModal: true, buyAmount: '', buyEstimate: '' })
   },
 
   closeBuyModal() {
@@ -128,26 +131,26 @@ Page({
   },
 
   onBuyAmountInput(e) {
-    this.setData({ buyAmount: e.detail.value })
-  },
-
-  onBuyRemarkInput(e) {
-    this.setData({ buyRemark: e.detail.value })
+    const val = e.detail.value
+    let estimate = ''
+    const amt = parseFloat(val)
+    if (amt > 0 && this.data.product) {
+      estimate = (amt * this.data.product.rate / 100 / 365).toFixed(4)
+    }
+    this.setData({ buyAmount: val, buyEstimate: estimate })
   },
 
   async onBuy() {
-    const { buyAmount, buyRemark, productId } = this.data
+    const { buyAmount, productId } = this.data
     if (!buyAmount || isNaN(buyAmount) || Number(buyAmount) <= 0) {
       return api.showError('请输入合法金额')
     }
-    if (!buyRemark.trim()) return api.showError('请填写备注')
 
     api.showLoading('买入中...')
     try {
       const res = await api.callCloud('buyProduct', {
         productId,
-        amount: Number(buyAmount),
-        remark: buyRemark.trim()
+        amount: Number(buyAmount)
       })
       api.showToast(res.msg || '买入成功')
       this.setData({ showBuyModal: false })
@@ -159,36 +162,27 @@ Page({
     }
   },
 
-  // 打开赎回弹窗
-  openRedeemModal() {
-    this.setData({ showRedeemModal: true, redeemRemark: '' })
-  },
-
-  closeRedeemModal() {
-    this.setData({ showRedeemModal: false })
-  },
-
-  onRedeemRemarkInput(e) {
-    this.setData({ redeemRemark: e.detail.value })
-  },
-
   async onRedeem() {
-    const { redeemRemark, investmentId } = this.data
-    if (!redeemRemark.trim()) return api.showError('请填写备注')
+    const { investmentId, investment } = this.data
+    if (!investmentId || !investment) return
 
-    api.showLoading('赎回中...')
-    try {
-      const res = await api.callCloud('redeemInvestment', {
-        investmentId,
-        remark: redeemRemark.trim()
-      })
-      api.showToast(res.msg || '赎回成功')
-      this.setData({ showRedeemModal: false })
-      setTimeout(() => wx.navigateBack(), 1500)
-    } catch (err) {
-      api.showError(err.msg)
-    } finally {
-      api.hideLoading()
-    }
+    wx.showModal({
+      title: '确认赎回',
+      content: `将赎回 ¥${investment.totalValueStr}（本金+收益）到默认账户`,
+      confirmText: '确认赎回',
+      success: async (res) => {
+        if (!res.confirm) return
+        api.showLoading('赎回中...')
+        try {
+          const result = await api.callCloud('redeemInvestment', { investmentId })
+          api.showToast(result.msg || '赎回成功')
+          setTimeout(() => wx.navigateBack(), 1500)
+        } catch (err) {
+          api.showError(err.msg)
+        } finally {
+          api.hideLoading()
+        }
+      }
+    })
   }
 })

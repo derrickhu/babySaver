@@ -24,11 +24,12 @@ Page({
     try {
       const res = await api.callCloud('getProducts')
       if (res.code === 0) {
-        const products = (res.data || []).filter(p => p.status === 'active').map(p => ({
+        const products = (res.data || []).filter(p => this.data.isParent || p.status === 'active').map(p => ({
           ...p,
           rateStr: p.rate + '%',
           riskLabel: util.getRiskLabel(p.riskLevel),
-          riskColor: util.getRiskColor(p.riskLevel)
+          riskColor: util.getRiskColor(p.riskLevel),
+          dailyPer1000: (1000 * p.rate / 100 / 365).toFixed(4)
         }))
         this.setData({ products })
       }
@@ -46,6 +47,10 @@ Page({
   goDetail(e) {
     const productId = e.currentTarget.dataset.id
     wx.navigateTo({ url: `/pages/product/detail/index?productId=${productId}` })
+  },
+
+  goAllLogs() {
+    wx.navigateTo({ url: '/pages/product/logs/index' })
   },
 
   onPullDownRefresh() {

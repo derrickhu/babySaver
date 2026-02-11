@@ -46,6 +46,10 @@ exports.main = async (event, context) => {
       // 收益计算
       case 'calcAllEarnings': return await calcAllEarnings(openid, data)
       case 'getAssetSummary': return await getAssetSummary(openid, data)
+      // 每日收益日历
+      case 'getEarningsCalendar': return await getEarningsCalendar(openid, data)
+      // 产品操作日志
+      case 'getProductLogs': return await getProductLogs(openid, data)
       default:
         return { code: -1, msg: '未知操作类型' }
     }
@@ -130,10 +134,31 @@ async function addTransaction(txData) {
   })
 }
 
+// 写入产品操作日志
+async function addProductLog(logData) {
+  const now = new Date()
+  return await db.collection('productLogs').add({
+    data: { ...logData, createdAt: now }
+  })
+}
+
+// 自动生成产品说明举例
+function generateProductExample(rate, type, termDays) {
+  const exampleAmount = 1000
+  const dailyEarning = round2(exampleAmount * rate / 100 / 365)
+  const monthlyEarning = round2(exampleAmount * rate / 100 / 12)
+  let desc = `例：存入${exampleAmount}元，每天收益约${dailyEarning}元，每月约${monthlyEarning}元`
+  if (type === 'fixed' && termDays > 0) {
+    const totalEarning = round2(exampleAmount * rate / 100 / 365 * termDays)
+    desc += `，${termDays}天到期总收益约${totalEarning}元`
+  }
+  return desc
+}
+
 // ========== 初始化集合 ==========
 
 async function initCollections() {
-  const collections = ['users', 'families', 'accounts', 'products', 'investments', 'transactions', 'earnings']
+  const collections = ['users', 'families', 'accounts', 'products', 'investments', 'transactions', 'earnings', 'productLogs']
   const results = []
   for (const name of collections) {
     try {
@@ -428,6 +453,14 @@ async function createProduct(openid, data) {
 
   const user = await verifyParent(openid)
   const now = new Date()
+  const actualRate = round2(rate)
+  const actualTermDays = type === 'fixed' ? parseInt(termDays) : 0
+
+  // 自动生成举例说明
+  const autoExample = generateProductExample(actualRate, type, actualTermDays)
+  const finalDesc = (description || '').trim()
+    ? (description.trim() + '\n' + autoExample)
+    : autoExample
 
   const productRes = await db.collection('products').add({
     data: {
@@ -435,16 +468,27 @@ async function createProduct(openid, data) {
       name: name.trim(),
       riskLevel,
       type,
-      rate: round2(rate),
-      termDays: type === 'fixed' ? parseInt(termDays) : 0,
+      rate: actualRate,
+      termDays: actualTermDays,
       minAmount: round2(minAmount || 0),
-      description: (description || '').trim(),
+      description: finalDesc,
       autoTransfer: { enabled: false, amount: 0, period: 'monthly' },
       status: 'active',
       createdBy: openid,
       createdAt: now,
       updatedAt: now
     }
+  })
+
+  // 记录产品操作日志
+  await addProductLog({
+    familyId: user.familyId,
+    productId: productRes._id,
+    productName: name.trim(),
+    action: 'create',
+    detail: `创建理财产品「${name.trim()}」，年化${actualRate}%，${type === 'demand' ? '活期' : '定期' + actualTermDays + '天'}`,
+    operatorId: openid,
+    operatorName: user.nickName || ''
   })
 
   return { code: 0, msg: '理财产品创建成功', data: { productId: productRes._id } }
@@ -462,6 +506,7 @@ async function updateProduct(openid, data) {
     return { code: -1, msg: '产品不存在' }
   }
 
+  const oldProduct = product.data
   const allowedFields = ['name', 'riskLevel', 'type', 'rate', 'termDays', 'minAmount', 'description', 'status', 'autoTransfer']
   const updateData = { updatedAt: new Date() }
   for (const key of allowedFields) {
@@ -472,7 +517,45 @@ async function updateProduct(openid, data) {
   if (updateData.rate !== undefined) updateData.rate = round2(updateData.rate)
   if (updateData.minAmount !== undefined) updateData.minAmount = round2(updateData.minAmount)
 
+  // 如果利率变了，重新生成举例说明
+  if (updateData.rate !== undefined || updateData.type !== undefined || updateData.termDays !== undefined) {
+    const newRate = updateData.rate !== undefined ? updateData.rate : oldProduct.rate
+    const newType = updateData.type !== undefined ? updateData.type : oldProduct.type
+    const newTermDays = updateData.termDays !== undefined ? updateData.termDays : oldProduct.termDays
+    const autoExample = generateProductExample(newRate, newType, newTermDays)
+    // 保留用户自定义描述（第一行），替换自动举例（以"例："开头的行）
+    const userDesc = (updateData.description || oldProduct.description || '').split('\n').filter(l => !l.startsWith('例：')).join('\n').trim()
+    updateData.description = userDesc ? (userDesc + '\n' + autoExample) : autoExample
+  }
+
   await db.collection('products').doc(productId).update({ data: updateData })
+
+  // 记录操作日志
+  let action = 'update'
+  let detail = '修改了产品信息'
+  if (updates.status === 'inactive') {
+    action = 'offline'
+    detail = `下线了理财产品「${oldProduct.name}」`
+  } else if (updates.status === 'active' && oldProduct.status === 'inactive') {
+    action = 'online'
+    detail = `上线了理财产品「${oldProduct.name}」`
+  } else {
+    const changes = []
+    if (updates.name && updates.name !== oldProduct.name) changes.push(`名称→${updates.name}`)
+    if (updates.rate !== undefined && updates.rate !== oldProduct.rate) changes.push(`利率→${round2(updates.rate)}%`)
+    if (updates.riskLevel && updates.riskLevel !== oldProduct.riskLevel) changes.push(`风险→${RISK_LABELS[updates.riskLevel]}`)
+    detail = changes.length > 0 ? `修改「${oldProduct.name}」：${changes.join('，')}` : `修改了「${oldProduct.name}」`
+  }
+  await addProductLog({
+    familyId: user.familyId,
+    productId,
+    productName: updateData.name || oldProduct.name,
+    action,
+    detail,
+    operatorId: openid,
+    operatorName: user.nickName || ''
+  })
+
   return { code: 0, msg: '产品更新成功' }
 }
 
@@ -518,12 +601,9 @@ async function getProductDetail(openid, data) {
 
 // 小孩购买理财产品（从默认账户扣款）
 async function buyProduct(openid, data) {
-  const { productId, amount, remark } = data
+  const { productId, amount } = data
   if (!productId || !amount || amount <= 0) {
     return { code: -1, msg: '参数不完整' }
-  }
-  if (!remark || remark.trim() === '') {
-    return { code: -1, msg: '请填写备注' }
   }
 
   const user = await getUserWithFamily(openid)
@@ -580,7 +660,7 @@ async function buyProduct(openid, data) {
     childOpenId: openid, familyId: user.familyId,
     type: 'buy',
     amount: round2(amount),
-    remark: remark.trim(),
+    remark: `买入${product.data.name}`,
     relatedId: productId, relatedName: product.data.name,
     status: 'success',
     createdBy: openid,
@@ -592,9 +672,8 @@ async function buyProduct(openid, data) {
 
 // 赎回投资（活期随时赎回，定期到期后赎回）
 async function redeemInvestment(openid, data) {
-  const { investmentId, remark } = data
+  const { investmentId } = data
   if (!investmentId) return { code: -1, msg: '投资ID不能为空' }
-  if (!remark || remark.trim() === '') return { code: -1, msg: '请填写备注' }
 
   const user = await getUserWithFamily(openid)
   if (user.role !== 'child') return { code: -1, msg: '仅小孩可赎回' }
@@ -639,7 +718,7 @@ async function redeemInvestment(openid, data) {
     childOpenId: openid, familyId: user.familyId,
     type: 'redeem',
     amount: redeemAmount,
-    remark: remark.trim(),
+    remark: `赎回${investment.data.productName}`,
     relatedId: investment.data.productId, relatedName: investment.data.productName,
     status: 'success',
     createdBy: openid,
@@ -850,7 +929,7 @@ async function doCalcAccountEarnings(account) {
   })
 }
 
-// 计算单个投资的收益
+// 计算单个投资的收益（到期后继续计算收益，不自动停止）
 async function doCalcInvestmentEarnings(investment) {
   const now = new Date()
   const today = formatDate(now)
@@ -861,22 +940,43 @@ async function doCalcInvestmentEarnings(investment) {
 
   const dailyRate = investment.rate / 100 / 365
   let earnings = investment.earnings || 0
+  const records = []
 
   for (let i = 1; i <= days; i++) {
+    const calcDate = new Date(new Date(investment.lastCalcDate).getTime() + i * 86400000)
+    const dateStr = formatDate(calcDate)
     const dailyEarning = round2(investment.amount * dailyRate)
     earnings = round2(earnings + dailyEarning)
-  }
 
-  await db.collection('investments').doc(investment._id).update({
-    data: { earnings, lastCalcDate: today, updatedAt: now }
-  })
-
-  // 检查定期产品是否到期
-  if (investment.endDate && today >= investment.endDate && investment.status === 'active') {
-    await db.collection('investments').doc(investment._id).update({
-      data: { status: 'matured' }
+    records.push({
+      investmentId: investment._id,
+      productId: investment.productId,
+      productName: investment.productName,
+      childOpenId: investment.childOpenId,
+      familyId: investment.familyId,
+      source: 'investment',
+      date: dateStr,
+      balance: investment.amount,
+      rate: investment.rate,
+      dailyEarning,
+      totalEarnings: earnings,
+      createdAt: now
     })
   }
+
+  // 批量写入收益记录
+  for (let i = 0; i < records.length; i += 20) {
+    const batch = records.slice(i, i + 20)
+    await Promise.all(batch.map(r => db.collection('earnings').add({ data: r })))
+  }
+
+  const updateData = { earnings, lastCalcDate: today, updatedAt: now }
+  // 标记是否已到期（但仍继续计算收益）
+  if (investment.endDate && today >= investment.endDate && investment.status === 'active') {
+    updateData.status = 'matured'
+  }
+
+  await db.collection('investments').doc(investment._id).update({ data: updateData })
 }
 
 // 计算小孩的所有收益（默认账户 + 所有投资）
@@ -956,4 +1056,71 @@ async function getAssetSummary(openid, data) {
       investments: investmentList
     }
   }
+}
+
+// ========== 每日收益日历 ==========
+
+async function getEarningsCalendar(openid, data) {
+  const { childOpenId: cid, year, month, source } = data
+  const childOpenId = cid || openid
+  if (!year || !month) return { code: -1, msg: '请指定年月' }
+
+  const user = await getUserWithFamily(openid)
+  const startDate = `${year}-${String(month).padStart(2, '0')}-01`
+  const endMonth = month === 12 ? 1 : month + 1
+  const endYear = month === 12 ? year + 1 : year
+  const endDate = `${endYear}-${String(endMonth).padStart(2, '0')}-01`
+
+  const query = {
+    childOpenId,
+    familyId: user.familyId,
+    date: _.gte(startDate).and(_.lt(endDate))
+  }
+  if (source) query.source = source
+
+  const res = await db.collection('earnings').where(query)
+    .orderBy('date', 'asc').limit(1000).get()
+
+  // 按日期聚合
+  const dayMap = {}
+  res.data.forEach(e => {
+    if (!dayMap[e.date]) {
+      dayMap[e.date] = { date: e.date, totalEarning: 0, details: [] }
+    }
+    dayMap[e.date].totalEarning = round2(dayMap[e.date].totalEarning + (e.dailyEarning || 0))
+    dayMap[e.date].details.push({
+      source: e.source,
+      productName: e.productName || '默认账户',
+      dailyEarning: e.dailyEarning,
+      balance: e.balance,
+      rate: e.rate
+    })
+  })
+
+  const calendarData = Object.values(dayMap).sort((a, b) => a.date.localeCompare(b.date))
+
+  // 月度总收益
+  let monthTotal = 0
+  calendarData.forEach(d => { monthTotal += d.totalEarning })
+
+  return { code: 0, data: { calendar: calendarData, monthTotal: round2(monthTotal) } }
+}
+
+// ========== 产品操作日志 ==========
+
+async function getProductLogs(openid, data) {
+  const { productId, page = 1, pageSize = 30 } = data
+  const user = await getUserWithFamily(openid)
+
+  const query = { familyId: user.familyId }
+  if (productId) query.productId = productId
+
+  const res = await db.collection('productLogs')
+    .where(query)
+    .orderBy('createdAt', 'desc')
+    .skip((page - 1) * pageSize)
+    .limit(pageSize)
+    .get()
+
+  return { code: 0, data: res.data }
 }
