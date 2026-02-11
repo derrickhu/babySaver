@@ -9,6 +9,9 @@ Page({
     currentDeposit: null,
     principal: '',
     rate: '',
+    estimateDaily: '0.0000',
+    estimateMonthly: '0.00',
+    estimateYearly: '0.00',
     loading: true,
     saving: false,
     children: [],
@@ -73,16 +76,22 @@ Page({
       const depositRes = await api.callCloud('getDeposit', { childOpenId })
       if (depositRes.code === 0 && depositRes.data) {
         const d = depositRes.data
+        const principal = String(d.principal)
+        const rate = String(d.rate)
         this.setData({
           currentDeposit: d,
-          principal: String(d.principal),
-          rate: String(d.rate)
+          principal,
+          rate
         })
+        this.updateEstimate(principal, rate)
       } else {
         this.setData({
           currentDeposit: null,
           principal: '',
-          rate: ''
+          rate: '',
+          estimateDaily: '0.0000',
+          estimateMonthly: '0.00',
+          estimateYearly: '0.00'
         })
       }
     } catch (err) {
@@ -104,12 +113,26 @@ Page({
 
   // 输入本金
   onPrincipalInput(e) {
-    this.setData({ principal: e.detail.value })
+    const principal = e.detail.value
+    this.setData({ principal })
+    this.updateEstimate(principal, this.data.rate)
   },
 
   // 输入利率
   onRateInput(e) {
-    this.setData({ rate: e.detail.value })
+    const rate = e.detail.value
+    this.setData({ rate })
+    this.updateEstimate(this.data.principal, rate)
+  },
+
+  // 更新收益预估（WXML 不支持 .toFixed，需在 JS 中计算）
+  updateEstimate(principal, rate) {
+    const p = parseFloat(principal) || 0
+    const r = parseFloat(rate) || 0
+    const estimateDaily = p && r ? (p * r / 100 / 365).toFixed(4) : '0.0000'
+    const estimateMonthly = p && r ? (p * r / 100 / 12).toFixed(2) : '0.00'
+    const estimateYearly = p && r ? (p * r / 100).toFixed(2) : '0.00'
+    this.setData({ estimateDaily, estimateMonthly, estimateYearly })
   },
 
   // 保存存款设置
