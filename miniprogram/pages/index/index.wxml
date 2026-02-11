@@ -72,7 +72,7 @@
           <text class="quick-icon">📄</text>
           <text class="quick-label">账单</text>
         </view>
-        <view class="quick-item" bindtap="goDeposit" wx:if="{{isParent}}">
+        <view class="quick-item" bindtap="goDeposit" wx:if="{{isParent && canDeposit}}">
           <text class="quick-icon">💰</text>
           <text class="quick-label">存入</text>
         </view>
@@ -80,11 +80,11 @@
           <text class="quick-icon">💳</text>
           <text class="quick-label">取现</text>
         </view>
-        <view class="quick-item" bindtap="goProductManage" wx:if="{{isParent}}">
+        <view class="quick-item" bindtap="goProductManage" wx:if="{{isParent && canProductManage}}">
           <text class="quick-icon">⚙️</text>
           <text class="quick-label">产品管理</text>
         </view>
-        <view class="quick-item" bindtap="goReview" wx:if="{{isParent && pendingCount > 0}}">
+        <view class="quick-item" bindtap="goReview" wx:if="{{isParent && canReview && pendingCount > 0}}">
           <text class="quick-icon">📋</text>
           <text class="quick-label">审批</text>
         </view>

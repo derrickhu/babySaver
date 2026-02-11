@@ -176,3 +176,33 @@
   font-weight: 600;
   letter-spacing: 12rpx;
 }
+
+/* 权限管理入口 */
+.perm-entry {
+  display: flex;
+  align-items: center;
+  margin: 24rpx 32rpx 0;
+  background: #fff;
+  border-radius: 16rpx;
+  padding: 28rpx 24rpx;
+}
+.perm-entry-icon {
+  font-size: 36rpx;
+  margin-right: 16rpx;
+}
+.perm-entry-text {
+  font-size: 30rpx;
+  font-weight: 500;
+  color: #333;
+}
+.perm-entry-desc {
+  flex: 1;
+  font-size: 24rpx;
+  color: #999;
+  text-align: right;
+  margin-right: 8rpx;
+}
+.perm-entry-arrow {
+  font-size: 32rpx;
+  color: #ccc;
+}

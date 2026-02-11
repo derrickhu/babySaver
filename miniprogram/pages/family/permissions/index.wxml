@@ -1,0 +1,54 @@
+<!-- 权限管理页 -->
+<view class="page-container">
+  <view class="loading-wrap" wx:if="{{loading}}">
+    <text class="loading-text">加载中...</text>
+  </view>
+
+  <block wx:else>
+    <view class="page-tip">
+      <text>存入、取现审批、产品管理默认仅家庭创建者有权限。\n创建者可授权给其他家长。</text>
+    </view>
+
+    <!-- 家长列表 -->
+    <view class="parent-card" wx:for="{{parents}}" wx:key="openid">
+      <view class="parent-header">
+        <view class="parent-avatar-wrap">
+          <image class="parent-avatar" wx:if="{{item.avatarUrl}}" src="{{item.avatarUrl}}" mode="aspectFill"></image>
+          <text class="parent-avatar-text" wx:else>👤</text>
+        </view>
+        <view class="parent-info">
+          <view class="parent-name-row">
+            <text class="parent-name">{{item.nickName}}</text>
+            <text class="creator-tag" wx:if="{{item.isCreator}}">创建者</text>
+          </view>
+          <text class="parent-title">{{item.parentTitle}}</text>
+        </view>
+      </view>
+
+      <!-- 权限开关列表 -->
+      <view class="perm-list">
+        <view class="perm-item" wx:for="{{permTypes}}" wx:for-item="perm" wx:key="*this">
+          <text class="perm-label">{{permLabels[perm]}}</text>
+          <view
+            class="perm-switch {{item.permissions[perm] ? 'on' : 'off'}} {{item.isCreator ? 'disabled' : ''}}"
+            data-openid="{{item.openid}}"
+            data-perm="{{perm}}"
+            data-enabled="{{item.permissions[perm]}}"
+            bindtap="{{item.isCreator ? '' : 'onTogglePerm'}}"
+          >
+            <view class="switch-dot"></view>
+          </view>
+        </view>
+      </view>
+
+      <view class="perm-note" wx:if="{{item.isCreator}}">
+        <text>创建者始终拥有全部权限</text>
+      </view>
+    </view>
+
+    <!-- 无其他家长 -->
+    <view class="empty-state" wx:if="{{parents.length <= 1}}">
+      <text class="empty-text">暂无其他家长\n邀请其他家长加入家庭后可分配权限</text>
+    </view>
+  </block>
+</view>

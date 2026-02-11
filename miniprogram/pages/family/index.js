@@ -136,6 +136,11 @@ Page({
     })
   },
 
+  // 权限管理
+  goPermissions() {
+    wx.navigateTo({ url: '/pages/family/permissions/index' })
+  },
+
   // 返回首页
   goHome() {
     wx.switchTab({ url: '/pages/index/index' })

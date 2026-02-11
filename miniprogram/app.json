@@ -12,7 +12,8 @@
     "pages/product/detail/index",
     "pages/product/create/index",
     "pages/product/logs/index",
-    "pages/earnings/calendar/index"
+    "pages/earnings/calendar/index",
+    "pages/family/permissions/index"
   ],
   "window": {
     "backgroundColor": "#F5F7FA",

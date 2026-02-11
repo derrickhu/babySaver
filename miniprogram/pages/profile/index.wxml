@@ -56,7 +56,7 @@
           </view>
         </view>
 
-        <view class="menu-item" bindtap="goDeposit">
+        <view class="menu-item" bindtap="goDeposit" wx:if="{{canDeposit}}">
           <text class="menu-icon">💰</text>
           <text class="menu-label">存入</text>
           <view class="menu-right">
@@ -64,7 +64,7 @@
           </view>
         </view>
 
-        <view class="menu-item" bindtap="goProducts">
+        <view class="menu-item" bindtap="goProducts" wx:if="{{canProductManage}}">
           <text class="menu-icon">⚙️</text>
           <text class="menu-label">理财产品管理</text>
           <view class="menu-right">
@@ -72,11 +72,20 @@
           </view>
         </view>
 
-        <view class="menu-item" bindtap="goReview">
+        <view class="menu-item" bindtap="goReview" wx:if="{{canReview}}">
           <text class="menu-icon">📋</text>
           <text class="menu-label">取现审批</text>
           <view class="menu-right">
             <text class="menu-badge" wx:if="{{pendingCount > 0}}">{{pendingCount}}</text>
+            <text class="menu-arrow">›</text>
+          </view>
+        </view>
+
+        <!-- 权限管理（仅创建者） -->
+        <view class="menu-item" bindtap="goPermissions" wx:if="{{isCreator}}">
+          <text class="menu-icon">🔐</text>
+          <text class="menu-label">权限管理</text>
+          <view class="menu-right">
             <text class="menu-arrow">›</text>
           </view>
         </view>

@@ -15,7 +15,10 @@ Page({
     parentTitleOptions: [],
     showTitlePicker: false,
     showRateModal: false,
-    baseRate: ''
+    baseRate: '',
+    canDeposit: false,
+    canReview: false,
+    canProductManage: false
   },
 
   onLoad() {
@@ -69,10 +72,14 @@ Page({
 
         if (results[0].code === 0) {
           const family = results[0].data
+          const myPerms = family.myPermissions || {}
           this.setData({
             family,
             isCreator: family.isCreator,
-            baseRate: String(family.baseRate || 2.0)
+            baseRate: String(family.baseRate || 2.0),
+            canDeposit: myPerms.deposit || family.isCreator,
+            canReview: myPerms.withdrawReview || family.isCreator,
+            canProductManage: myPerms.productManage || family.isCreator
           })
         }
 
@@ -113,6 +120,10 @@ Page({
 
   goProducts() {
     wx.navigateTo({ url: '/pages/product/manage/index' })
+  },
+
+  goPermissions() {
+    wx.navigateTo({ url: '/pages/family/permissions/index' })
   },
 
   // 家长身份修改

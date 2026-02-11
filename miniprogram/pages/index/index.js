@@ -15,6 +15,10 @@ Page({
     account: null,
     investments: [],
     pendingCount: 0,
+    // 权限
+    canDeposit: false,
+    canReview: false,
+    canProductManage: false,
     // 家长：小孩列表和当前选中
     children: [],
     selectedChildIndex: 0,
@@ -85,15 +89,26 @@ Page({
 
   // 家长：加载小孩列表，默认展示第一个小孩
   async loadParentData() {
-    const [membersRes, pendingRes] = await Promise.all([
+    const [membersRes, pendingRes, familyRes] = await Promise.all([
       api.callCloud('getFamilyMembers'),
-      api.callCloud('getPendingCount')
+      api.callCloud('getPendingCount'),
+      api.callCloud('getFamily')
     ])
 
     const children = (membersRes.data || []).filter(m => m.role === 'child')
+
+    // 解析权限
+    let myPerms = { deposit: true, withdrawReview: true, productManage: true }
+    if (familyRes.code === 0 && familyRes.data && familyRes.data.myPermissions) {
+      myPerms = familyRes.data.myPermissions
+    }
+
     this.setData({
       children,
-      pendingCount: pendingRes.data ? pendingRes.data.count : 0
+      pendingCount: pendingRes.data ? pendingRes.data.count : 0,
+      canDeposit: myPerms.deposit,
+      canReview: myPerms.withdrawReview,
+      canProductManage: myPerms.productManage
     })
 
     if (children.length > 0) {
@@ -101,11 +116,29 @@ Page({
       this.setData({ selectedChildId: childId })
       await this.loadAssetSummary(childId)
     }
+
+    // 家长首次进入时请求订阅消息权限（取现通知）
+    this.requestSubscribe()
+  },
+
+  // 请求订阅消息权限（家长：取现申请通知，小孩：审核结果通知）
+  requestSubscribe() {
+    api.callCloud('requestSubscribe', {}).then(res => {
+      const tmplIds = res.data && res.data.templateIds
+      if (!tmplIds || tmplIds.length === 0) return
+      wx.requestSubscribeMessage({
+        tmplIds,
+        success: () => {},
+        fail: () => {}
+      })
+    }).catch(() => {})
   },
 
   // 小孩：加载自己的数据
   async loadChildData() {
     await this.loadAssetSummary()
+    // 小孩也请求订阅（审核结果通知）
+    this.requestSubscribe()
   },
 
   // 加载资产总览

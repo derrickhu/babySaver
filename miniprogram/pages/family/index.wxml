@@ -44,6 +44,14 @@
       </view>
     </view>
 
+    <!-- 创建者：权限管理入口 -->
+    <view class="perm-entry" wx:if="{{isCreator}}" bindtap="goPermissions">
+      <text class="perm-entry-icon">🔐</text>
+      <text class="perm-entry-text">权限管理</text>
+      <text class="perm-entry-desc">管理家长的操作权限</text>
+      <text class="perm-entry-arrow">›</text>
+    </view>
+
     <button class="btn-primary" style="margin: 40rpx 32rpx;" bindtap="goHome">返回首页</button>
   </block>
 

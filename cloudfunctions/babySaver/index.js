@@ -50,6 +50,11 @@ exports.main = async (event, context) => {
       case 'getEarningsCalendar': return await getEarningsCalendar(openid, data)
       // 产品操作日志
       case 'getProductLogs': return await getProductLogs(openid, data)
+      // 权限管理
+      case 'getPermissions': return await getPermissions(openid)
+      case 'updatePermissions': return await updatePermissions(openid, data)
+      // 订阅消息
+      case 'requestSubscribe': return await requestSubscribe(openid, data)
       default:
         return { code: -1, msg: '未知操作类型' }
     }
@@ -140,6 +145,107 @@ async function addProductLog(logData) {
   return await db.collection('productLogs').add({
     data: { ...logData, createdAt: now }
   })
+}
+
+// ========== 权限相关 ==========
+
+// 权限类型
+const PERMISSIONS = ['deposit', 'withdrawReview', 'productManage']
+
+// 获取家庭权限配置（创建者始终拥有全部权限）
+async function getFamilyPermissions(familyId) {
+  const family = await db.collection('families').doc(familyId).get()
+  const f = family.data
+  const creatorId = f.creatorOpenId || f.parentOpenId
+  // 如果没有权限配置，初始化为仅创建者
+  const perms = f.permissions || {}
+  return {
+    deposit: perms.deposit || [creatorId],
+    withdrawReview: perms.withdrawReview || [creatorId],
+    productManage: perms.productManage || [creatorId],
+    creatorOpenId: creatorId
+  }
+}
+
+// 验证家长是否有指定权限（创建者始终有权限）
+async function verifyParentPermission(openid, permType) {
+  const user = await getUserWithFamily(openid)
+  if (user.role !== 'parent') throw new Error('仅家长可操作')
+
+  const family = await db.collection('families').doc(user.familyId).get()
+  const creatorId = family.data.creatorOpenId || family.data.parentOpenId
+
+  // 创建者始终有所有权限
+  if (openid === creatorId) return user
+
+  const perms = family.data.permissions || {}
+  const allowedList = perms[permType] || [creatorId]
+  if (!allowedList.includes(openid)) {
+    const permNames = { deposit: '存入', withdrawReview: '取现审批', productManage: '产品管理' }
+    throw new Error(`您没有「${permNames[permType] || permType}」权限，请联系家庭创建者授权`)
+  }
+  return user
+}
+
+// ========== 订阅消息通知 ==========
+
+// 待办事项提醒：小孩取现 → 通知家长
+// 关键词：thing1(事项名称), thing2(提醒内容), thing3(备注)
+const WITHDRAW_TEMPLATE_ID = '5It1FyqknG1-gC4hKelmrgbZeHFpqD5p8cbtZio-_s8'
+
+// 提现审核通知：家长审核完成 → 通知小孩
+// 关键词：amount1(申请金额), phrase2(审核结果)
+const REVIEW_RESULT_TEMPLATE_ID = 'GPmqW3cLc99XxTKVDX282D_-NwIYnQBOYJu2h1Y9Mwo'
+
+// 通知家长：小孩申请取现
+async function sendWithdrawNotification(familyId, childName, amount, remark) {
+  try {
+    const family = await db.collection('families').doc(familyId).get()
+
+    // 获取有审批权限的家长
+    const perms = family.data.permissions || {}
+    const creatorId = family.data.creatorOpenId || family.data.parentOpenId
+    const reviewers = perms.withdrawReview || [creatorId]
+    if (reviewers.length === 0) return
+
+    for (const parentId of reviewers) {
+      try {
+        await cloud.openapi.subscribeMessage.send({
+          touser: parentId,
+          templateId: WITHDRAW_TEMPLATE_ID,
+          page: '/pages/withdraw/review/index',
+          data: {
+            thing1: { value: '取现申请待审批' },
+            thing2: { value: `${childName || '小孩'}申请取现¥${round2(amount)}` },
+            thing3: { value: (remark || '取现申请').substring(0, 20) }
+          }
+        })
+        console.log(`[通知] 已发送取现通知给家长 ${parentId}`)
+      } catch (err) {
+        console.log(`[通知] 发送失败 ${parentId}:`, err.errCode, err.errMsg)
+      }
+    }
+  } catch (err) {
+    console.error('[通知] 发送取现通知异常:', err)
+  }
+}
+
+// 通知小孩：审核结果
+async function sendReviewResultNotification(childOpenId, amount, approved) {
+  try {
+    await cloud.openapi.subscribeMessage.send({
+      touser: childOpenId,
+      templateId: REVIEW_RESULT_TEMPLATE_ID,
+      page: '/pages/withdraw/apply/index',
+      data: {
+        amount1: { value: `${round2(amount)}元` },
+        phrase2: { value: approved ? '已通过' : '已拒绝' }
+      }
+    })
+    console.log(`[通知] 已发送审核结果通知给小孩 ${childOpenId}`)
+  } catch (err) {
+    console.log(`[通知] 发送审核结果失败:`, err.errCode, err.errMsg)
+  }
 }
 
 // 自动生成产品说明举例
@@ -256,6 +362,11 @@ async function createFamily(openid, data) {
       parentOpenIds: [openid],
       childOpenIds: [],
       baseRate: 2.0, // 默认账户基础年化利率
+      permissions: {
+        deposit: [openid],
+        withdrawReview: [openid],
+        productManage: [openid]
+      },
       createdAt: now
     }
   })
@@ -307,13 +418,20 @@ async function getFamily(openid) {
 
   const family = await db.collection('families').doc(user.data[0].familyId).get()
   const familyData = family.data
-  familyData.isCreator = (familyData.creatorOpenId === openid)
+  const creatorId = familyData.creatorOpenId || familyData.parentOpenId
+  familyData.isCreator = (creatorId === openid)
   if (!familyData.creatorOpenId && familyData.parentOpenId) {
     familyData.creatorOpenId = familyData.parentOpenId
-    familyData.isCreator = (familyData.parentOpenId === openid)
   }
   if (!familyData.parentOpenIds && familyData.parentOpenId) {
     familyData.parentOpenIds = [familyData.parentOpenId]
+  }
+  // 补充当前用户的权限信息
+  const perms = familyData.permissions || {}
+  familyData.myPermissions = {
+    deposit: familyData.isCreator || (perms.deposit || []).includes(openid),
+    withdrawReview: familyData.isCreator || (perms.withdrawReview || []).includes(openid),
+    productManage: familyData.isCreator || (perms.productManage || []).includes(openid)
   }
   return { code: 0, data: familyData }
 }
@@ -370,7 +488,7 @@ async function depositToAccount(openid, data) {
     return { code: -1, msg: '请填写备注' }
   }
 
-  const user = await verifyParent(openid)
+  const user = await verifyParentPermission(openid, 'deposit')
 
   // 验证小孩在同一家庭
   const child = await db.collection('users').where({ _openid: childOpenId }).get()
@@ -451,7 +569,7 @@ async function createProduct(openid, data) {
     return { code: -1, msg: '定期产品请设置投资天数' }
   }
 
-  const user = await verifyParent(openid)
+  const user = await verifyParentPermission(openid, 'productManage')
   const now = new Date()
   const actualRate = round2(rate)
   const actualTermDays = type === 'fixed' ? parseInt(termDays) : 0
@@ -499,7 +617,7 @@ async function updateProduct(openid, data) {
   const { productId, ...updates } = data
   if (!productId) return { code: -1, msg: '产品ID不能为空' }
 
-  const user = await verifyParent(openid)
+  const user = await verifyParentPermission(openid, 'productManage')
 
   const product = await db.collection('products').doc(productId).get()
   if (!product.data || product.data.familyId !== user.familyId) {
@@ -781,6 +899,9 @@ async function applyWithdraw(openid, data) {
     childName: user.nickName
   })
 
+  // 异步通知有审批权限的家长（不阻塞主流程）
+  sendWithdrawNotification(user.familyId, user.nickName, amount, remark.trim()).catch(() => {})
+
   return { code: 0, msg: '取现申请已提交，等待家长审批' }
 }
 
@@ -790,7 +911,7 @@ async function reviewWithdraw(openid, data) {
     return { code: -1, msg: '参数无效' }
   }
 
-  const user = await verifyParent(openid)
+  const user = await verifyParentPermission(openid, 'withdrawReview')
   const tx = await db.collection('transactions').doc(transactionId).get()
   if (!tx.data || tx.data.familyId !== user.familyId) {
     return { code: -1, msg: '记录不存在' }
@@ -837,6 +958,9 @@ async function reviewWithdraw(openid, data) {
       updatedAt: now
     }
   })
+
+  // 异步通知小孩审核结果
+  sendReviewResultNotification(tx.data.childOpenId, tx.data.amount, action === 'approve').catch(() => {})
 
   return { code: 0, msg: action === 'approve' ? '已通过取现申请' : '已拒绝取现申请' }
 }
@@ -1123,4 +1247,103 @@ async function getProductLogs(openid, data) {
     .get()
 
   return { code: 0, data: res.data }
+}
+
+// ========== 权限管理 ==========
+
+// 获取权限配置（含各家长详情）
+async function getPermissions(openid) {
+  const user = await verifyParent(openid)
+  const family = await db.collection('families').doc(user.familyId).get()
+  const creatorId = family.data.creatorOpenId || family.data.parentOpenId
+
+  // 获取所有家长
+  const parents = await db.collection('users').where({
+    familyId: user.familyId, role: 'parent'
+  }).get()
+
+  const perms = family.data.permissions || {}
+  const depositList = perms.deposit || [creatorId]
+  const withdrawReviewList = perms.withdrawReview || [creatorId]
+  const productManageList = perms.productManage || [creatorId]
+
+  const parentList = parents.data.map(p => ({
+    openid: p._openid,
+    nickName: p.nickName,
+    parentTitle: p.parentTitle || '家长',
+    avatarUrl: p.avatarUrl || '',
+    isCreator: p._openid === creatorId,
+    permissions: {
+      deposit: p._openid === creatorId || depositList.includes(p._openid),
+      withdrawReview: p._openid === creatorId || withdrawReviewList.includes(p._openid),
+      productManage: p._openid === creatorId || productManageList.includes(p._openid)
+    }
+  }))
+
+  return { code: 0, data: { parents: parentList, isCreator: openid === creatorId } }
+}
+
+// 创建者修改其他家长权限
+async function updatePermissions(openid, data) {
+  const { targetOpenId, permType, enabled } = data
+  if (!targetOpenId || !permType || !PERMISSIONS.includes(permType)) {
+    return { code: -1, msg: '参数无效' }
+  }
+
+  const user = await verifyParent(openid)
+  const family = await db.collection('families').doc(user.familyId).get()
+  const creatorId = family.data.creatorOpenId || family.data.parentOpenId
+
+  if (openid !== creatorId) {
+    return { code: -1, msg: '仅家庭创建者可管理权限' }
+  }
+  if (targetOpenId === creatorId) {
+    return { code: -1, msg: '创建者始终拥有全部权限' }
+  }
+
+  // 验证目标是同家庭的家长
+  const target = await db.collection('users').where({ _openid: targetOpenId }).get()
+  if (target.data.length === 0 || target.data[0].familyId !== user.familyId || target.data[0].role !== 'parent') {
+    return { code: -1, msg: '目标用户不是家庭内的家长' }
+  }
+
+  const perms = family.data.permissions || {}
+  let list = perms[permType] || [creatorId]
+
+  if (enabled) {
+    if (!list.includes(targetOpenId)) list.push(targetOpenId)
+  } else {
+    list = list.filter(id => id !== targetOpenId)
+  }
+
+  // 确保创建者始终在列表中
+  if (!list.includes(creatorId)) list.push(creatorId)
+
+  const updateObj = {}
+  updateObj[`permissions.${permType}`] = list
+
+  await db.collection('families').doc(user.familyId).update({ data: updateObj })
+
+  const permNames = { deposit: '存入', withdrawReview: '取现审批', productManage: '产品管理' }
+  const targetName = target.data[0].nickName || '家长'
+  return {
+    code: 0,
+    msg: `已${enabled ? '授权' : '取消'}${targetName}的「${permNames[permType]}」权限`
+  }
+}
+
+// 获取订阅消息模板ID（前端据此请求用户授权）
+async function requestSubscribe(openid, data) {
+  const user = await db.collection('users').where({ _openid: openid }).get()
+  const role = user.data.length > 0 ? user.data[0].role : ''
+
+  // 家长需要：取现申请通知
+  // 小孩需要：审核结果通知
+  const templateIds = []
+  if (role === 'parent') {
+    templateIds.push(WITHDRAW_TEMPLATE_ID)
+  } else if (role === 'child') {
+    templateIds.push(REVIEW_RESULT_TEMPLATE_ID)
+  }
+  return { code: 0, msg: 'ok', data: { templateIds } }
 }
