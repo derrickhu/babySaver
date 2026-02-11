@@ -1,7 +1,7 @@
 // 小孩存钱宝 - 应用入口
 App({
   globalData: {
-    env: '', // 请填入云环境 ID
+    env: 'cloud1-1gl9y1l7f00779ab', // 请填入云环境 ID
     userInfo: null,
     isLoggedIn: false
   },
