@@ -1191,7 +1191,7 @@ async function getPendingCount(openid) {
 // ========== 账单相关 ==========
 
 async function getTransactions(openid, data) {
-  const { childOpenId, type, page = 1, pageSize = 20 } = data
+  const { childOpenId, type, tag, startDate, endDate, page = 1, pageSize = 20 } = data
   const user = await getUserWithFamily(openid)
 
   const query = { familyId: user.familyId }
@@ -1204,6 +1204,20 @@ async function getTransactions(openid, data) {
   }
 
   if (type) query.type = type
+  if (tag) query.tag = tag
+
+  // 时间范围筛选
+  if (startDate || endDate) {
+    if (startDate && endDate) {
+      query.createdAt = _.gte(new Date(startDate + 'T00:00:00')).and(_.lte(new Date(endDate + 'T23:59:59')))
+    } else if (startDate) {
+      query.createdAt = _.gte(new Date(startDate + 'T00:00:00'))
+    } else {
+      query.createdAt = _.lte(new Date(endDate + 'T23:59:59'))
+    }
+  }
+
+  console.log('[getTransactions] 查询条件:', JSON.stringify({ type, tag, startDate, endDate, page }))
 
   const res = await db.collection('transactions')
     .where(query)
@@ -1227,7 +1241,39 @@ async function getTransactions(openid, data) {
     childName: t.childName || (childMap[t.childOpenId] || {}).nickName || ''
   }))
 
-  return { code: 0, data: txList }
+  // 汇总统计：使用相同的筛选条件查询所有数据汇总（不分页）
+  // 为避免性能问题，汇总仅在第一页请求时计算
+  let summary = null
+  if (page === 1) {
+    try {
+      // 查询全部匹配的记录用于汇总（最多 1000 条）
+      const allRes = await db.collection('transactions')
+        .where(query)
+        .orderBy('createdAt', 'desc')
+        .limit(1000)
+        .get()
+      let totalIncome = 0
+      let totalExpense = 0
+      let txCount = allRes.data.length
+      for (const t of allRes.data) {
+        const amt = t.amount || 0
+        if (['deposit', 'redeem'].includes(t.type)) {
+          totalIncome += amt
+        } else {
+          totalExpense += amt
+        }
+      }
+      summary = {
+        totalIncome: round2(totalIncome),
+        totalExpense: round2(totalExpense),
+        txCount
+      }
+    } catch (e) {
+      console.error('汇总计算失败:', e)
+    }
+  }
+
+  return { code: 0, data: txList, summary }
 }
 
 // ========== 收益计算 ==========

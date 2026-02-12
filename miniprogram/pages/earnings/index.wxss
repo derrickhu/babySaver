@@ -5,47 +5,167 @@
   padding-bottom: 120rpx;
 }
 
-/* 小孩筛选 */
-.child-filter {
-  padding: 20rpx 24rpx 0;
-}
-.child-filter-btn {
-  display: inline-flex;
-  align-items: center;
-  padding: 12rpx 24rpx;
+/* ========== 筛选区 ========== */
+.filter-section {
   background: #fff;
-  border-radius: 32rpx;
-  font-size: 26rpx;
-  color: #333;
-}
-.filter-arrow {
-  font-size: 20rpx;
-  color: #999;
-  margin-left: 8rpx;
+  padding: 16rpx 0 12rpx;
+  margin-bottom: 12rpx;
 }
 
-/* 类型过滤 */
-.filter-bar {
+/* 通用行 */
+.filter-row {
   display: flex;
-  padding: 20rpx 24rpx;
-  gap: 16rpx;
-  overflow-x: auto;
+  align-items: center;
+  padding: 6rpx 24rpx;
 }
-.filter-item {
+
+/* 小孩选择按钮 */
+.child-filter-btn {
+  display: flex;
+  align-items: center;
+  padding: 0 20rpx;
+  height: 56rpx;
+  background: #f5f6fa;
+  border-radius: 28rpx;
+  font-size: 24rpx;
+  color: #333;
   flex-shrink: 0;
-  padding: 10rpx 28rpx;
-  border-radius: 32rpx;
-  font-size: 26rpx;
-  color: #666;
-  background: #fff;
+  margin-right: 12rpx;
 }
-.filter-item.active {
+.filter-arrow {
+  font-size: 16rpx;
+  color: #bbb;
+  margin-left: 4rpx;
+}
+
+/* ========== 统一胶囊按钮 ========== */
+.pill-group {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 12rpx;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.pill-group::-webkit-scrollbar { display: none; }
+
+.pill {
+  flex-shrink: 0;
+  height: 56rpx;
+  line-height: 56rpx;
+  padding: 0 28rpx;
+  border-radius: 28rpx;
+  font-size: 24rpx;
+  color: #666;
+  background: #f5f6fa;
+  text-align: center;
+  white-space: nowrap;
+  transition: all 0.15s;
+}
+.pill:active {
+  opacity: 0.7;
+}
+.pill-on {
   background: #4a7cf7;
   color: #fff;
   font-weight: 500;
 }
 
-/* 账单列表 */
+/* 标签行的小号胶囊 */
+.pill-sm {
+  height: 48rpx;
+  line-height: 48rpx;
+  padding: 0 22rpx;
+  font-size: 22rpx;
+  border-radius: 24rpx;
+}
+
+/* ========== 标签分区 ========== */
+.tag-section {
+  display: flex;
+  align-items: center;
+  padding: 6rpx 24rpx;
+}
+.tag-section-label {
+  font-size: 22rpx;
+  color: #999;
+  flex-shrink: 0;
+  margin-right: 12rpx;
+}
+.tag-scroll {
+  flex: 1;
+  white-space: nowrap;
+  display: flex;
+  gap: 10rpx;
+}
+.tag-scroll::-webkit-scrollbar { display: none; }
+
+/* ========== 自定义时间 ========== */
+.custom-time-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8rpx 24rpx 12rpx;
+  gap: 12rpx;
+}
+.date-btn {
+  height: 56rpx;
+  line-height: 56rpx;
+  padding: 0 28rpx;
+  background: #f5f6fa;
+  border-radius: 28rpx;
+  font-size: 24rpx;
+  color: #333;
+  text-align: center;
+  min-width: 200rpx;
+}
+.date-sep {
+  font-size: 24rpx;
+  color: #ccc;
+}
+
+/* ========== 汇总卡片 ========== */
+.summary-card {
+  display: flex;
+  align-items: center;
+  background: #fff;
+  margin: 0 24rpx 12rpx;
+  border-radius: 16rpx;
+  padding: 20rpx 16rpx;
+  position: relative;
+}
+.summary-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.summary-num {
+  font-size: 28rpx;
+  font-weight: 700;
+  font-family: 'DIN', 'Helvetica Neue', sans-serif;
+  margin-bottom: 4rpx;
+}
+.summary-num.income { color: #07c160; }
+.summary-num.expense { color: #ff4d4f; }
+.summary-num.net { color: #4a7cf7; }
+.summary-label {
+  font-size: 20rpx;
+  color: #999;
+}
+.summary-line {
+  width: 1rpx;
+  height: 44rpx;
+  background: #eee;
+}
+.summary-count {
+  position: absolute;
+  right: 20rpx;
+  top: 10rpx;
+  font-size: 18rpx;
+  color: #ccc;
+}
+
+/* ========== 账单列表 ========== */
 .tx-list {
   padding: 0 24rpx;
 }
@@ -55,20 +175,20 @@
   padding: 24rpx;
   background: #fff;
   border-radius: 12rpx;
-  margin-bottom: 12rpx;
+  margin-bottom: 10rpx;
 }
 .tx-icon-wrap {
-  width: 64rpx;
-  height: 64rpx;
-  border-radius: 16rpx;
+  width: 60rpx;
+  height: 60rpx;
+  border-radius: 14rpx;
   background: #f5f7ff;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-right: 20rpx;
+  margin-right: 18rpx;
   flex-shrink: 0;
 }
-.tx-icon { font-size: 32rpx; }
+.tx-icon { font-size: 30rpx; }
 .tx-info {
   flex: 1;
   display: flex;
@@ -78,7 +198,7 @@
 .tx-type-row {
   display: flex;
   align-items: center;
-  gap: 10rpx;
+  gap: 8rpx;
 }
 .tx-type {
   font-size: 28rpx;
@@ -88,7 +208,7 @@
 .tx-tag {
   font-size: 20rpx;
   color: #4a7cf7;
-  background: rgba(74, 124, 247, 0.1);
+  background: rgba(74, 124, 247, 0.08);
   padding: 2rpx 12rpx;
   border-radius: 6rpx;
   white-space: nowrap;
@@ -133,7 +253,7 @@
 .tx-status-approved { color: #07c160; }
 .tx-status-rejected { color: #ff4d4f; }
 
-/* 空/加载 */
+/* ========== 空/加载 ========== */
 .empty-state {
   display: flex;
   flex-direction: column;
@@ -143,12 +263,14 @@
 .empty-icon { font-size: 80rpx; margin-bottom: 24rpx; }
 .empty-text { font-size: 28rpx; color: #999; }
 .loading-wrap {
-  display: flex; justify-content: center; padding-top: 200rpx;
+  display: flex;
+  justify-content: center;
+  padding-top: 200rpx;
 }
 .loading-text { font-size: 26rpx; color: #999; }
 .load-more {
   text-align: center;
   padding: 24rpx;
-  font-size: 24rpx;
-  color: #bbb;
+  font-size: 22rpx;
+  color: #ccc;
 }
