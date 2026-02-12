@@ -85,16 +85,8 @@ Page({
     if (amountNum > maxAmount) return api.showError(`最多可取 ¥${maxAmount.toFixed(2)}`)
     if (!remark || !remark.trim()) return api.showError('请填写备注')
 
-    // 在用户点击时请求订阅「审核结果通知」（一次授权一次推送）
-    try {
-      const subRes = await api.callCloud('requestSubscribe', {})
-      const tmplIds = subRes.data && subRes.data.templateIds
-      if (tmplIds && tmplIds.length > 0) {
-        await new Promise(resolve => {
-          wx.requestSubscribeMessage({ tmplIds, complete: resolve })
-        })
-      }
-    } catch (e) {}
+    // 必须在 tap 同步调用栈中第一时间调用，不能有 await 在前面！
+    await api.requestSubscribe([api.TMPL_REVIEW])
 
     const confirmRes = await new Promise(resolve => {
       wx.showModal({

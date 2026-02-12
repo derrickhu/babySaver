@@ -126,6 +126,27 @@ Page({
     }
   },
 
+  // 开启消息通知（必须在 tap 事件中同步调用）
+  async onEnableNotify() {
+    // 根据角色订阅不同模板
+    const tmplIds = []
+    if (this.data.isParent) {
+      tmplIds.push(api.TMPL_WITHDRAW)  // 取现申请通知
+      tmplIds.push(api.TMPL_MEMBER)    // 成员变动通知
+    } else {
+      tmplIds.push(api.TMPL_REVIEW)    // 审核结果通知
+    }
+    // 微信限制单次最多 3 个模板
+    const res = await api.requestSubscribe(tmplIds.slice(0, 3))
+    // 检查结果告知用户
+    const accepted = Object.values(res).filter(v => v === 'accept').length
+    if (accepted > 0) {
+      api.showToast('通知已开启')
+    } else {
+      api.showToast('请在弹窗中点击"允许"')
+    }
+  },
+
   // 成员头像加载失败时降级到 emoji
   onMemberAvatarError(e) {
     const idx = e.currentTarget.dataset.index

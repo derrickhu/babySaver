@@ -198,6 +198,16 @@ async function verifyParentPermission(openid, permType) {
 }
 
 // ========== 订阅消息通知 ==========
+//
+// 重要说明：
+// 1. 所有模板 ID 必须在「微信公众平台 → 订阅消息 → 我的模板」中选用后获得
+// 2. 微信订阅消息是一次性的：用户每点一次"允许"只能收到一条通知
+// 3. 发送失败常见原因：
+//    - 43101: 用户未订阅（需在前端 wx.requestSubscribeMessage 授权）
+//    - 47003: 模板不存在（需在后台添加模板并替换 ID）
+//    - 41030: page 路径不存在
+//
+// 请将以下模板 ID 替换为你在微信公众平台后台实际申请的 ID
 
 // 待办事项提醒：小孩取现 → 通知家长
 // 关键词：thing1(事项名称), thing2(提醒内容), thing3(备注)
@@ -207,33 +217,46 @@ const WITHDRAW_TEMPLATE_ID = '5It1FyqknG1-gC4hKelmrgbZeHFpqD5p8cbtZio-_s8'
 // 关键词：amount1(申请金额), phrase2(审核结果)
 const REVIEW_RESULT_TEMPLATE_ID = 'GPmqW3cLc99XxTKVDX282D_-NwIYnQBOYJu2h1Y9Mwo'
 
+// 成员变动通知：成员加入/离开 → 通知创建者
+// 请在微信公众平台选用"成员变动提醒"或类似模板，关键词：thing1(变动内容), thing3(备注)
+// 如果没有合适模板，可选用"待办事项提醒"复用 WITHDRAW_TEMPLATE_ID
+const MEMBER_CHANGE_TEMPLATE_ID = '5It1FyqknG1-gC4hKelmrgbZeHFpqD5p8cbtZio-_s8'
+
+// 安全发送订阅消息（统一错误处理和日志）
+async function safeSendSubscribeMessage(touser, templateId, page, data, tag) {
+  try {
+    await cloud.openapi.subscribeMessage.send({ touser, templateId, page, data })
+    console.log(`[通知] ${tag} 发送成功 → ${touser}`)
+    return true
+  } catch (err) {
+    const code = err.errCode || ''
+    const msg = err.errMsg || ''
+    if (code === 43101) {
+      console.log(`[通知] ${tag} 用户未订阅 ${touser}（需前端授权）`)
+    } else if (code === 47003) {
+      console.error(`[通知] ${tag} 模板不存在 templateId=${templateId}，请到微信公众平台检查`)
+    } else {
+      console.error(`[通知] ${tag} 发送失败 ${touser}: code=${code} msg=${msg}`)
+    }
+    return false
+  }
+}
+
 // 通知家长：小孩申请取现
 async function sendWithdrawNotification(familyId, childName, amount, remark) {
   try {
     const family = await db.collection('families').doc(familyId).get()
-
-    // 获取有审批权限的家长
     const perms = family.data.permissions || {}
     const creatorId = family.data.creatorOpenId || family.data.parentOpenId
     const reviewers = perms.withdrawReview || [creatorId]
     if (reviewers.length === 0) return
 
     for (const parentId of reviewers) {
-      try {
-        await cloud.openapi.subscribeMessage.send({
-          touser: parentId,
-          templateId: WITHDRAW_TEMPLATE_ID,
-          page: '/pages/withdraw/review/index',
-          data: {
-            thing1: { value: '取现申请待审批' },
-            thing2: { value: `${childName || '小孩'}申请取现¥${round2(amount)}` },
-            thing3: { value: (remark || '取现申请').substring(0, 20) }
-          }
-        })
-        console.log(`[通知] 已发送取现通知给家长 ${parentId}`)
-      } catch (err) {
-        console.log(`[通知] 发送失败 ${parentId}:`, err.errCode, err.errMsg)
-      }
+      await safeSendSubscribeMessage(parentId, WITHDRAW_TEMPLATE_ID, '/pages/withdraw/review/index', {
+        thing1: { value: '取现申请待审批' },
+        thing2: { value: `${childName || '小孩'}申请取现¥${round2(amount)}` },
+        thing3: { value: (remark || '取现申请').substring(0, 20) }
+      }, '取现通知')
     }
   } catch (err) {
     console.error('[通知] 发送取现通知异常:', err)
@@ -242,19 +265,28 @@ async function sendWithdrawNotification(familyId, childName, amount, remark) {
 
 // 通知小孩：审核结果
 async function sendReviewResultNotification(childOpenId, amount, approved) {
+  await safeSendSubscribeMessage(childOpenId, REVIEW_RESULT_TEMPLATE_ID, '/pages/withdraw/apply/index', {
+    amount1: { value: `${round2(amount)}元` },
+    phrase2: { value: approved ? '已通过' : '已拒绝' }
+  }, '审核结果')
+}
+
+// 通知创建者：成员加入或离开家庭
+async function sendMemberChangeNotification(familyId, memberName, action) {
   try {
-    await cloud.openapi.subscribeMessage.send({
-      touser: childOpenId,
-      templateId: REVIEW_RESULT_TEMPLATE_ID,
-      page: '/pages/withdraw/apply/index',
-      data: {
-        amount1: { value: `${round2(amount)}元` },
-        phrase2: { value: approved ? '已通过' : '已拒绝' }
-      }
-    })
-    console.log(`[通知] 已发送审核结果通知给小孩 ${childOpenId}`)
+    const family = await db.collection('families').doc(familyId).get()
+    if (!family.data) return
+    const creatorId = family.data.creatorOpenId || family.data.parentOpenId
+    if (!creatorId) return
+
+    const actionText = action === 'join' ? '加入' : '离开'
+    await safeSendSubscribeMessage(creatorId, MEMBER_CHANGE_TEMPLATE_ID, '/pages/family/index', {
+      thing1: { value: `${memberName}${actionText}了家庭` },
+      thing2: { value: `家庭成员${actionText}通知` },
+      thing3: { value: `${memberName}已${actionText}「${family.data.familyName}」` }
+    }, `成员${actionText}`)
   } catch (err) {
-    console.log(`[通知] 发送审核结果失败:`, err.errCode, err.errMsg)
+    console.error('[通知] 发送成员变动通知异常:', err)
   }
 }
 
@@ -436,6 +468,11 @@ async function joinFamily(openid, data) {
   await db.collection('users').where({ _openid: openid }).update({
     data: { familyId, updatedAt: now }
   })
+
+  // 异步通知创建者有新成员加入
+  const memberName = user.data[0].nickName || '新成员'
+  sendMemberChangeNotification(familyId, memberName, 'join').catch(() => {})
+
   return { code: 0, msg: '加入家庭成功' }
 }
 
@@ -609,6 +646,10 @@ async function leaveFamily(openid) {
   await db.collection('users').where({ _openid: openid }).update({
     data: { familyId: '', updatedAt: now }
   })
+
+  // 异步通知创建者有成员离开
+  const memberName = user.data[0].nickName || '成员'
+  sendMemberChangeNotification(familyId, memberName, 'leave').catch(() => {})
 
   return { code: 0, msg: '已退出家庭' }
 }
@@ -1513,17 +1554,33 @@ async function updatePermissions(openid, data) {
 }
 
 // 获取订阅消息模板ID（前端据此请求用户授权）
+// scene 参数区分场景: 'withdraw'(取现相关), 'member'(成员变动), 默认根据角色返回
 async function requestSubscribe(openid, data) {
   const user = await db.collection('users').where({ _openid: openid }).get()
   const role = user.data.length > 0 ? user.data[0].role : ''
+  const scene = data.scene || ''
 
-  // 家长需要：取现申请通知
-  // 小孩需要：审核结果通知
   const templateIds = []
-  if (role === 'parent') {
-    templateIds.push(WITHDRAW_TEMPLATE_ID)
-  } else if (role === 'child') {
-    templateIds.push(REVIEW_RESULT_TEMPLATE_ID)
+
+  if (scene === 'member') {
+    // 家庭创建者订阅成员变动通知
+    templateIds.push(MEMBER_CHANGE_TEMPLATE_ID)
+  } else if (scene === 'withdraw') {
+    // 根据角色返回取现相关模板
+    if (role === 'parent') {
+      templateIds.push(WITHDRAW_TEMPLATE_ID)
+    } else if (role === 'child') {
+      templateIds.push(REVIEW_RESULT_TEMPLATE_ID)
+    }
+  } else {
+    // 默认：根据角色返回所有需要的模板
+    if (role === 'parent') {
+      templateIds.push(WITHDRAW_TEMPLATE_ID)
+      templateIds.push(MEMBER_CHANGE_TEMPLATE_ID)
+    } else if (role === 'child') {
+      templateIds.push(REVIEW_RESULT_TEMPLATE_ID)
+    }
   }
+
   return { code: 0, msg: 'ok', data: { templateIds } }
 }

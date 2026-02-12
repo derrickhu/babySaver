@@ -110,6 +110,37 @@ async function resolveUserAvatar(userInfo) {
   return { ...userInfo, avatarUrl: urlMap[userInfo.avatarUrl] || '' }
 }
 
+// ========== 订阅消息（模板 ID 与云函数保持一致） ==========
+// 重要：这些 ID 必须与云函数中的模板 ID 完全一致
+const TMPL_WITHDRAW = '5It1FyqknG1-gC4hKelmrgbZeHFpqD5p8cbtZio-_s8'   // 取现申请通知（家长收）
+const TMPL_REVIEW   = 'GPmqW3cLc99XxTKVDX282D_-NwIYnQBOYJu2h1Y9Mwo'   // 审核结果通知（小孩收）
+const TMPL_MEMBER   = '5It1FyqknG1-gC4hKelmrgbZeHFpqD5p8cbtZio-_s8'   // 成员变动通知（创建者收）
+
+/**
+ * 请求订阅消息授权（必须在 tap 事件的同步调用栈中直接调用）
+ * 不能在 await 之后调用，否则真机不弹窗！
+ * @param {string[]} tmplIds - 模板 ID 数组
+ * @returns {Promise<Object>} 各模板的授权结果
+ */
+function requestSubscribe(tmplIds) {
+  return new Promise(resolve => {
+    if (!tmplIds || tmplIds.length === 0) {
+      return resolve({})
+    }
+    wx.requestSubscribeMessage({
+      tmplIds,
+      success: (res) => {
+        console.log('订阅授权结果:', res)
+        resolve(res)
+      },
+      fail: (err) => {
+        console.warn('订阅授权失败:', err)
+        resolve({})
+      }
+    })
+  })
+}
+
 module.exports = {
   callCloud,
   showLoading,
@@ -118,5 +149,9 @@ module.exports = {
   showError,
   resolveCloudFileUrls,
   resolveAvatars,
-  resolveUserAvatar
+  resolveUserAvatar,
+  requestSubscribe,
+  TMPL_WITHDRAW,
+  TMPL_REVIEW,
+  TMPL_MEMBER
 }

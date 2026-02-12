@@ -60,6 +60,14 @@
       <text class="perm-entry-arrow">›</text>
     </view>
 
+    <!-- 开启消息通知（tap 事件中请求订阅） -->
+    <view class="perm-entry" bindtap="onEnableNotify">
+      <text class="perm-entry-icon">🔔</text>
+      <text class="perm-entry-text">消息通知</text>
+      <text class="perm-entry-desc">开启后可接收成员变动等通知</text>
+      <text class="perm-entry-arrow">›</text>
+    </view>
+
     <!-- 创建者：解散家庭 -->
     <view class="disband-entry" wx:if="{{isCreator}}" bindtap="onDisbandFamily">
       <text class="disband-icon">⚠️</text>
