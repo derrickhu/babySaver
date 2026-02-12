@@ -33,60 +33,45 @@
       </view>
     </view>
 
-    <!-- 家长无小孩 - 引导邀请 -->
-    <view wx:if="{{isParent && children.length === 0}}" class="onboard-section">
-      <!-- 顶部欢迎卡 -->
-      <view class="onboard-welcome">
-        <view class="onboard-welcome-bg"></view>
-        <view class="onboard-welcome-content">
-          <text class="onboard-hello">👋 你好，{{userInfo.nickName}}</text>
-          <text class="onboard-title">家庭创建成功</text>
-          <text class="onboard-subtitle">接下来邀请小孩加入，即可开始理财之旅</text>
-        </view>
-      </view>
-
+    <!-- 家长无小孩 -->
+    <view wx:if="{{isParent && children.length === 0}}" class="no-child-section">
       <!-- 邀请码卡片 -->
-      <view class="onboard-invite-card" wx:if="{{inviteCode}}">
-        <view class="onboard-invite-header">
-          <text class="onboard-invite-title">家庭邀请码</text>
-          <text class="onboard-invite-copy" bindtap="onCopyInviteCode">复制</text>
+      <view class="no-child-card" wx:if="{{inviteCode}}">
+        <view class="no-child-top">
+          <text class="no-child-label">家庭邀请码</text>
+          <text class="no-child-code">{{inviteCode}}</text>
         </view>
-        <text class="onboard-invite-code">{{inviteCode}}</text>
-        <text class="onboard-invite-hint">小孩在小程序中输入此邀请码即可加入</text>
+        <view class="no-child-actions">
+          <text class="no-child-btn copy" bindtap="onCopyInviteCode">复制</text>
+          <button class="no-child-btn share" open-type="share">邀请</button>
+        </view>
+        <text class="no-child-hint">小孩打开小程序输入邀请码即可加入</text>
       </view>
 
-      <!-- 邀请到微信群 -->
-      <button class="onboard-share-btn" open-type="share">
-        <text class="onboard-share-icon">💬</text>
-        <view class="onboard-share-info">
-          <text class="onboard-share-title">邀请到微信群</text>
-          <text class="onboard-share-desc">发到家庭群，成员打开即可加入</text>
-        </view>
-        <text class="onboard-share-arrow">›</text>
-      </button>
-
-      <!-- 使用指南 -->
-      <view class="onboard-steps">
-        <text class="onboard-steps-title">如何开始使用？</text>
-        <view class="onboard-step-item">
-          <view class="step-num">1</view>
-          <view class="step-content">
-            <text class="step-title">邀请小孩加入家庭</text>
-            <text class="step-desc">通过微信群或邀请码，让小孩加入您的家庭</text>
+      <!-- 新手引导 -->
+      <view class="guide-card">
+        <text class="guide-title">3 步开始使用</text>
+        <view class="guide-list">
+          <view class="guide-item">
+            <view class="guide-icon">①</view>
+            <view class="guide-text">
+              <text class="guide-main">邀请小孩加入</text>
+              <text class="guide-sub">复制邀请码或直接分享到微信群</text>
+            </view>
           </view>
-        </view>
-        <view class="onboard-step-item">
-          <view class="step-num">2</view>
-          <view class="step-content">
-            <text class="step-title">为小孩存入资金</text>
-            <text class="step-desc">设置存款金额，系统将自动计算每日收益</text>
+          <view class="guide-item">
+            <view class="guide-icon">②</view>
+            <view class="guide-text">
+              <text class="guide-main">设置存款与利率</text>
+              <text class="guide-sub">为小孩存入资金，系统自动按天计息</text>
+            </view>
           </view>
-        </view>
-        <view class="onboard-step-item">
-          <view class="step-num">3</view>
-          <view class="step-content">
-            <text class="step-title">小孩查看收益、学会理财</text>
-            <text class="step-desc">小孩可随时查看存款和收益，培养理财意识</text>
+          <view class="guide-item">
+            <view class="guide-icon">③</view>
+            <view class="guide-text">
+              <text class="guide-main">小孩查看收益</text>
+              <text class="guide-sub">随时查看本金、利息和收益趋势</text>
+            </view>
           </view>
         </view>
       </view>
