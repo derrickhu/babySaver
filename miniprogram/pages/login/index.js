@@ -78,7 +78,7 @@ Page({
     // 先展示选中的头像（本地临时）
     this.setData({ avatarUrl: tempPath })
 
-    // 上传到云存储，获取永久 fileID
+    // 上传到云存储，获取永久 fileID（临时路径仅本机可见，必须上传）
     api.showLoading('上传头像...')
     try {
       const cloudPath = `avatars/${Date.now()}_${Math.random().toString(36).slice(2)}.jpg`
@@ -90,7 +90,10 @@ Page({
     } catch (err) {
       console.error('头像上传失败:', err)
       api.showToast('头像上传失败，请重试')
-      this.setData({ avatarUrl: tempPath }) // 仍保留临时路径，注册时可能还在有效期内
+      // 上传失败时清空头像，不允许使用临时路径（其他设备无法显示）
+      this.setData({ avatarUrl: '' })
+      api.hideLoading()
+      return // 不进入 Step 2，要求用户重试
     }
     api.hideLoading()
 

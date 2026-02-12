@@ -15,6 +15,26 @@ Page({
     this.loadData()
   },
 
+  // 待审批列表头像加载失败
+  onPendingAvatarError(e) {
+    const idx = e.currentTarget.dataset.index
+    const list = this.data.pendingList.slice()
+    if (list[idx]) {
+      list[idx] = { ...list[idx], avatarError: true }
+      this.setData({ pendingList: list })
+    }
+  },
+
+  // 历史列表头像加载失败
+  onHistoryAvatarError(e) {
+    const idx = e.currentTarget.dataset.index
+    const list = this.data.historyList.slice()
+    if (list[idx]) {
+      list[idx] = { ...list[idx], avatarError: true }
+      this.setData({ historyList: list })
+    }
+  },
+
   onShow() {
     if (!this.data.loading) this.loadData()
   },
@@ -36,14 +56,13 @@ Page({
 
       const allTx = allRes.data || []
 
-      this.setData({
-        pendingList: allTx
-          .filter(t => t.status === 'pending')
-          .map(t => this.formatTx(t)),
-        historyList: allTx
-          .filter(t => t.status !== 'pending')
-          .map(t => this.formatTx(t))
-      })
+      let pendingList = allTx.filter(t => t.status === 'pending').map(t => this.formatTx(t))
+      let historyList = allTx.filter(t => t.status !== 'pending').map(t => this.formatTx(t))
+      // 将 cloud:// fileID 转为临时 HTTPS URL
+      pendingList = await api.resolveAvatars(pendingList, 'childAvatarUrl')
+      historyList = await api.resolveAvatars(historyList, 'childAvatarUrl')
+
+      this.setData({ pendingList, historyList })
     } catch (err) {
       console.error('加载失败:', err)
     } finally {

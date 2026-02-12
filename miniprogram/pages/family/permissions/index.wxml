@@ -13,7 +13,7 @@
     <view class="parent-card" wx:for="{{parents}}" wx:key="openid">
       <view class="parent-header">
         <view class="parent-avatar-wrap">
-          <image class="parent-avatar" wx:if="{{item.avatarUrl}}" src="{{item.avatarUrl}}" mode="aspectFill"></image>
+          <image class="parent-avatar" wx:if="{{item.avatarUrl && !item.avatarError}}" src="{{item.avatarUrl}}" mode="aspectFill" binderror="onParentAvatarError" data-index="{{index}}"></image>
           <text class="parent-avatar-text" wx:else>👤</text>
         </view>
         <view class="parent-info">

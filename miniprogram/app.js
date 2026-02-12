@@ -41,9 +41,24 @@ App({
       wx.cloud.callFunction({
         name: 'babySaver',
         data: { type: 'getUserInfo' }
-      }).then(res => {
+      }).then(async res => {
         const result = res.result
         if (result.code === 0 && result.data) {
+          // 将 cloud:// 头像转为临时 HTTPS URL，确保跨设备显示
+          const avatarUrl = result.data.avatarUrl
+          if (avatarUrl && avatarUrl.startsWith('cloud://')) {
+            try {
+              const urlRes = await wx.cloud.getTempFileURL({ fileList: [avatarUrl] })
+              const item = urlRes.fileList && urlRes.fileList[0]
+              if (item && item.status === 0 && item.tempFileURL) {
+                result.data.avatarUrl = item.tempFileURL
+              } else {
+                result.data.avatarUrl = ''
+              }
+            } catch (e) {
+              result.data.avatarUrl = ''
+            }
+          }
           this.globalData.userInfo = result.data
           this.globalData.isLoggedIn = true
           // 通知页面登录状态已更新

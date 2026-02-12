@@ -70,13 +70,14 @@ Page({
           })
         }
         if (membersRes.code === 0) {
-          this.setData({
-            members: membersRes.data.map(m => ({
-              ...m,
-              roleText: util.getMemberRoleText(m),
-              emoji: util.getMemberEmoji(m)
-            }))
-          })
+          let memberList = membersRes.data.map(m => ({
+            ...m,
+            roleText: util.getMemberRoleText(m),
+            emoji: util.getMemberEmoji(m)
+          }))
+          // 将 cloud:// fileID 转为临时 HTTPS URL，确保跨设备显示
+          memberList = await api.resolveAvatars(memberList)
+          this.setData({ members: memberList })
         }
       } catch (err) {
         console.error('加载家庭信息失败:', err)
@@ -122,6 +123,16 @@ Page({
       } else {
         api.showError(err.msg || '自动加入失败，请手动输入邀请码')
       }
+    }
+  },
+
+  // 成员头像加载失败时降级到 emoji
+  onMemberAvatarError(e) {
+    const idx = e.currentTarget.dataset.index
+    const members = this.data.members.slice()
+    if (members[idx]) {
+      members[idx] = { ...members[idx], avatarError: true }
+      this.setData({ members })
     }
   },
 

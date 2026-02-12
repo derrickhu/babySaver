@@ -32,7 +32,7 @@
     <view class="member-list card">
       <view class="member-item" wx:for="{{members}}" wx:key="_id">
         <view class="member-avatar-wrap">
-          <image class="member-avatar-img" wx:if="{{item.avatarUrl}}" src="{{item.avatarUrl}}" mode="aspectFill"></image>
+          <image class="member-avatar-img" wx:if="{{item.avatarUrl && !item.avatarError}}" src="{{item.avatarUrl}}" mode="aspectFill" binderror="onMemberAvatarError" data-index="{{index}}"></image>
           <text class="member-avatar-emoji" wx:else>{{item.emoji}}</text>
         </view>
         <view class="member-info">

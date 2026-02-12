@@ -18,6 +18,16 @@ Page({
     this.loadPermissions()
   },
 
+  // 家长头像加载失败时降级
+  onParentAvatarError(e) {
+    const idx = e.currentTarget.dataset.index
+    const parents = this.data.parents.slice()
+    if (parents[idx]) {
+      parents[idx] = { ...parents[idx], avatarError: true }
+      this.setData({ parents })
+    }
+  },
+
   onShow() {
     if (!this.data.loading) this.loadPermissions()
   },
@@ -26,8 +36,10 @@ Page({
     try {
       const res = await api.callCloud('getPermissions')
       if (res.code === 0 && res.data) {
+        // 将 cloud:// fileID 转为临时 HTTPS URL
+        const parents = await api.resolveAvatars(res.data.parents || [])
         this.setData({
-          parents: res.data.parents || [],
+          parents,
           isCreator: res.data.isCreator
         })
       }

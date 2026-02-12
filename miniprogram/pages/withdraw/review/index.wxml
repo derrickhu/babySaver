@@ -17,7 +17,7 @@
       <view class="review-header">
         <view class="review-child">
           <view class="child-avatar-wrap">
-            <image class="child-avatar-img" wx:if="{{item.childAvatarUrl}}" src="{{item.childAvatarUrl}}" mode="aspectFill"></image>
+            <image class="child-avatar-img" wx:if="{{item.childAvatarUrl && !item.avatarError}}" src="{{item.childAvatarUrl}}" mode="aspectFill" binderror="onPendingAvatarError" data-index="{{index}}"></image>
             <text class="child-avatar-emoji" wx:else>🧒</text>
           </view>
           <text class="child-name">{{item.childName}}</text>
@@ -67,7 +67,7 @@
       <view class="history-header">
         <view class="history-child">
           <view class="child-avatar-wrap small">
-            <image class="child-avatar-img" wx:if="{{item.childAvatarUrl}}" src="{{item.childAvatarUrl}}" mode="aspectFill"></image>
+            <image class="child-avatar-img" wx:if="{{item.childAvatarUrl && !item.avatarError}}" src="{{item.childAvatarUrl}}" mode="aspectFill" binderror="onHistoryAvatarError" data-index="{{index}}"></image>
             <text class="child-avatar-emoji" wx:else>🧒</text>
           </view>
           <text>{{item.childName}}</text>

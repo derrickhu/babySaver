@@ -42,7 +42,9 @@ Page({
     try {
       const userRes = await api.callCloud('getUserInfo')
       if (userRes.code === 0 && userRes.data) {
-        app.globalData.userInfo = userRes.data
+        // 将 cloud:// fileID 转为临时 HTTPS URL
+        const resolved = await api.resolveUserAvatar(userRes.data)
+        app.globalData.userInfo = resolved
       }
     } catch (e) {}
 
@@ -100,6 +102,11 @@ Page({
     }
 
     this.setData({ loading: false })
+  },
+
+  // 头像加载失败时降级
+  onAvatarLoadError() {
+    this.setData({ avatarError: true })
   },
 
   // 更换头像（上传云存储后更新）

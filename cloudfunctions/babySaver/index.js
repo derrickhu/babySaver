@@ -4,6 +4,13 @@ cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV })
 const db = cloud.database()
 const _ = db.command
 
+// 校验头像 URL 是否有效（仅 cloud:// 和 https:// 开头的可跨设备访问）
+function safeAvatarUrl(url) {
+  if (!url) return ''
+  if (url.startsWith('cloud://') || url.startsWith('https://')) return url
+  return '' // 过滤掉 http://tmp/ 、wxfile:// 等本地临时路径
+}
+
 // 路由分发
 exports.main = async (event, context) => {
   const { type, data = {} } = event
@@ -302,7 +309,7 @@ async function register(openid, data) {
   const now = new Date()
   const userData = {
     _openid: openid, nickName, role, familyId: '',
-    avatarUrl: avatarUrl || '', createdAt: now, updatedAt: now
+    avatarUrl: safeAvatarUrl(avatarUrl), createdAt: now, updatedAt: now
   }
   if (role === 'parent') userData.parentTitle = parentTitle
 
@@ -313,7 +320,9 @@ async function register(openid, data) {
 async function getUserInfo(openid) {
   const res = await db.collection('users').where({ _openid: openid }).get()
   if (res.data.length === 0) return { code: 1, msg: '用户未注册', data: null }
-  return { code: 0, data: res.data[0] }
+  const userData = res.data[0]
+  userData.avatarUrl = safeAvatarUrl(userData.avatarUrl)
+  return { code: 0, data: userData }
 }
 
 async function updateParentTitle(openid, data) {
@@ -335,12 +344,14 @@ async function updateParentTitle(openid, data) {
 async function updateAvatar(openid, data) {
   const { avatarUrl } = data
   if (!avatarUrl) return { code: -1, msg: '头像不能为空' }
+  const safeUrl = safeAvatarUrl(avatarUrl)
+  if (!safeUrl) return { code: -1, msg: '头像格式无效，请重新上传' }
 
   const user = await db.collection('users').where({ _openid: openid }).get()
   if (user.data.length === 0) return { code: -1, msg: '用户不存在' }
 
   await db.collection('users').where({ _openid: openid }).update({
-    data: { avatarUrl, updatedAt: new Date() }
+    data: { avatarUrl: safeUrl, updatedAt: new Date() }
   })
   return { code: 0, msg: '头像已更新' }
 }
@@ -461,7 +472,11 @@ async function getFamilyMembers(openid) {
   const members = await db.collection('users').where({ familyId: user.data[0].familyId }).get()
   const family = await db.collection('families').doc(user.data[0].familyId).get()
   const creatorOpenId = family.data.creatorOpenId || family.data.parentOpenId
-  const result = members.data.map(m => ({ ...m, isCreator: m._openid === creatorOpenId }))
+  const result = members.data.map(m => ({
+    ...m,
+    avatarUrl: safeAvatarUrl(m.avatarUrl),
+    isCreator: m._openid === creatorOpenId
+  }))
   return { code: 0, data: result }
 }
 
@@ -622,7 +637,7 @@ async function getChildAccounts(openid) {
     accounts.push({
       ...account,
       childName: child.nickName,
-      childAvatarUrl: child.avatarUrl || ''
+      childAvatarUrl: safeAvatarUrl(child.avatarUrl)
     })
   }
   return { code: 0, data: accounts }
@@ -1160,7 +1175,7 @@ async function getTransactions(openid, data) {
   if (childIds.length > 0) {
     const childUsers = await db.collection('users').where({ _openid: _.in(childIds) }).get()
     for (const c of childUsers.data) {
-      childMap[c._openid] = { avatarUrl: c.avatarUrl || '', nickName: c.nickName }
+      childMap[c._openid] = { avatarUrl: safeAvatarUrl(c.avatarUrl), nickName: c.nickName }
     }
   }
   const txList = res.data.map(t => ({
@@ -1436,7 +1451,7 @@ async function getPermissions(openid) {
     openid: p._openid,
     nickName: p.nickName,
     parentTitle: p.parentTitle || '家长',
-    avatarUrl: p.avatarUrl || '',
+    avatarUrl: safeAvatarUrl(p.avatarUrl),
     isCreator: p._openid === creatorId,
     permissions: {
       deposit: p._openid === creatorId || depositList.includes(p._openid),

@@ -4,7 +4,7 @@
   <view class="user-card" wx:if="{{userInfo}}">
     <button class="user-avatar-btn" open-type="chooseAvatar" bindchooseavatar="onChooseAvatar">
       <view class="user-avatar-wrap">
-        <image class="user-avatar-img" wx:if="{{userInfo.avatarUrl}}" src="{{userInfo.avatarUrl}}" mode="aspectFill"></image>
+        <image class="user-avatar-img" wx:if="{{userInfo.avatarUrl && !avatarError}}" src="{{userInfo.avatarUrl}}" mode="aspectFill" binderror="onAvatarLoadError"></image>
         <text class="user-avatar-emoji" wx:else>{{isParent ? '👨‍👩‍👧' : '🧒'}}</text>
       </view>
       <text class="user-avatar-hint">点击更换头像</text>

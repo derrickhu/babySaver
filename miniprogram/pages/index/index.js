@@ -100,7 +100,9 @@ Page({
       api.callCloud('getFamily')
     ])
 
-    const children = (membersRes.data || []).filter(m => m.role === 'child')
+    let children = (membersRes.data || []).filter(m => m.role === 'child')
+    // 将 cloud:// fileID 转为临时 HTTPS URL，确保跨设备显示
+    children = await api.resolveAvatars(children)
 
     // 解析权限
     let myPerms = { deposit: true, withdrawReview: true, productManage: true }
