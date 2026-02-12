@@ -1,94 +1,107 @@
 <!-- 登录注册页 -->
 <view class="login-page">
-  <!-- 顶部装饰 -->
-  <view class="login-header">
-    <view class="logo-wrapper">
-      <text class="logo-icon">🐷</text>
+  <!-- ===== Step 1：欢迎屏 ===== -->
+  <view class="welcome" wx:if="{{step === 1}}">
+    <view class="welcome-top">
+      <view class="logo-box">
+        <text class="logo-icon">🐷</text>
+      </view>
+      <text class="app-name">小孩存钱宝</text>
+      <text class="app-slogan">培养孩子的理财好习惯</text>
     </view>
-    <text class="app-name">小孩存钱宝</text>
-    <text class="app-desc">培养孩子的理财好习惯</text>
+
+    <view class="welcome-bottom">
+      <button class="wx-login-btn" open-type="chooseAvatar" bindchooseavatar="onChooseAvatar">
+        <text class="wx-login-text">微信一键登录</text>
+      </button>
+      <view class="agreement-row" bindtap="onToggleAgreement">
+        <view class="agreement-check {{agreed ? 'checked' : ''}}">
+          <text wx:if="{{agreed}}">✓</text>
+        </view>
+        <text class="agreement-text">阅读并同意</text>
+        <text class="agreement-link" catchtap="onViewAgreement">《用户协议》</text>
+        <text class="agreement-text">和</text>
+        <text class="agreement-link" catchtap="onViewPrivacy">《隐私政策》</text>
+      </view>
+    </view>
   </view>
 
-  <!-- 注册表单 -->
-  <view class="login-form card">
-    <view class="form-title">创建账号</view>
+  <!-- ===== Step 2：完善资料 ===== -->
+  <view class="profile-setup" wx:elif="{{step === 2}}">
+    <!-- 顶部返回 -->
+    <view class="setup-nav">
+      <text class="setup-back" bindtap="onBackToWelcome">‹ 返回</text>
+    </view>
 
-    <!-- 头像 + 昵称（微信设置页风格） -->
-    <view class="cell-group">
-      <button class="cell cell-btn" open-type="chooseAvatar" bindchooseavatar="onChooseAvatar">
-        <text class="cell-label">头像</text>
-        <view class="cell-value">
-          <view class="cell-avatar-box">
-            <image class="cell-avatar" src="{{avatarUrl}}" wx:if="{{avatarUrl}}" mode="aspectFill"></image>
-            <text class="cell-avatar-holder" wx:else>👤</text>
-          </view>
-          <text class="cell-arrow">›</text>
+    <text class="setup-title">完善资料</text>
+    <text class="setup-subtitle">还差一步，即可开始使用</text>
+
+    <!-- 头像 + 昵称 -->
+    <view class="setup-card card">
+      <button class="avatar-row" open-type="chooseAvatar" bindchooseavatar="onChooseAvatar">
+        <view class="avatar-box">
+          <image class="avatar-img" src="{{avatarUrl}}" wx:if="{{avatarUrl}}" mode="aspectFill"></image>
+          <text class="avatar-placeholder" wx:else>👤</text>
         </view>
+        <text class="avatar-change">点击更换头像</text>
       </button>
-      <view class="cell">
-        <text class="cell-label">昵称</text>
-        <view class="cell-value">
-          <input
-            class="cell-input"
-            type="nickname"
-            placeholder="未设置"
-            value="{{nickName}}"
-            bindinput="onNickNameInput"
-            bindblur="onNickNameBlur"
-            focus="{{focusNickname}}"
-            maxlength="20"
-          />
-        </view>
+
+      <view class="nickname-row">
+        <text class="nickname-label">昵称</text>
+        <input
+          class="nickname-input"
+          type="nickname"
+          placeholder="请输入昵称"
+          value="{{nickName}}"
+          bindinput="onNickNameInput"
+          bindblur="onNickNameBlur"
+          focus="{{focusNickname}}"
+          maxlength="20"
+        />
       </view>
     </view>
 
     <!-- 角色选择 -->
-    <view class="form-item">
-      <text class="form-label">我是</text>
-      <view class="role-selector">
+    <view class="setup-card card">
+      <text class="card-label">选择身份</text>
+      <view class="role-picker">
         <view
-          class="role-option {{role === 'parent' ? 'active' : ''}}"
+          class="role-card {{role === 'parent' ? 'active' : ''}}"
           data-role="parent"
           bindtap="onSelectRole"
         >
-          <text class="role-icon">👨‍👩‍👧</text>
-          <text class="role-name">家长</text>
+          <text class="role-emoji">👨‍👩‍👧</text>
+          <text class="role-name">我是家长</text>
           <text class="role-desc">管理存款和审批</text>
         </view>
         <view
-          class="role-option {{role === 'child' ? 'active' : ''}}"
+          class="role-card {{role === 'child' ? 'active' : ''}}"
           data-role="child"
           bindtap="onSelectRole"
         >
-          <text class="role-icon">🧒</text>
-          <text class="role-name">小孩</text>
+          <text class="role-emoji">🧒</text>
+          <text class="role-name">我是小孩</text>
           <text class="role-desc">查看存款和取现</text>
         </view>
       </view>
     </view>
 
-    <!-- 家长身份选择（仅家长角色时显示） -->
-    <view class="form-item" wx:if="{{role === 'parent'}}">
-      <text class="form-label">我的身份</text>
-      <view class="parent-title-selector">
+    <!-- 家长身份标识 -->
+    <view class="setup-card card" wx:if="{{role === 'parent'}}">
+      <text class="card-label">我是孩子的</text>
+      <view class="title-picker">
         <view
-          class="title-option {{parentTitle === item ? 'active' : ''}}"
+          class="title-chip {{parentTitle === item ? 'active' : ''}}"
           wx:for="{{parentTitleOptions}}"
           wx:key="*this"
           data-title="{{item}}"
           bindtap="onSelectParentTitle"
-        >
-          <text class="title-text">{{item}}</text>
-        </view>
+        >{{item}}</view>
       </view>
     </view>
 
-    <!-- 注册按钮 -->
-    <button
-      class="btn-primary register-btn"
-      bindtap="onRegister"
-      disabled="{{loading}}"
-    >
+    <!-- 提交按钮 -->
+    <button class="submit-btn" bindtap="onRegister" disabled="{{loading}}">
       {{loading ? '注册中...' : '开始使用'}}
     </button>
   </view>

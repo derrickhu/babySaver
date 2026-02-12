@@ -1,13 +1,15 @@
-// 登录注册页（仅未注册用户可见，已注册用户自动跳转）
+// 登录注册页（微信一键登录 + 资料完善两步流程）
 const api = require('../../utils/api')
 const util = require('../../utils/util')
 
 Page({
   data: {
-    nickName: '',
+    step: 1,           // 1=欢迎屏  2=资料填写
+    agreed: true,      // 默认勾选协议
     avatarUrl: '',
-    role: '', // 'parent' 或 'child'
-    parentTitle: '', // 家长身份标识
+    nickName: '',
+    role: '',          // 'parent' 或 'child'
+    parentTitle: '',
     parentTitleOptions: [],
     loading: false,
     focusNickname: false
@@ -20,6 +22,7 @@ Page({
   },
 
   onShow() {
+    // 已注册用户直接跳转首页
     this.checkAlreadyRegistered()
   },
 
@@ -34,23 +37,54 @@ Page({
         wx.switchTab({ url: '/pages/index/index' })
       }
     } catch (e) {
-      // 未注册或网络异常
+      // 未注册或网络异常，停留在登录页
     }
   },
 
-  // 选择头像后，自动聚焦昵称输入框弹出微信昵称键盘
+  // ========== Step 1 ==========
+
+  // 勾选/取消协议
+  onToggleAgreement() {
+    this.setData({ agreed: !this.data.agreed })
+  },
+
+  // 查看用户协议（占位）
+  onViewAgreement() {
+    wx.showModal({ title: '用户协议', content: '暂无内容', showCancel: false })
+  },
+
+  // 查看隐私政策（占位）
+  onViewPrivacy() {
+    wx.showModal({ title: '隐私政策', content: '暂无内容', showCancel: false })
+  },
+
+  // 选择头像（Step 1 一键登录触发 / Step 2 更换头像触发）
   onChooseAvatar(e) {
+    if (!this.data.agreed) {
+      return api.showToast('请先阅读并同意协议')
+    }
+
     const { avatarUrl } = e.detail
-    this.setData({
-      avatarUrl: avatarUrl || ''
-    })
-    // 选完头像后，延迟一下自动聚焦昵称输入框
-    if (!this.data.nickName) {
+    if (!avatarUrl) return
+
+    this.setData({ avatarUrl })
+
+    // 如果在 Step 1，选完头像自动进入 Step 2
+    if (this.data.step === 1) {
+      this.setData({ step: 2 })
+      // 延迟聚焦昵称输入框，触发微信昵称键盘
       setTimeout(() => {
         this.setData({ focusNickname: true })
-      }, 300)
+      }, 400)
     }
   },
+
+  // 返回欢迎屏
+  onBackToWelcome() {
+    this.setData({ step: 1 })
+  },
+
+  // ========== Step 2 ==========
 
   // 昵称输入
   onNickNameInput(e) {
@@ -83,7 +117,7 @@ Page({
   async onRegister() {
     const { nickName, role, parentTitle, avatarUrl } = this.data
     if (!avatarUrl) {
-      return api.showToast('请点击头像设置微信头像')
+      return api.showToast('请设置头像')
     }
     if (!nickName || nickName.trim() === '') {
       return api.showToast('请设置昵称')
@@ -108,7 +142,7 @@ Page({
         registerData.parentTitle = parentTitle
       }
 
-      const res = await api.callCloud('register', registerData)
+      await api.callCloud('register', registerData)
       api.hideLoading()
       api.showToast('注册成功')
 
@@ -123,16 +157,15 @@ Page({
     } catch (err) {
       api.hideLoading()
       if (err.msg === '用户已注册') {
+        // 已注册用户直接跳转
         const app = getApp()
         api.callCloud('getUserInfo').then(userRes => {
           if (userRes.data) {
             app.globalData.userInfo = userRes.data
             app.globalData.isLoggedIn = true
             wx.switchTab({ url: '/pages/index/index' })
-          } else {
-            api.showError('用户已注册')
           }
-        }).catch(() => api.showError('用户已注册'))
+        }).catch(() => api.showError('登录失败'))
       } else {
         api.showError(err.msg || '注册失败')
       }
