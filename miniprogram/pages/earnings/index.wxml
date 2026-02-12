@@ -29,7 +29,10 @@
         <text class="tx-icon">{{item.typeIcon}}</text>
       </view>
       <view class="tx-info">
-        <text class="tx-type">{{item.typeText}}</text>
+        <view class="tx-type-row">
+          <text class="tx-type">{{item.typeText}}</text>
+          <text class="tx-tag" wx:if="{{item.tagLabel}}">{{item.tagLabel}}</text>
+        </view>
         <text class="tx-detail">{{item.relatedName || ''}}{{item.showChildName ? ' · ' + item.childName : ''}}</text>
         <text class="tx-remark" wx:if="{{item.remark}}">{{item.remark}}</text>
         <text class="tx-time">{{item.timeStr}}</text>

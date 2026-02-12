@@ -76,7 +76,9 @@ Page({
       amountStr: util.formatMoney(t.amount),
       statusText: util.getStatusText(t.status),
       timeStr: util.formatDateTime(t.createdAt),
-      reviewTimeStr: t.reviewedAt ? util.formatDateTime(t.reviewedAt) : ''
+      reviewTimeStr: t.reviewedAt ? util.formatDateTime(t.reviewedAt) : '',
+      tagLabel: t.tag ? util.getTagLabel(t.type, t.tag) : '',
+      tagIcon: t.tag ? util.getTagIcon(t.type, t.tag) : ''
     }
   },
 

@@ -10,9 +10,22 @@ Page({
     childName: '',
     amount: '',
     remark: '',
+    selectedTag: '',
     accountBalance: '0.00',
     submitting: false,
-    loading: true
+    loading: true,
+    // 存入来源标签
+    depositTags: [
+      { key: 'pocket_money', icon: '💰', label: '零花钱' },
+      { key: 'new_year', icon: '🧧', label: '压岁钱' },
+      { key: 'birthday', icon: '🎂', label: '生日红包' },
+      { key: 'reward', icon: '🏆', label: '奖励' },
+      { key: 'study', icon: '📚', label: '学习奖金' },
+      { key: 'chores', icon: '🧹', label: '家务劳动' },
+      { key: 'gift', icon: '🎁', label: '礼物红包' },
+      { key: 'savings', icon: '🐷', label: '主动存入' },
+      { key: 'other', icon: '📝', label: '其他' }
+    ]
   },
 
   onLoad(options) {
@@ -84,26 +97,39 @@ Page({
   onAmountInput(e) { this.setData({ amount: e.detail.value }) },
   onRemarkInput(e) { this.setData({ remark: e.detail.value }) },
 
+  // 选择标签
+  onSelectTag(e) {
+    const key = e.currentTarget.dataset.key
+    // 点击已选中的标签可取消
+    this.setData({ selectedTag: this.data.selectedTag === key ? '' : key })
+  },
+
   async onSubmit() {
-    const { childOpenId, amount, remark } = this.data
+    const { childOpenId, amount, remark, selectedTag } = this.data
     const amountNum = parseFloat(amount)
 
     if (!childOpenId) return api.showError('请选择小孩')
     if (isNaN(amountNum) || amountNum <= 0) return api.showError('请输入正确的金额')
-    if (!remark || !remark.trim()) return api.showError('请填写备注')
+    if (!selectedTag) return api.showError('请选择存入来源')
 
     this.setData({ submitting: true })
     api.showLoading('存入中...')
+
+    // 自动生成备注：标签名 + 用户补充
+    const tagItem = this.data.depositTags.find(t => t.key === selectedTag)
+    const tagLabel = tagItem ? tagItem.label : ''
+    const finalRemark = remark && remark.trim() ? `${tagLabel} - ${remark.trim()}` : tagLabel
 
     try {
       const res = await api.callCloud('depositToAccount', {
         childOpenId,
         amount: amountNum,
-        remark: remark.trim()
+        remark: finalRemark,
+        tag: selectedTag
       })
       api.hideLoading()
       api.showToast(res.msg || '存入成功')
-      this.setData({ amount: '', remark: '' })
+      this.setData({ amount: '', remark: '', selectedTag: '' })
       this.loadAccount(childOpenId)
     } catch (err) {
       api.hideLoading()

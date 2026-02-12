@@ -187,6 +187,60 @@ function getParentTitleOptions() {
   return ['爸爸', '妈妈', '爷爷', '奶奶', '外公', '外婆', '其他']
 }
 
+// ========== 交易标签映射 ==========
+
+// 存入来源标签
+const DEPOSIT_TAG_MAP = {
+  pocket_money: { icon: '💰', label: '零花钱' },
+  new_year:     { icon: '🧧', label: '压岁钱' },
+  birthday:     { icon: '🎂', label: '生日红包' },
+  reward:       { icon: '🏆', label: '奖励' },
+  study:        { icon: '📚', label: '学习奖金' },
+  chores:       { icon: '🧹', label: '家务劳动' },
+  gift:         { icon: '🎁', label: '礼物红包' },
+  savings:      { icon: '🐷', label: '主动存入' },
+  other:        { icon: '📝', label: '其他' }
+}
+
+// 取现用途标签
+const WITHDRAW_TAG_MAP = {
+  snack:      { icon: '🍭', label: '零食' },
+  toy:        { icon: '🧸', label: '玩具' },
+  book:       { icon: '📖', label: '书籍' },
+  stationery: { icon: '✏️', label: '文具' },
+  clothing:   { icon: '👕', label: '衣服' },
+  travel:     { icon: '🎡', label: '游玩' },
+  movie:      { icon: '🎬', label: '电影' },
+  sports:     { icon: '⚽', label: '运动' },
+  gift_buy:   { icon: '🎁', label: '买礼物' },
+  other:      { icon: '📝', label: '其他' }
+}
+
+// 根据交易类型和 tag key 获取标签信息
+function getTagInfo(type, tagKey) {
+  if (!tagKey) return null
+  const map = type === 'deposit' ? DEPOSIT_TAG_MAP : WITHDRAW_TAG_MAP
+  return map[tagKey] || null
+}
+
+// 获取标签显示文字（icon + label）
+function getTagText(type, tagKey) {
+  const info = getTagInfo(type, tagKey)
+  return info ? `${info.icon} ${info.label}` : ''
+}
+
+// 获取标签 label
+function getTagLabel(type, tagKey) {
+  const info = getTagInfo(type, tagKey)
+  return info ? info.label : ''
+}
+
+// 获取标签 icon
+function getTagIcon(type, tagKey) {
+  const info = getTagInfo(type, tagKey)
+  return info ? info.icon : ''
+}
+
 module.exports = {
   formatDate,
   formatDateTime,
@@ -205,5 +259,11 @@ module.exports = {
   getParentTitleEmoji,
   getMemberRoleText,
   getMemberEmoji,
-  getParentTitleOptions
+  getParentTitleOptions,
+  getTagInfo,
+  getTagText,
+  getTagLabel,
+  getTagIcon,
+  DEPOSIT_TAG_MAP,
+  WITHDRAW_TAG_MAP
 }

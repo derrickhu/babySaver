@@ -76,11 +76,12 @@ Page({
           ...t,
           amountStr: util.formatMoney(t.amount),
           typeText: util.getTransactionTypeText(t.type),
-          typeIcon: util.getTransactionTypeIcon(t.type),
+          typeIcon: t.tag ? util.getTagIcon(t.type, t.tag) || util.getTransactionTypeIcon(t.type) : util.getTransactionTypeIcon(t.type),
           statusText: util.getStatusText(t.status),
           timeStr: util.formatDateTime(t.createdAt),
           isIncome: ['deposit', 'redeem'].includes(t.type),
-          showChildName: isParent && t.childName
+          showChildName: isParent && t.childName,
+          tagLabel: t.tag ? util.getTagLabel(t.type, t.tag) : ''
         }))
 
         const merged = page === 1 ? newData : [...this.data.transactions, ...newData]

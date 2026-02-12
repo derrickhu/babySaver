@@ -30,6 +30,11 @@
         <text class="amount-value">¥{{item.amountStr}}</text>
       </view>
 
+      <view class="review-tag" wx:if="{{item.tagLabel}}">
+        <text class="tag-label-text">用途：</text>
+        <text class="tag-badge">{{item.tagIcon}} {{item.tagLabel}}</text>
+      </view>
+
       <view class="review-reason" wx:if="{{item.remark}}">
         <text class="reason-label">备注：</text>
         <text class="reason-text">{{item.remark}}</text>
@@ -76,6 +81,7 @@
       </view>
       <view class="history-body">
         <text class="history-amount">¥{{item.amountStr}}</text>
+        <text class="history-tag" wx:if="{{item.tagLabel}}">{{item.tagIcon}} {{item.tagLabel}}</text>
         <text class="history-time">{{item.timeStr}}</text>
       </view>
       <view class="history-reason" wx:if="{{item.remark}}">

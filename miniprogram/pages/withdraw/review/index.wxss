@@ -117,6 +117,36 @@
   color: var(--accent);
 }
 
+/* 用途标签 */
+.review-tag {
+  display: flex;
+  align-items: center;
+  padding: 16rpx 0 0;
+  font-size: 26rpx;
+}
+.tag-label-text {
+  color: var(--text-hint);
+  margin-right: 8rpx;
+}
+.tag-badge {
+  display: inline-block;
+  background: rgba(255, 184, 0, 0.12);
+  color: #FF8C00;
+  font-size: 24rpx;
+  padding: 4rpx 16rpx;
+  border-radius: 8rpx;
+  font-weight: 500;
+}
+
+.history-tag {
+  font-size: 22rpx;
+  color: #FF8C00;
+  background: rgba(255, 184, 0, 0.12);
+  padding: 2rpx 12rpx;
+  border-radius: 6rpx;
+  white-space: nowrap;
+}
+
 .review-reason {
   padding: 16rpx 0;
   font-size: 26rpx;

@@ -87,7 +87,61 @@
   color: var(--text-hint);
 }
 
+/* 标签选择 */
+.tag-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16rpx;
+  margin-top: 12rpx;
+}
+.tag-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: calc((100% - 64rpx) / 5);
+  height: 120rpx;
+  background: #f5f6fa;
+  border-radius: 16rpx;
+  transition: all 0.2s;
+  border: 2rpx solid transparent;
+}
+.tag-item:active {
+  transform: scale(0.95);
+}
+.tag-active {
+  background: rgba(255, 184, 0, 0.12);
+  border-color: #FFB800;
+}
+.tag-active .tag-label {
+  color: #FF8C00;
+  font-weight: 600;
+}
+.tag-icon {
+  font-size: 36rpx;
+  margin-bottom: 6rpx;
+}
+.tag-label {
+  font-size: 22rpx;
+  color: #666;
+  white-space: nowrap;
+}
+
 /* 历史记录 */
+.history-top-row {
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+}
+.history-tag-badge {
+  font-size: 20rpx;
+  color: #FF8C00;
+  background: rgba(255, 184, 0, 0.12);
+  padding: 2rpx 12rpx;
+  border-radius: 6rpx;
+  white-space: nowrap;
+}
+
 .history-section {
   margin-top: 40rpx;
 }

@@ -7,10 +7,24 @@ Page({
     account: null,
     amount: '',
     remark: '',
+    selectedTag: '',
     maxAmount: 0,
     submitting: false,
     history: [],
-    loading: true
+    loading: true,
+    // 取现用途标签（适合小朋友的消费场景）
+    withdrawTags: [
+      { key: 'snack', icon: '🍭', label: '零食' },
+      { key: 'toy', icon: '🧸', label: '玩具' },
+      { key: 'book', icon: '📖', label: '书籍' },
+      { key: 'stationery', icon: '✏️', label: '文具' },
+      { key: 'clothing', icon: '👕', label: '衣服' },
+      { key: 'travel', icon: '🎡', label: '游玩' },
+      { key: 'movie', icon: '🎬', label: '电影' },
+      { key: 'sports', icon: '⚽', label: '运动' },
+      { key: 'gift_buy', icon: '🎁', label: '买礼物' },
+      { key: 'other', icon: '📝', label: '其他' }
+    ]
   },
 
   onLoad() {
@@ -59,7 +73,9 @@ Page({
             ...t,
             amountStr: util.formatMoney(t.amount),
             statusText: util.getStatusText(t.status),
-            timeStr: util.relativeTime(t.createdAt)
+            timeStr: util.relativeTime(t.createdAt),
+            tagLabel: t.tag ? util.getTagLabel(t.type, t.tag) : '',
+            tagIcon: t.tag ? util.getTagIcon(t.type, t.tag) : ''
           }))
         })
       }
@@ -73,17 +89,23 @@ Page({
   onAmountInput(e) { this.setData({ amount: e.detail.value }) },
   onRemarkInput(e) { this.setData({ remark: e.detail.value }) },
 
+  // 选择标签
+  onSelectTag(e) {
+    const key = e.currentTarget.dataset.key
+    this.setData({ selectedTag: this.data.selectedTag === key ? '' : key })
+  },
+
   onTakeAll() {
     this.setData({ amount: String(this.data.maxAmount) })
   },
 
   async onSubmit() {
-    const { amount, remark, maxAmount } = this.data
+    const { amount, remark, maxAmount, selectedTag } = this.data
     const amountNum = parseFloat(amount)
 
     if (isNaN(amountNum) || amountNum <= 0) return api.showError('请输入正确的取现金额')
     if (amountNum > maxAmount) return api.showError(`最多可取 ¥${maxAmount.toFixed(2)}`)
-    if (!remark || !remark.trim()) return api.showError('请填写备注')
+    if (!selectedTag) return api.showError('请选择用途')
 
     // 必须在 tap 同步调用栈中第一时间调用，不能有 await 在前面！
     await api.requestSubscribe([api.TMPL_REVIEW])
@@ -101,14 +123,20 @@ Page({
     this.setData({ submitting: true })
     api.showLoading('提交中...')
 
+    // 自动生成备注：标签名 + 用户补充
+    const tagItem = this.data.withdrawTags.find(t => t.key === selectedTag)
+    const tagLabel = tagItem ? tagItem.label : ''
+    const finalRemark = remark && remark.trim() ? `${tagLabel} - ${remark.trim()}` : tagLabel
+
     try {
       const res = await api.callCloud('applyWithdraw', {
         amount: amountNum,
-        remark: remark.trim()
+        remark: finalRemark,
+        tag: selectedTag
       })
       api.hideLoading()
       api.showToast(res.msg || '提交成功')
-      this.setData({ amount: '', remark: '' })
+      this.setData({ amount: '', remark: '', selectedTag: '' })
       this.loadData()
     } catch (err) {
       api.hideLoading()

@@ -26,11 +26,28 @@
       />
     </view>
 
+    <!-- 取现用途标签 -->
     <view class="form-item">
-      <text class="form-label">备注（必填）</text>
+      <text class="form-label">用途</text>
+      <view class="tag-grid">
+        <view
+          class="tag-item {{selectedTag === item.key ? 'tag-active' : ''}}"
+          wx:for="{{withdrawTags}}"
+          wx:key="key"
+          bindtap="onSelectTag"
+          data-key="{{item.key}}"
+        >
+          <text class="tag-icon">{{item.icon}}</text>
+          <text class="tag-label">{{item.label}}</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="form-item">
+      <text class="form-label">备注</text>
       <textarea
         class="form-textarea"
-        placeholder="说说为什么要取钱呢..."
+        placeholder="选填，补充说明..."
         value="{{remark}}"
         bindinput="onRemarkInput"
         maxlength="100"
@@ -63,7 +80,10 @@
     <view class="card">
       <view class="history-item" wx:for="{{history}}" wx:key="_id">
         <view class="history-info">
-          <text class="history-amount">¥{{item.amountStr}}</text>
+          <view class="history-top-row">
+            <text class="history-amount">¥{{item.amountStr}}</text>
+            <text class="history-tag-badge" wx:if="{{item.tagLabel}}">{{item.tagIcon}} {{item.tagLabel}}</text>
+          </view>
           <text class="history-time">{{item.timeStr}}</text>
         </view>
         <view class="history-right">

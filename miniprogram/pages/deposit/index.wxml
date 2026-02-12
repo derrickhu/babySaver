@@ -35,11 +35,28 @@
       </view>
     </view>
 
+    <!-- 存入标签 -->
+    <view class="card tag-card">
+      <text class="tag-title">选择来源</text>
+      <view class="tag-grid">
+        <view
+          class="tag-item {{selectedTag === item.key ? 'tag-active' : ''}}"
+          wx:for="{{depositTags}}"
+          wx:key="key"
+          bindtap="onSelectTag"
+          data-key="{{item.key}}"
+        >
+          <text class="tag-icon">{{item.icon}}</text>
+          <text class="tag-label">{{item.label}}</text>
+        </view>
+      </view>
+    </view>
+
     <!-- 备注 -->
     <view class="card">
       <view class="form-item">
         <text class="form-label">备注</text>
-        <input class="form-input" placeholder="请填写备注（必填）" value="{{remark}}" bindinput="onRemarkInput" maxlength="50" />
+        <input class="form-input" placeholder="选填，补充说明" value="{{remark}}" bindinput="onRemarkInput" maxlength="50" />
       </view>
     </view>
 

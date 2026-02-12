@@ -686,7 +686,7 @@ async function getChildAccounts(openid) {
 
 // 家长存钱到小孩默认账户
 async function depositToAccount(openid, data) {
-  const { childOpenId, amount, remark } = data
+  const { childOpenId, amount, remark, tag } = data
   if (!childOpenId || !amount || amount <= 0) {
     return { code: -1, msg: '参数不完整' }
   }
@@ -719,6 +719,7 @@ async function depositToAccount(openid, data) {
     type: 'deposit',
     amount: round2(amount),
     remark: remark.trim(),
+    tag: tag || '',
     relatedId: '', relatedName: '默认账户',
     status: 'success',
     createdBy: openid,
@@ -1068,7 +1069,7 @@ async function getInvestments(openid, data) {
 // ========== 取现相关（重写，基于 accounts） ==========
 
 async function applyWithdraw(openid, data) {
-  const { amount, remark } = data
+  const { amount, remark, tag } = data
   if (!amount || amount <= 0) return { code: -1, msg: '取现金额无效' }
   if (!remark || remark.trim() === '') return { code: -1, msg: '请填写备注' }
 
@@ -1099,6 +1100,7 @@ async function applyWithdraw(openid, data) {
     type: 'withdraw',
     amount: round2(amount),
     remark: remark.trim(),
+    tag: tag || '',
     relatedId: account._id, relatedName: '默认账户',
     status: 'pending',
     createdBy: openid,

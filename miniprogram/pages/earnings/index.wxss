@@ -75,10 +75,23 @@
   flex-direction: column;
   min-width: 0;
 }
+.tx-type-row {
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+}
 .tx-type {
   font-size: 28rpx;
   font-weight: 600;
   color: #333;
+}
+.tx-tag {
+  font-size: 20rpx;
+  color: #4a7cf7;
+  background: rgba(74, 124, 247, 0.1);
+  padding: 2rpx 12rpx;
+  border-radius: 6rpx;
+  white-space: nowrap;
 }
 .tx-detail {
   font-size: 22rpx;
