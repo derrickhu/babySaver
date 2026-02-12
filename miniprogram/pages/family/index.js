@@ -97,17 +97,16 @@ Page({
     this.setData({ loading: true })
     try {
       await api.callCloud('joinFamily', { inviteCode: inviteCode.toUpperCase() })
-      api.showToast('已加入家庭')
 
       // 刷新用户信息后重新加载页面
       const app = getApp()
       const userRes = await api.callCloud('getUserInfo')
       app.globalData.userInfo = userRes.data
+      // 标记需要显示产品亮点
+      app.globalData.showHighlights = true
 
       // 加入成功，跳转首页
-      setTimeout(() => {
-        wx.switchTab({ url: '/pages/index/index' })
-      }, 800)
+      wx.switchTab({ url: '/pages/index/index' })
     } catch (err) {
       // 加入失败（如邀请码无效、已加入家庭等），回退到手动输入模式
       this.setData({
@@ -195,16 +194,15 @@ Page({
     try {
       const res = await api.callCloud('joinFamily', { inviteCode: inputCode })
       api.hideLoading()
-      api.showToast('加入家庭成功')
 
       // 刷新用户信息
       const app = getApp()
       const userRes = await api.callCloud('getUserInfo')
       app.globalData.userInfo = userRes.data
+      // 标记需要显示产品亮点
+      app.globalData.showHighlights = true
 
-      setTimeout(() => {
-        wx.switchTab({ url: '/pages/index/index' })
-      }, 800)
+      wx.switchTab({ url: '/pages/index/index' })
     } catch (err) {
       api.hideLoading()
       api.showError(err.msg)

@@ -255,11 +255,10 @@ Page({
       const app = getApp()
       const userRes = await api.callCloud('getUserInfo')
       app.globalData.userInfo = userRes.data
-      // 标记需要显示产品亮点
-      app.globalData.showHighlights = true
-
       // 创建家庭后直接加载首页数据（当前就在首页）
       this.loadData()
+      // 直接触发亮点弹窗
+      this.setData({ showHighlights: true })
     } catch (err) {
       api.hideLoading()
       api.showError(err.msg)
@@ -278,13 +277,16 @@ Page({
     try {
       await api.callCloud('joinFamily', { inviteCode: inputCode })
       api.hideLoading()
-      api.showToast('加入家庭成功')
 
       const app = getApp()
       const userRes = await api.callCloud('getUserInfo')
       app.globalData.userInfo = userRes.data
+      // 标记需要显示产品亮点
+      app.globalData.showHighlights = true
 
       this.loadData()
+      // 触发亮点弹窗（当前就在首页）
+      this.setData({ showHighlights: true })
     } catch (err) {
       api.hideLoading()
       api.showError(err.msg)

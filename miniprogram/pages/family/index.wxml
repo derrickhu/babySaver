@@ -89,8 +89,6 @@
       <text class="leave-text">退出家庭</text>
       <text class="leave-desc">退出后需重新输入邀请码加入</text>
     </view>
-
-    <button class="btn-primary" style="margin: 40rpx 32rpx;" bindtap="goHome">返回首页</button>
   </block>
 
   <!-- 未创建/加入家庭 -->
