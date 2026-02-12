@@ -15,8 +15,21 @@ Page({
     loading: true
   },
 
-  onLoad() {
+  onLoad(options) {
+    this.shareInviteCode = options.inviteCode || ''
     this.loadData()
+  },
+
+  // 分享到微信群/好友（创建者邀请成员时使用）
+  onShareAppMessage() {
+    const { inviteCode, family, isCreator } = this.data
+    if (!isCreator || !inviteCode) {
+      return { title: '小孩存钱宝 - 培养孩子的理财好习惯' }
+    }
+    return {
+      title: `邀请你加入「${family ? family.familyName : '我的'}」家庭，一起培养孩子的理财习惯`,
+      path: `/pages/family/index?inviteCode=${inviteCode}`
+    }
   },
 
   onShow() {
@@ -66,6 +79,9 @@ Page({
       } catch (err) {
         console.error('加载家庭信息失败:', err)
       }
+    } else if (this.shareInviteCode) {
+      // 从分享链接进入且未加入家庭时，自动填充邀请码
+      this.setData({ inputCode: this.shareInviteCode.toUpperCase() })
     }
 
     this.setData({ loading: false })
@@ -139,6 +155,41 @@ Page({
   // 权限管理
   goPermissions() {
     wx.navigateTo({ url: '/pages/family/permissions/index' })
+  },
+
+  // 解散家庭（仅创建者）
+  async onDisbandFamily() {
+    if (!this.data.isCreator) {
+      return api.showToast('仅家庭创建者可解散家庭')
+    }
+
+    const confirmRes = await new Promise(resolve => {
+      wx.showModal({
+        title: '解散家庭',
+        content: '解散后，所有成员的账户、理财产品、收益等数据将被清除，且不可恢复。确定要解散吗？',
+        confirmText: '确定解散',
+        confirmColor: '#FF4D4F',
+        success: resolve
+      })
+    })
+
+    if (!confirmRes.confirm) return
+
+    api.showLoading('解散中...')
+    try {
+      await api.callCloud('disbandFamily')
+      api.hideLoading()
+      api.showToast('家庭已解散')
+
+      const app = getApp()
+      const userRes = await api.callCloud('getUserInfo')
+      app.globalData.userInfo = userRes.data
+
+      this.loadData()
+    } catch (err) {
+      api.hideLoading()
+      api.showError(err.msg)
+    }
   },
 
   // 返回首页

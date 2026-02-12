@@ -23,6 +23,7 @@ exports.main = async (event, context) => {
       case 'joinFamily': return await joinFamily(openid, data)
       case 'getFamily': return await getFamily(openid)
       case 'getFamilyMembers': return await getFamilyMembers(openid)
+      case 'disbandFamily': return await disbandFamily(openid)
       // 默认账户相关
       case 'getAccount': return await getAccount(openid, data)
       case 'getChildAccounts': return await getChildAccounts(openid)
@@ -446,6 +447,72 @@ async function getFamilyMembers(openid) {
   const creatorOpenId = family.data.creatorOpenId || family.data.parentOpenId
   const result = members.data.map(m => ({ ...m, isCreator: m._openid === creatorOpenId }))
   return { code: 0, data: result }
+}
+
+// 解散家庭（仅创建者可操作）
+async function disbandFamily(openid) {
+  const user = await db.collection('users').where({ _openid: openid }).get()
+  if (user.data.length === 0 || !user.data[0].familyId) {
+    return { code: -1, msg: '未加入家庭' }
+  }
+
+  const familyId = user.data[0].familyId
+  const family = await db.collection('families').doc(familyId).get()
+  if (!family.data) return { code: -1, msg: '家庭不存在' }
+
+  const creatorOpenId = family.data.creatorOpenId || family.data.parentOpenId
+  if (creatorOpenId !== openid) {
+    return { code: -1, msg: '仅家庭创建者可解散家庭' }
+  }
+
+  const now = new Date()
+
+  // 1. 清除所有成员的家庭关联
+  const members = await db.collection('users').where({ familyId }).get()
+  for (const m of members.data) {
+    await db.collection('users').where({ _openid: m._openid }).update({
+      data: { familyId: '', updatedAt: now }
+    })
+  }
+
+  // 2. 删除该家庭下的关联数据（分批删除，云数据库单次 limit 20）
+  const collectionsToClean = ['accounts', 'investments', 'transactions', 'earnings']
+  for (const collName of collectionsToClean) {
+    let hasMore = true
+    while (hasMore) {
+      const batch = await db.collection(collName).where({ familyId }).limit(20).get()
+      if (batch.data.length === 0) {
+        hasMore = false
+        break
+      }
+      for (const doc of batch.data) {
+        await db.collection(collName).doc(doc._id).remove()
+      }
+    }
+  }
+
+  // 3. 删除理财产品（productLogs 通过 productId 关联，先删产品）
+  let hasMore = true
+  while (hasMore) {
+    const products = await db.collection('products').where({ familyId }).limit(20).get()
+    if (products.data.length === 0) {
+      hasMore = false
+      break
+    }
+    for (const p of products.data) {
+      // 删除该产品的 productLogs
+      const logs = await db.collection('productLogs').where({ productId: p._id }).get()
+      for (const log of logs.data) {
+        await db.collection('productLogs').doc(log._id).remove()
+      }
+      await db.collection('products').doc(p._id).remove()
+    }
+  }
+
+  // 4. 删除家庭记录
+  await db.collection('families').doc(familyId).remove()
+
+  return { code: 0, msg: '家庭已解散' }
 }
 
 // ========== 默认账户相关 ==========

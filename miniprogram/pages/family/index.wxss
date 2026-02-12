@@ -63,6 +63,41 @@
   color: var(--text-hint);
 }
 
+/* 分享到微信群按钮 */
+.share-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 32rpx 24rpx;
+  margin-top: 16rpx;
+  background: linear-gradient(135deg, #5B8FF9 0%, #7B68EE 100%);
+  border-radius: 16rpx;
+  color: #fff;
+  border: none;
+}
+
+.share-btn::after {
+  border: none;
+}
+
+.share-btn-icon {
+  font-size: 48rpx;
+  margin-bottom: 12rpx;
+}
+
+.share-btn-text {
+  font-size: 32rpx;
+  font-weight: 600;
+  margin-bottom: 4rpx;
+}
+
+.share-btn-desc {
+  font-size: 24rpx;
+  opacity: 0.9;
+}
+
 /* 非创建者提示 */
 .non-creator-tip {
   width: 100%;
@@ -205,4 +240,30 @@
 .perm-entry-arrow {
   font-size: 32rpx;
   color: #ccc;
+}
+
+/* 解散家庭入口 */
+.disband-entry {
+  display: flex;
+  align-items: center;
+  margin: 16rpx 32rpx 0;
+  padding: 24rpx;
+  border-radius: 16rpx;
+  background: #FFF1F0;
+  border: 1rpx solid #FFccc7;
+}
+.disband-icon {
+  font-size: 32rpx;
+  margin-right: 12rpx;
+}
+.disband-text {
+  font-size: 28rpx;
+  color: var(--danger);
+  font-weight: 500;
+}
+.disband-desc {
+  flex: 1;
+  font-size: 24rpx;
+  color: var(--text-hint);
+  text-align: right;
 }
