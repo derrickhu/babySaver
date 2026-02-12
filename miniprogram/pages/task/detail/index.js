@@ -20,7 +20,7 @@ Page({
       this.setData({
         isParent: userInfo.role === 'parent',
         isChild: userInfo.role === 'child',
-        myOpenId: userInfo.openid || ''
+        myOpenId: userInfo._openid || ''
       })
     }
   },

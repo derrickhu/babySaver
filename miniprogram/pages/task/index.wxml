@@ -23,7 +23,12 @@
       <view class="task-top">
         <view class="task-title-row">
           <text class="task-title">{{item.title}}</text>
-          <text class="task-status status-{{item.statusClass}}">{{item.statusText}}</text>
+          <view class="task-title-right">
+            <text class="task-status status-{{item.statusClass}}">{{item.statusText}}</text>
+            <view class="task-more-btn" wx:if="{{item.isMyTask}}" catchtap="onMoreTap" data-id="{{item._id}}" data-status="{{item.status}}">
+              <text class="more-icon">⋯</text>
+            </view>
+          </view>
         </view>
         <text class="task-desc" wx:if="{{item.description}}">{{item.description}}</text>
       </view>

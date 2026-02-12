@@ -60,6 +60,29 @@
   white-space: nowrap;
   margin-right: 16rpx;
 }
+.task-title-right {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  flex-shrink: 0;
+}
+.task-more-btn {
+  width: 48rpx;
+  height: 48rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+}
+.task-more-btn:active {
+  background: #f0f0f0;
+}
+.more-icon {
+  font-size: 32rpx;
+  color: #999;
+  font-weight: 700;
+  line-height: 1;
+}
 .task-desc {
   font-size: 24rpx;
   color: #999;

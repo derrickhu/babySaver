@@ -22,6 +22,7 @@ Page({
       { key: 'travel', icon: '🎡', label: '游玩' },
       { key: 'movie', icon: '🎬', label: '电影' },
       { key: 'sports', icon: '⚽', label: '运动' },
+      { key: 'game', icon: '🎮', label: '游戏' },
       { key: 'gift_buy', icon: '🎁', label: '买礼物' },
       { key: 'other', icon: '📝', label: '其他' }
     ]

@@ -212,6 +212,7 @@ const WITHDRAW_TAG_MAP = {
   travel:     { icon: '🎡', label: '游玩' },
   movie:      { icon: '🎬', label: '电影' },
   sports:     { icon: '⚽', label: '运动' },
+  game:       { icon: '🎮', label: '游戏' },
   gift_buy:   { icon: '🎁', label: '买礼物' },
   other:      { icon: '📝', label: '其他' }
 }

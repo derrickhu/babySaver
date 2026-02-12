@@ -5,6 +5,7 @@ const util = require('../../utils/util')
 Page({
   data: {
     isParent: false,
+    myOpenId: '',
     activeTab: 'open',
     tabs: [
       { key: 'open', label: '待领取' },
@@ -22,7 +23,10 @@ Page({
     const app = getApp()
     const userInfo = app.globalData.userInfo
     if (userInfo) {
-      this.setData({ isParent: userInfo.role === 'parent' })
+      this.setData({
+        isParent: userInfo.role === 'parent',
+        myOpenId: userInfo._openid || ''
+      })
     }
   },
 
@@ -35,7 +39,10 @@ Page({
     const app = getApp()
     const userInfo = app.globalData.userInfo
     if (userInfo) {
-      this.setData({ isParent: userInfo.role === 'parent' })
+      this.setData({
+        isParent: userInfo.role === 'parent',
+        myOpenId: userInfo._openid || ''
+      })
     }
     this.refreshList()
   },
@@ -89,6 +96,8 @@ Page({
       deadlineText = `${util.formatDate(deadline)} 截止`
     }
 
+    const isMyTask = t.createdBy === this.data.myOpenId
+
     return {
       ...t,
       rewardStr: util.formatMoney(t.reward),
@@ -96,7 +105,8 @@ Page({
       urgent,
       statusText: this._getStatusText(t.status),
       statusClass: t.status,
-      timeStr: util.relativeTime(t.createdAt)
+      timeStr: util.relativeTime(t.createdAt),
+      isMyTask
     }
   },
 
@@ -129,6 +139,63 @@ Page({
   // 跳转创建
   onCreateTask() {
     wx.navigateTo({ url: '/pages/task/create/index' })
+  },
+
+  // 更多操作（编辑/删除）
+  onMoreTap(e) {
+    const id = e.currentTarget.dataset.id
+    const status = e.currentTarget.dataset.status
+    const canEdit = ['open', 'claimed'].includes(status)
+    const canDelete = ['open', 'expired', 'rejected'].includes(status)
+
+    const items = []
+    const actions = []
+    if (canEdit) {
+      items.push('✏️ 编辑任务')
+      actions.push('edit')
+    }
+    if (canDelete) {
+      items.push('🗑️ 删除任务')
+      actions.push('delete')
+    }
+    if (items.length === 0) {
+      wx.showToast({ title: '当前状态不可操作', icon: 'none' })
+      return
+    }
+
+    wx.showActionSheet({
+      itemList: items,
+      success: (res) => {
+        const action = actions[res.tapIndex]
+        if (action === 'edit') {
+          wx.navigateTo({ url: `/pages/task/create/index?id=${id}` })
+        } else if (action === 'delete') {
+          this.onDeleteTask(id)
+        }
+      }
+    })
+  },
+
+  // 删除任务
+  async onDeleteTask(taskId) {
+    const res = await new Promise(resolve => {
+      wx.showModal({
+        title: '删除确认',
+        content: '删除后不可恢复，确认删除此任务？',
+        confirmText: '删除',
+        confirmColor: '#ff4d4f',
+        success: resolve
+      })
+    })
+    if (!res.confirm) return
+
+    try {
+      const r = await api.callCloud('deleteTask', { taskId })
+      wx.showToast({ title: r.msg || '已删除', icon: 'success' })
+      this.refreshList()
+    } catch (err) {
+      wx.showToast({ title: err.msg || '删除失败', icon: 'none' })
+    }
   },
 
   // 加载更多
