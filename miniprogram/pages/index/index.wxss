@@ -37,6 +37,180 @@
 .empty-icon { font-size: 80rpx; margin-bottom: 24rpx; }
 .empty-text { font-size: 28rpx; color: #999; line-height: 1.6; }
 
+/* ===== 家长引导页 ===== */
+.onboard-section {
+  padding-bottom: 40rpx;
+}
+
+/* 欢迎卡 */
+.onboard-welcome {
+  position: relative;
+  border-radius: 0 0 32rpx 32rpx;
+  overflow: hidden;
+}
+.onboard-welcome-bg {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: linear-gradient(135deg, #4a7cf7 0%, #6c5ce7 100%);
+}
+.onboard-welcome-content {
+  position: relative;
+  z-index: 1;
+  padding: 48rpx 36rpx 56rpx;
+}
+.onboard-hello {
+  display: block;
+  font-size: 28rpx;
+  color: rgba(255,255,255,0.8);
+  margin-bottom: 12rpx;
+}
+.onboard-title {
+  display: block;
+  font-size: 40rpx;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 8rpx;
+}
+.onboard-subtitle {
+  display: block;
+  font-size: 26rpx;
+  color: rgba(255,255,255,0.75);
+}
+
+/* 邀请码卡片 */
+.onboard-invite-card {
+  margin: -24rpx 24rpx 0;
+  position: relative;
+  z-index: 2;
+  background: #fff;
+  border-radius: 20rpx;
+  padding: 28rpx 32rpx;
+  box-shadow: 0 4rpx 20rpx rgba(0,0,0,0.06);
+}
+.onboard-invite-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16rpx;
+}
+.onboard-invite-title {
+  font-size: 26rpx;
+  color: #999;
+}
+.onboard-invite-copy {
+  font-size: 24rpx;
+  color: #4a7cf7;
+  padding: 8rpx 20rpx;
+  background: #e8effe;
+  border-radius: 8rpx;
+  font-weight: 500;
+}
+.onboard-invite-code {
+  display: block;
+  font-size: 52rpx;
+  font-weight: 700;
+  color: #4a7cf7;
+  letter-spacing: 10rpx;
+  text-align: center;
+  padding: 8rpx 0 16rpx;
+}
+.onboard-invite-hint {
+  display: block;
+  font-size: 22rpx;
+  color: #bbb;
+  text-align: center;
+}
+
+/* 邀请到微信群 */
+.onboard-share-btn {
+  display: flex;
+  align-items: center;
+  margin: 24rpx 24rpx 0;
+  padding: 28rpx 28rpx;
+  background: #fff;
+  border-radius: 20rpx;
+  box-shadow: 0 4rpx 20rpx rgba(0,0,0,0.06);
+  border: none;
+  text-align: left;
+}
+.onboard-share-btn::after { border: none; }
+.onboard-share-icon {
+  font-size: 44rpx;
+  margin-right: 20rpx;
+  flex-shrink: 0;
+}
+.onboard-share-info {
+  flex: 1;
+}
+.onboard-share-title {
+  display: block;
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #333;
+}
+.onboard-share-desc {
+  display: block;
+  font-size: 24rpx;
+  color: #999;
+  margin-top: 4rpx;
+}
+.onboard-share-arrow {
+  font-size: 36rpx;
+  color: #ccc;
+  flex-shrink: 0;
+}
+
+/* 使用指南 */
+.onboard-steps {
+  margin: 24rpx 24rpx 0;
+  background: #fff;
+  border-radius: 20rpx;
+  padding: 32rpx 28rpx;
+  box-shadow: 0 4rpx 20rpx rgba(0,0,0,0.06);
+}
+.onboard-steps-title {
+  display: block;
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 28rpx;
+}
+.onboard-step-item {
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 28rpx;
+}
+.onboard-step-item:last-child { margin-bottom: 0; }
+.step-num {
+  width: 48rpx;
+  height: 48rpx;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #4a7cf7, #6c5ce7);
+  color: #fff;
+  font-size: 24rpx;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-right: 20rpx;
+  margin-top: 4rpx;
+}
+.step-content { flex: 1; }
+.step-title {
+  display: block;
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 4rpx;
+}
+.step-desc {
+  display: block;
+  font-size: 24rpx;
+  color: #999;
+  line-height: 1.5;
+}
+
 /* 小孩切换器 */
 .child-switcher {
   display: flex;

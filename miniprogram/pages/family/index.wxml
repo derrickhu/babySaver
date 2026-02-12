@@ -11,19 +11,19 @@
         <text class="invite-label">邀请成员加入</text>
         <button class="share-btn" open-type="share">
           <text class="share-btn-icon">📤</text>
-          <text class="share-btn-text">分享到微信群</text>
-          <text class="share-btn-desc">分享到家庭群，成员打开即可加入</text>
+          <text class="share-btn-text">邀请到微信群</text>
+          <text class="share-btn-desc">发到家庭群，成员打开即可加入</text>
         </button>
         <view class="invite-code-wrap" style="margin-top: 20rpx;">
           <text class="invite-code">{{inviteCode}}</text>
           <text class="copy-btn" bindtap="onCopyCode">复制</text>
         </view>
-        <text class="invite-tip">也可复制邀请码，通过其他方式分享</text>
+        <text class="invite-tip">也可复制邀请码，通过其他方式邀请</text>
       </view>
 
       <!-- 非创建者提示 -->
       <view class="non-creator-tip" wx:elif="{{isParent && !isCreator}}">
-        <text class="tip-text">💡 如需邀请新成员，请联系家庭创建者分享到微信群</text>
+        <text class="tip-text">💡 如需邀请新成员，请联系家庭创建者邀请到微信群</text>
       </view>
     </view>
 
@@ -44,7 +44,7 @@
         <text class="member-avatar">➕</text>
         <view class="member-info">
           <text class="member-name" style="color: var(--text-hint);">等待成员加入...</text>
-          <text class="member-role">分享到家庭群即可邀请加入</text>
+          <text class="member-role">邀请到家庭群即可加入</text>
         </view>
       </view>
     </view>

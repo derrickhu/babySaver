@@ -22,7 +22,10 @@ Page({
     // 家长：小孩列表和当前选中
     children: [],
     selectedChildIndex: 0,
-    selectedChildId: ''
+    selectedChildId: '',
+    // 邀请码（家长无小孩时展示）
+    inviteCode: '',
+    family: null
   },
 
   onLoad() {
@@ -103,12 +106,15 @@ Page({
       myPerms = familyRes.data.myPermissions
     }
 
+    const family = familyRes.code === 0 ? familyRes.data : null
     this.setData({
       children,
       pendingCount: pendingRes.data ? pendingRes.data.count : 0,
       canDeposit: myPerms.deposit,
       canReview: myPerms.withdrawReview,
-      canProductManage: myPerms.productManage
+      canProductManage: myPerms.productManage,
+      inviteCode: family ? family.inviteCode : '',
+      family
     })
 
     if (children.length > 0) {
@@ -208,6 +214,31 @@ Page({
 
   goFamily() {
     wx.navigateTo({ url: '/pages/family/index' })
+  },
+
+  // 复制邀请码
+  onCopyInviteCode() {
+    const { inviteCode } = this.data
+    if (!inviteCode) return
+    wx.setClipboardData({
+      data: inviteCode,
+      success: () => {
+        const api = require('../../utils/api')
+        api.showToast('邀请码已复制')
+      }
+    })
+  },
+
+  // 邀请到微信群（家长无小孩时使用）
+  onShareAppMessage() {
+    const { inviteCode, family, isParent } = this.data
+    if (!isParent || !inviteCode) {
+      return { title: '小孩存钱宝 - 培养孩子的理财好习惯' }
+    }
+    return {
+      title: `邀请你加入「${family ? family.familyName : '我的'}」家庭，一起培养孩子的理财习惯`,
+      path: `/pages/family/index?inviteCode=${inviteCode}`
+    }
   },
 
   goProducts() {
