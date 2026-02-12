@@ -15,14 +15,16 @@ Page({
     focusNickname: false
   },
 
-  onLoad() {
+  onLoad(options) {
+    // 从分享链接进入时，保存 inviteCode，注册后自动加入家庭
+    this.pendingInviteCode = options.inviteCode || ''
     this.setData({
       parentTitleOptions: util.getParentTitleOptions()
     })
   },
 
   onShow() {
-    // 已注册用户直接跳转首页
+    // 已注册用户直接跳转
     this.checkAlreadyRegistered()
   },
 
@@ -34,7 +36,12 @@ Page({
         const app = getApp()
         app.globalData.userInfo = res.data
         app.globalData.isLoggedIn = true
-        wx.switchTab({ url: '/pages/index/index' })
+        // 如果携带邀请码，跳转到家庭页完成自动加入
+        if (this.pendingInviteCode) {
+          wx.redirectTo({ url: `/pages/family/index?inviteCode=${this.pendingInviteCode}` })
+        } else {
+          wx.switchTab({ url: '/pages/index/index' })
+        }
       }
     } catch (e) {
       // 未注册或网络异常，停留在登录页
@@ -169,7 +176,9 @@ Page({
       app.globalData.isLoggedIn = true
 
       setTimeout(() => {
-        wx.redirectTo({ url: '/pages/family/index' })
+        // 注册完成后，如果有待处理的邀请码，带到家庭页自动加入
+        const inviteParam = this.pendingInviteCode ? `?inviteCode=${this.pendingInviteCode}` : ''
+        wx.redirectTo({ url: `/pages/family/index${inviteParam}` })
       }, 800)
     } catch (err) {
       api.hideLoading()
@@ -180,7 +189,12 @@ Page({
           if (userRes.data) {
             app.globalData.userInfo = userRes.data
             app.globalData.isLoggedIn = true
-            wx.switchTab({ url: '/pages/index/index' })
+            // 如果有待处理的邀请码，跳转家庭页自动加入
+            if (this.pendingInviteCode) {
+              wx.redirectTo({ url: `/pages/family/index?inviteCode=${this.pendingInviteCode}` })
+            } else {
+              wx.switchTab({ url: '/pages/index/index' })
+            }
           }
         }).catch(() => api.showError('登录失败'))
       } else {

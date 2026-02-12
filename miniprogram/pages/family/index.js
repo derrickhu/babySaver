@@ -43,7 +43,9 @@ Page({
     const app = getApp()
     const userInfo = app.globalData.userInfo
     if (!userInfo) {
-      wx.redirectTo({ url: '/pages/login/index' })
+      // 未登录时跳转登录页，携带 inviteCode 确保注册后能自动加入家庭
+      const inviteParam = this.shareInviteCode ? `?inviteCode=${this.shareInviteCode}` : ''
+      wx.redirectTo({ url: `/pages/login/index${inviteParam}` })
       return
     }
 
@@ -80,11 +82,47 @@ Page({
         console.error('加载家庭信息失败:', err)
       }
     } else if (this.shareInviteCode) {
-      // 从分享链接进入且未加入家庭时，自动填充邀请码
-      this.setData({ inputCode: this.shareInviteCode.toUpperCase() })
+      // 从分享链接进入且未加入家庭时，自动加入家庭
+      await this.autoJoinByInviteCode(this.shareInviteCode)
+      this.shareInviteCode = '' // 只尝试一次，避免重复
+      return // autoJoinByInviteCode 内部会重新 loadData
     }
 
     this.setData({ loading: false })
+  },
+
+  // 通过分享链接中的邀请码自动加入家庭
+  async autoJoinByInviteCode(inviteCode) {
+    this.setData({ loading: true })
+    try {
+      await api.callCloud('joinFamily', { inviteCode: inviteCode.toUpperCase() })
+      api.showToast('已加入家庭')
+
+      // 刷新用户信息后重新加载页面
+      const app = getApp()
+      const userRes = await api.callCloud('getUserInfo')
+      app.globalData.userInfo = userRes.data
+
+      // 加入成功，跳转首页
+      setTimeout(() => {
+        wx.switchTab({ url: '/pages/index/index' })
+      }, 800)
+    } catch (err) {
+      // 加入失败（如邀请码无效、已加入家庭等），回退到手动输入模式
+      this.setData({
+        loading: false,
+        inputCode: inviteCode.toUpperCase()
+      })
+      if (err.msg === '您已加入家庭') {
+        // 已在家庭中，刷新页面显示家庭信息
+        const app = getApp()
+        const userRes = await api.callCloud('getUserInfo')
+        app.globalData.userInfo = userRes.data
+        this.loadData()
+      } else {
+        api.showError(err.msg || '自动加入失败，请手动输入邀请码')
+      }
+    }
   },
 
   // 创建家庭（家长）
