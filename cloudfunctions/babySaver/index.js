@@ -4,10 +4,11 @@ cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV })
 const db = cloud.database()
 const _ = db.command
 
-// 校验头像 URL 是否有效（仅 cloud:// 和 https:// 开头的可跨设备访问）
+// 校验头像 URL 是否有效（支持 cloud://、https:// 和 emoji: 默认头像）
 function safeAvatarUrl(url) {
   if (!url) return ''
   if (url.startsWith('cloud://') || url.startsWith('https://')) return url
+  if (url.startsWith('emoji:')) return url  // 默认 emoji 头像
   return '' // 过滤掉 http://tmp/ 、wxfile:// 等本地临时路径
 }
 
@@ -26,6 +27,7 @@ exports.main = async (event, context) => {
       case 'getUserInfo': return await getUserInfo(openid)
       case 'updateParentTitle': return await updateParentTitle(openid, data)
       case 'updateAvatar': return await updateAvatar(openid, data)
+      case 'deleteUser': return await deleteUser(openid)
       // 家庭相关
       case 'createFamily': return await createFamily(openid, data)
       case 'joinFamily': return await joinFamily(openid, data)
@@ -397,6 +399,44 @@ async function updateAvatar(openid, data) {
     data: { avatarUrl: safeUrl, updatedAt: new Date() }
   })
   return { code: 0, msg: '头像已更新' }
+}
+
+// 注销账号（删除用户所有数据，如果在家庭中先退出/解散）
+async function deleteUser(openid) {
+  const userRes = await db.collection('users').where({ _openid: openid }).get()
+  if (userRes.data.length === 0) return { code: -1, msg: '用户不存在' }
+
+  const user = userRes.data[0]
+  const now = new Date()
+
+  // 如果在家庭中，先处理家庭关系
+  if (user.familyId) {
+    const family = await db.collection('families').doc(user.familyId).get()
+    if (family.data) {
+      const creatorId = family.data.creatorOpenId || family.data.parentOpenId
+      if (creatorId === openid) {
+        // 是管理员：解散家庭（复用解散逻辑）
+        await disbandFamily(openid)
+      } else {
+        // 非管理员：退出家庭
+        await leaveFamily(openid)
+      }
+    }
+  }
+
+  // 删除用户头像（云存储）
+  if (user.avatarUrl && user.avatarUrl.startsWith('cloud://')) {
+    try {
+      await cloud.deleteFile({ fileList: [user.avatarUrl] })
+    } catch (e) {
+      console.error('删除头像失败:', e)
+    }
+  }
+
+  // 删除用户记录
+  await db.collection('users').where({ _openid: openid }).remove()
+
+  return { code: 0, msg: '账号已注销' }
 }
 
 // ========== 家庭相关（保持不变） ==========

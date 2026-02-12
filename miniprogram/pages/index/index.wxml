@@ -92,14 +92,82 @@
     <text class="loading-text">加载中...</text>
   </view>
 
-  <!-- 未加入家庭：与家庭管理页一致，展示创建和加入 -->
-  <view wx:elif="{{!hasFamily}}" class="no-family-section">
-    <!-- 家长：创建家庭 + 加入已有家庭 -->
-    <block wx:if="{{isParent}}">
+  <!-- 未登录 或 已登录但未加入家庭：展示亮点介绍 + 创建/加入家庭 -->
+  <view wx:elif="{{!isLoggedIn || !hasFamily}}" class="no-family-section">
+    <!-- 产品亮点介绍（仅未登录时展示） -->
+    <view class="visitor-highlights" wx:if="{{!isLoggedIn}}">
+      <view class="visitor-header">
+        <view class="visitor-logo">
+          <text class="visitor-logo-icon">🐷</text>
+        </view>
+        <text class="visitor-app-name">小孩存钱宝</text>
+        <text class="visitor-slogan">培养孩子的理财好习惯</text>
+      </view>
+      <view class="visitor-features">
+        <view class="visitor-feature-item">
+          <view class="highlight-icon-wrap highlight-icon-blue">
+            <text class="highlight-icon">📒</text>
+          </view>
+          <view class="highlight-text">
+            <text class="highlight-main">收支全记录</text>
+            <text class="highlight-sub">压岁钱、零花钱、奖励收入，每笔清清楚楚</text>
+          </view>
+        </view>
+        <view class="visitor-feature-item">
+          <view class="highlight-icon-wrap highlight-icon-orange">
+            <text class="highlight-icon">🏦</text>
+          </view>
+          <view class="highlight-text">
+            <text class="highlight-main">虚拟理财体验</text>
+            <text class="highlight-sub">参照真实利率按天计息，让孩子体会"钱生钱"</text>
+          </view>
+        </view>
+        <view class="visitor-feature-item">
+          <view class="highlight-icon-wrap highlight-icon-green">
+            <text class="highlight-icon">🎯</text>
+          </view>
+          <view class="highlight-text">
+            <text class="highlight-main">任务赚奖励</text>
+            <text class="highlight-sub">完成家务、学习任务即可赚取奖励</text>
+          </view>
+        </view>
+        <view class="visitor-feature-item">
+          <view class="highlight-icon-wrap highlight-icon-purple">
+            <text class="highlight-icon">👨‍👩‍👧‍👦</text>
+          </view>
+          <view class="highlight-text">
+            <text class="highlight-main">家长审批花钱</text>
+            <text class="highlight-sub">孩子花钱需申请审批，花钱有节制</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 未登录：选择身份 + 注册入口 -->
+    <block wx:if="{{!isLoggedIn}}">
+      <view class="setup-card card">
+        <text class="card-label-center">选择身份</text>
+        <view class="role-picker">
+          <view class="role-card" data-role="parent" bindtap="goRegisterWithRole">
+            <text class="role-emoji">👨‍👩‍👧</text>
+            <text class="role-name">我是家长</text>
+            <text class="role-desc">管理存款和审批</text>
+          </view>
+          <view class="role-card" data-role="child" bindtap="goRegisterWithRole">
+            <text class="role-emoji">🧒</text>
+            <text class="role-name">我是小孩</text>
+            <text class="role-desc">查看存款和取现</text>
+          </view>
+        </view>
+      </view>
+    </block>
+
+    <!-- 已登录-家长：创建家庭 + 加入家庭 -->
+    <block wx:elif="{{isLoggedIn && isParent}}">
       <view class="setup-card card">
         <text class="setup-icon">🏠</text>
-        <text class="setup-title">创建您的家庭</text>
-        <text class="setup-desc">创建后，将生成邀请码\n小孩和其他家长输入邀请码即可加入</text>
+        <text class="setup-title">创建家庭</text>
+        <text class="setup-desc">创建家庭后，邀请孩子加入\n一起开启财商培养之旅</text>
         <button class="btn-primary" style="width: 100%; margin-top: 40rpx;" bindtap="onCreateFamily">创建家庭</button>
       </view>
       <view class="setup-card card">
@@ -118,7 +186,8 @@
         <button class="btn-secondary" style="width: 100%; margin-top: 32rpx;" bindtap="onJoinFamily">加入家庭</button>
       </view>
     </block>
-    <!-- 小孩：加入家庭 -->
+
+    <!-- 已登录-小孩：只能加入家庭 -->
     <block wx:else>
       <view class="setup-card card">
         <text class="setup-icon">🔗</text>

@@ -41,6 +41,118 @@
 .no-family-section {
   padding-bottom: 40rpx;
 }
+
+/* 访客视图 - 产品亮点 */
+.visitor-highlights {
+  margin: 0 24rpx;
+  background: #fff;
+  border-radius: 20rpx;
+  overflow: hidden;
+  box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.06);
+}
+.visitor-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 48rpx 32rpx 32rpx;
+  background: linear-gradient(135deg, #4a7cf7 0%, #6c5ce7 100%);
+}
+.visitor-logo {
+  width: 120rpx;
+  height: 120rpx;
+  background: rgba(255,255,255,0.2);
+  border-radius: 32rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 20rpx;
+}
+.visitor-logo-icon {
+  font-size: 64rpx;
+}
+.visitor-app-name {
+  font-size: 40rpx;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 8rpx;
+}
+.visitor-slogan {
+  font-size: 26rpx;
+  color: rgba(255,255,255,0.85);
+}
+.visitor-features {
+  padding: 28rpx 32rpx;
+}
+.visitor-feature-item {
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 24rpx;
+}
+.visitor-feature-item:last-child {
+  margin-bottom: 0;
+}
+
+/* 未登录：身份选择卡片 */
+.card-label-center {
+  display: block;
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #333;
+  text-align: center;
+  margin-bottom: 24rpx;
+}
+.role-picker {
+  display: flex;
+  gap: 20rpx;
+}
+.role-card {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 36rpx 16rpx;
+  border-radius: 20rpx;
+  border: 2rpx solid #eee;
+  background: #FAFAFA;
+  transition: all 0.25s;
+}
+.role-card:active {
+  border-color: #4a7cf7;
+  background: #EBF2FF;
+}
+.role-emoji {
+  font-size: 56rpx;
+  margin-bottom: 12rpx;
+}
+.role-name {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 6rpx;
+}
+.role-desc {
+  font-size: 24rpx;
+  color: #999;
+}
+
+/* 主动登录入口 */
+.visitor-login-section {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40rpx 0 20rpx;
+}
+.visitor-login-hint {
+  font-size: 26rpx;
+  color: #999;
+}
+.visitor-login-btn {
+  font-size: 26rpx;
+  color: #4a7cf7;
+  font-weight: 500;
+  margin-left: 8rpx;
+}
+
 .setup-card {
   display: flex;
   flex-direction: column;

@@ -233,5 +233,48 @@ Page({
       showCancel: false,
       confirmText: '知道了'
     })
+  },
+
+  // 注销账号
+  onDeleteAccount() {
+    const isCreator = this.data.isCreator
+    const hasFamily = this.data.hasFamily
+    let content = '注销后将删除您的账号和所有数据，此操作不可恢复。确定注销吗？'
+    if (hasFamily && isCreator) {
+      content = '您是家庭管理员，注销账号将同时解散家庭并删除所有家庭数据。确定注销吗？'
+    }
+
+    wx.showModal({
+      title: '注销账号',
+      content,
+      confirmText: '确认注销',
+      confirmColor: '#ff4d4f',
+      success: (res) => {
+        if (res.confirm) {
+          this.doDeleteAccount()
+        }
+      }
+    })
+  },
+
+  async doDeleteAccount() {
+    api.showLoading('注销中...')
+    try {
+      await api.callCloud('deleteUser')
+      api.hideLoading()
+
+      // 清除本地状态
+      const app = getApp()
+      app.globalData.userInfo = null
+      app.globalData.isLoggedIn = false
+
+      api.showToast('账号已注销')
+      setTimeout(() => {
+        wx.reLaunch({ url: '/pages/index/index' })
+      }, 1000)
+    } catch (err) {
+      api.hideLoading()
+      api.showError(err.msg || '注销失败')
+    }
   }
 })

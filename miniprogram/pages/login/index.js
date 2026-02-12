@@ -1,14 +1,16 @@
-// 登录注册页（微信一键登录 + 资料完善两步流程）
+// 注册页面 - 分步注册（Step1 选身份 → Step2 填资料）
 const api = require('../../utils/api')
 const util = require('../../utils/util')
 
 Page({
   data: {
-    step: 1,           // 1=欢迎屏  2=资料填写
-    agreed: true,      // 默认勾选协议
+    step: 1,           // 当前步骤：1=选身份，2=填资料
+    agreed: false,
     avatarUrl: '',
+    defaultEmoji: '👤',
+    useDefaultAvatar: true,
     nickName: '',
-    role: '',          // 'parent' 或 'child'
+    role: '',
     parentTitle: '',
     parentTitleOptions: [],
     loading: false,
@@ -16,15 +18,28 @@ Page({
   },
 
   onLoad(options) {
-    // 从分享链接进入时，保存 inviteCode，注册后自动加入家庭
     this.pendingInviteCode = options.inviteCode || ''
     this.setData({
       parentTitleOptions: util.getParentTitleOptions()
     })
+
+    // 从首页带 role 参数进入时，直接跳到 Step 2
+    if (options.role === 'parent' || options.role === 'child') {
+      const role = options.role
+      const emoji = util.getDefaultAvatarEmoji(role, '')
+      const defaultNick = util.getDefaultNickName(role, '')
+      this.setData({
+        step: 2,
+        role,
+        defaultEmoji: emoji,
+        nickName: defaultNick,
+        useDefaultAvatar: true,
+        avatarUrl: ''
+      })
+    }
   },
 
   onShow() {
-    // 已注册用户直接跳转
     this.checkAlreadyRegistered()
   },
 
@@ -36,7 +51,6 @@ Page({
         const app = getApp()
         app.globalData.userInfo = res.data
         app.globalData.isLoggedIn = true
-        // 如果携带邀请码，跳转到家庭页完成自动加入
         if (this.pendingInviteCode) {
           wx.redirectTo({ url: `/pages/family/index?inviteCode=${this.pendingInviteCode}` })
         } else {
@@ -44,41 +58,70 @@ Page({
         }
       }
     } catch (e) {
-      // 未注册或网络异常，停留在登录页
+      // 未注册，停留在注册页
     }
   },
-
-  // ========== Step 1 ==========
 
   // 勾选/取消协议
   onToggleAgreement() {
     this.setData({ agreed: !this.data.agreed })
   },
 
-  // 查看用户协议（占位）
   onViewAgreement() {
     wx.showModal({ title: '用户协议', content: '暂无内容', showCancel: false })
   },
 
-  // 查看隐私政策（占位）
   onViewPrivacy() {
     wx.showModal({ title: '隐私政策', content: '暂无内容', showCancel: false })
   },
 
-  // 选择头像（Step 1 一键登录触发 / Step 2 更换头像触发）
-  // 临时头像需上传云存储得到永久 fileID，否则会过期导致无法显示
-  async onChooseAvatar(e) {
-    if (!this.data.agreed) {
-      return api.showToast('请先阅读并同意协议')
-    }
+  // Step 1: 选择角色 → 自动进入 Step 2
+  onSelectRole(e) {
+    const role = e.currentTarget.dataset.role
+    const parentTitle = role === 'child' ? '' : this.data.parentTitle
+    const emoji = util.getDefaultAvatarEmoji(role, parentTitle)
+    const defaultNick = util.getDefaultNickName(role, parentTitle)
 
+    this.setData({
+      role,
+      parentTitle,
+      defaultEmoji: emoji,
+      nickName: defaultNick,
+      useDefaultAvatar: true,
+      avatarUrl: ''
+    })
+
+    // 延迟切换到 Step 2，让用户看到选中效果
+    setTimeout(() => {
+      this.setData({ step: 2 })
+    }, 200)
+  },
+
+  // Step 2: 返回 Step 1
+  onBackToStep1() {
+    this.setData({ step: 1, role: '' })
+  },
+
+  // 选择家长身份 — 更新默认头像和昵称
+  onSelectParentTitle(e) {
+    const parentTitle = e.currentTarget.dataset.title
+    const emoji = util.getDefaultAvatarEmoji('parent', parentTitle)
+    const defaultNick = util.getDefaultNickName('parent', parentTitle)
+
+    const updates = { parentTitle, defaultEmoji: emoji }
+    if (this.data.useDefaultAvatar) {
+      updates.nickName = defaultNick
+    }
+    this.setData(updates)
+  },
+
+  // 微信授权获取头像
+  async onChooseAvatar(e) {
     const { avatarUrl: tempPath } = e.detail
     if (!tempPath) return
 
-    // 先展示选中的头像（本地临时）
-    this.setData({ avatarUrl: tempPath })
+    this.setData({ avatarUrl: tempPath, useDefaultAvatar: false })
 
-    // 上传到云存储，获取永久 fileID（临时路径仅本机可见，必须上传）
     api.showLoading('上传头像...')
     try {
       const cloudPath = `avatars/${Date.now()}_${Math.random().toString(36).slice(2)}.jpg`
@@ -90,35 +133,23 @@ Page({
     } catch (err) {
       console.error('头像上传失败:', err)
       api.showToast('头像上传失败，请重试')
-      // 上传失败时清空头像，不允许使用临时路径（其他设备无法显示）
-      this.setData({ avatarUrl: '' })
+      this.setData({ avatarUrl: '', useDefaultAvatar: true })
       api.hideLoading()
-      return // 不进入 Step 2，要求用户重试
+      return
     }
     api.hideLoading()
-
-    // 如果在 Step 1，选完头像自动进入 Step 2
-    if (this.data.step === 1) {
-      this.setData({ step: 2 })
-      setTimeout(() => {
-        this.setData({ focusNickname: true })
-      }, 400)
-    }
   },
 
-  // 返回欢迎屏
-  onBackToWelcome() {
-    this.setData({ step: 1 })
+  // 恢复使用默认头像
+  onUseDefaultAvatar() {
+    this.setData({ avatarUrl: '', useDefaultAvatar: true })
   },
-
-  // ========== Step 2 ==========
 
   // 昵称输入
   onNickNameInput(e) {
     this.setData({ nickName: e.detail.value })
   },
 
-  // 昵称失焦（type=nickname 选择微信昵称后在 blur 拿到真实值）
   onNickNameBlur(e) {
     const val = (e.detail.value || '').trim()
     if (val) {
@@ -126,28 +157,12 @@ Page({
     }
   },
 
-  // 选择角色
-  onSelectRole(e) {
-    const role = e.currentTarget.dataset.role
-    this.setData({
-      role,
-      parentTitle: role === 'child' ? '' : this.data.parentTitle
-    })
-  },
-
-  // 选择家长身份
-  onSelectParentTitle(e) {
-    this.setData({ parentTitle: e.currentTarget.dataset.title })
-  },
-
   // 提交注册
   async onRegister() {
-    const { nickName, role, parentTitle, avatarUrl } = this.data
-    if (!avatarUrl) {
-      return api.showToast('请设置头像')
-    }
-    if (!nickName || nickName.trim() === '') {
-      return api.showToast('请设置昵称')
+    const { nickName, role, parentTitle, avatarUrl, useDefaultAvatar, defaultEmoji, agreed } = this.data
+
+    if (!agreed) {
+      return api.showToast('请先阅读并同意协议')
     }
     if (!role) {
       return api.showToast('请选择身份')
@@ -155,15 +170,20 @@ Page({
     if (role === 'parent' && !parentTitle) {
       return api.showToast('请选择家长身份')
     }
+    if (!nickName || nickName.trim() === '') {
+      return api.showToast('请设置昵称')
+    }
 
     this.setData({ loading: true })
     api.showLoading('注册中...')
 
     try {
+      const finalAvatar = useDefaultAvatar ? `emoji:${defaultEmoji}` : avatarUrl
+
       const registerData = {
         nickName: nickName.trim(),
         role,
-        avatarUrl
+        avatarUrl: finalAvatar
       }
       if (role === 'parent') {
         registerData.parentTitle = parentTitle
@@ -179,20 +199,20 @@ Page({
       app.globalData.isLoggedIn = true
 
       setTimeout(() => {
-        // 注册完成后，如果有待处理的邀请码，带到家庭页自动加入
-        const inviteParam = this.pendingInviteCode ? `?inviteCode=${this.pendingInviteCode}` : ''
-        wx.redirectTo({ url: `/pages/family/index${inviteParam}` })
+        if (this.pendingInviteCode) {
+          wx.redirectTo({ url: `/pages/family/index?inviteCode=${this.pendingInviteCode}` })
+        } else {
+          wx.switchTab({ url: '/pages/index/index' })
+        }
       }, 800)
     } catch (err) {
       api.hideLoading()
       if (err.msg === '用户已注册') {
-        // 已注册用户直接跳转
         const app = getApp()
         api.callCloud('getUserInfo').then(userRes => {
           if (userRes.data) {
             app.globalData.userInfo = userRes.data
             app.globalData.isLoggedIn = true
-            // 如果有待处理的邀请码，跳转家庭页自动加入
             if (this.pendingInviteCode) {
               wx.redirectTo({ url: `/pages/family/index?inviteCode=${this.pendingInviteCode}` })
             } else {

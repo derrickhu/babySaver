@@ -125,6 +125,11 @@
         </view>
       </view>
     </view>
+
+    <!-- 注销账号 -->
+    <view class="delete-account-section" wx:if="{{userInfo}}">
+      <text class="delete-account-btn" bindtap="onDeleteAccount">注销账号</text>
+    </view>
   </view>
 
   <!-- 修改家长身份弹窗 -->

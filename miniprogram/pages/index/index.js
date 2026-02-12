@@ -5,6 +5,7 @@ const util = require('../../utils/util')
 Page({
   data: {
     userInfo: null,
+    isLoggedIn: false,
     isParent: false,
     hasFamily: false,
     loading: true,
@@ -45,6 +46,7 @@ Page({
     }
     const app = getApp()
     if (app.globalData.isLoggedIn) {
+      this.setData({ isLoggedIn: true, userInfo: app.globalData.userInfo })
       this.loadData()
     }
     // 创建家庭后触发产品亮点弹窗
@@ -57,17 +59,17 @@ Page({
   checkLoginAndLoad() {
     const app = getApp()
     if (app.globalData.isLoggedIn) {
-      this.setData({ userInfo: app.globalData.userInfo })
+      this.setData({ userInfo: app.globalData.userInfo, isLoggedIn: true })
       this.loadData()
     } else {
       app.loginCallback = (userInfo) => {
-        this.setData({ userInfo })
+        this.setData({ userInfo, isLoggedIn: true })
         this.loadData()
       }
+      // 未登录：不跳转登录页，展示访客视图（产品亮点介绍）
       setTimeout(() => {
         if (!app.globalData.isLoggedIn) {
-          this.setData({ loading: false })
-          wx.redirectTo({ url: '/pages/login/index' })
+          this.setData({ loading: false, isLoggedIn: false })
         }
       }, 3000)
     }
@@ -240,12 +242,33 @@ Page({
     wx.navigateTo({ url: '/pages/family/index' })
   },
 
+  // 未登录时主动去授权登录
+  goLogin() {
+    wx.navigateTo({ url: '/pages/login/index' })
+  },
+
+  // 未登录：选择身份后跳注册页，预设角色
+  goRegisterWithRole(e) {
+    const role = e.currentTarget.dataset.role
+    wx.navigateTo({ url: `/pages/login/index?role=${role}` })
+  },
+
   // 未加入家庭时的操作（与家庭管理页一致）
   onCodeInput(e) {
     this.setData({ inputCode: e.detail.value.toUpperCase() })
   },
 
   async onCreateFamily() {
+    // 未登录时跳转注册页
+    const app = getApp()
+    if (!app.globalData.isLoggedIn) {
+      return wx.navigateTo({ url: '/pages/login/index' })
+    }
+    // 小孩不能创建家庭
+    if (app.globalData.userInfo && app.globalData.userInfo.role === 'child') {
+      const api = require('../../utils/api')
+      return api.showToast('小孩只能加入家庭哦')
+    }
     const api = require('../../utils/api')
     api.showLoading('创建中...')
     try {
@@ -266,6 +289,11 @@ Page({
   },
 
   async onJoinFamily() {
+    // 未登录时跳转注册页
+    const app = getApp()
+    if (!app.globalData.isLoggedIn) {
+      return wx.navigateTo({ url: '/pages/login/index' })
+    }
     const { inputCode } = this.data
     if (!inputCode || inputCode.length < 6) {
       const api = require('../../utils/api')

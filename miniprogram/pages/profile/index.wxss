@@ -231,6 +231,17 @@
   border-radius: 50%;
 }
 
+/* 注销账号 */
+.delete-account-section {
+  display: flex;
+  justify-content: center;
+  padding: 48rpx 0 32rpx;
+}
+.delete-account-btn {
+  font-size: 26rpx;
+  color: #999;
+}
+
 /* 利率设置弹窗 */
 .rate-tip {
   font-size: 24rpx;

@@ -187,6 +187,23 @@ function getParentTitleOptions() {
   return ['爸爸', '妈妈', '爷爷', '奶奶', '外公', '外婆', '其他']
 }
 
+// 根据角色和家长身份获取默认头像 emoji
+function getDefaultAvatarEmoji(role, parentTitle) {
+  if (role === 'child') return '🧒'
+  const map = {
+    '爸爸': '👨', '妈妈': '👩', '爷爷': '👴', '奶奶': '👵',
+    '外公': '👴', '外婆': '👵', '其他': '👤'
+  }
+  return map[parentTitle] || '👨‍👩‍👧'
+}
+
+// 根据角色和家长身份生成默认昵称
+function getDefaultNickName(role, parentTitle) {
+  if (role === 'child') return '小朋友'
+  if (parentTitle) return parentTitle
+  return '家长'
+}
+
 // ========== 交易标签映射 ==========
 
 // 存入来源标签
@@ -261,6 +278,8 @@ module.exports = {
   getMemberRoleText,
   getMemberEmoji,
   getParentTitleOptions,
+  getDefaultAvatarEmoji,
+  getDefaultNickName,
   getTagInfo,
   getTagText,
   getTagLabel,

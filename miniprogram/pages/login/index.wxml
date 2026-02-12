@@ -1,64 +1,14 @@
-<!-- 登录注册页 -->
+<!-- 注册页面 - 分步注册 -->
 <view class="login-page">
-  <!-- ===== Step 1：欢迎屏 ===== -->
-  <view class="welcome" wx:if="{{step === 1}}">
-    <view class="welcome-top">
-      <view class="logo-box">
-        <text class="logo-icon">🐷</text>
+  <!-- Step 1: 选择身份 -->
+  <view class="step-page {{step === 1 ? 'step-active' : 'step-hide'}}" wx:if="{{step <= 1}}">
+    <!-- 顶部 Logo -->
+    <view class="reg-header">
+      <view class="reg-logo-box">
+        <text class="reg-logo-icon">🐷</text>
       </view>
-      <text class="app-name">小孩存钱宝</text>
-      <text class="app-slogan">培养孩子的理财好习惯</text>
-    </view>
-
-    <view class="welcome-bottom">
-      <button class="wx-login-btn" open-type="chooseAvatar" bindchooseavatar="onChooseAvatar">
-        <text class="wx-login-text">微信一键登录</text>
-      </button>
-      <view class="agreement-row" bindtap="onToggleAgreement">
-        <view class="agreement-check {{agreed ? 'checked' : ''}}">
-          <text wx:if="{{agreed}}">✓</text>
-        </view>
-        <text class="agreement-text">阅读并同意</text>
-        <text class="agreement-link" catchtap="onViewAgreement">《用户协议》</text>
-        <text class="agreement-text">和</text>
-        <text class="agreement-link" catchtap="onViewPrivacy">《隐私政策》</text>
-      </view>
-    </view>
-  </view>
-
-  <!-- ===== Step 2：完善资料 ===== -->
-  <view class="profile-setup" wx:elif="{{step === 2}}">
-    <!-- 顶部返回 -->
-    <view class="setup-nav">
-      <text class="setup-back" bindtap="onBackToWelcome">‹ 返回</text>
-    </view>
-
-    <text class="setup-title">完善资料</text>
-    <text class="setup-subtitle">还差一步，即可开始使用</text>
-
-    <!-- 头像 + 昵称 -->
-    <view class="setup-card card">
-      <button class="avatar-row" open-type="chooseAvatar" bindchooseavatar="onChooseAvatar">
-        <view class="avatar-box">
-          <image class="avatar-img" src="{{avatarUrl}}" wx:if="{{avatarUrl}}" mode="aspectFill"></image>
-          <text class="avatar-placeholder" wx:else>👤</text>
-        </view>
-        <text class="avatar-change">点击更换头像</text>
-      </button>
-
-      <view class="nickname-row">
-        <text class="nickname-label">昵称</text>
-        <input
-          class="nickname-input"
-          type="nickname"
-          placeholder="请输入昵称"
-          value="{{nickName}}"
-          bindinput="onNickNameInput"
-          bindblur="onNickNameBlur"
-          focus="{{focusNickname}}"
-          maxlength="20"
-        />
-      </view>
+      <text class="reg-app-name">小孩存钱宝</text>
+      <text class="reg-subtitle">创建账号，开始使用</text>
     </view>
 
     <!-- 角色选择 -->
@@ -85,6 +35,18 @@
         </view>
       </view>
     </view>
+  </view>
+
+  <!-- Step 2: 填写资料 -->
+  <view class="step-page {{step === 2 ? 'step-active' : 'step-hide'}}" wx:if="{{step >= 2}}">
+    <!-- 顶部返回 + 标题 -->
+    <view class="step2-header">
+      <view class="step2-back" bindtap="onBackToStep1">
+        <text class="step2-back-icon">‹</text>
+      </view>
+      <text class="step2-title">完善资料</text>
+      <view class="step2-placeholder"></view>
+    </view>
 
     <!-- 家长身份标识 -->
     <view class="setup-card card" wx:if="{{role === 'parent'}}">
@@ -100,9 +62,57 @@
       </view>
     </view>
 
+    <!-- 头像 + 昵称 -->
+    <view class="setup-card card">
+      <view class="avatar-section">
+        <!-- 默认 emoji 头像 -->
+        <view class="avatar-box" wx:if="{{useDefaultAvatar}}">
+          <view class="default-avatar-circle">
+            <text class="default-avatar-emoji">{{defaultEmoji}}</text>
+          </view>
+        </view>
+        <!-- 微信授权头像 -->
+        <view class="avatar-box" wx:else>
+          <image class="avatar-img" src="{{avatarUrl}}" mode="aspectFill"></image>
+          <text class="avatar-reset" bindtap="onUseDefaultAvatar">恢复默认</text>
+        </view>
+
+        <!-- 微信授权按钮 -->
+        <button class="wx-avatar-btn" open-type="chooseAvatar" bindchooseavatar="onChooseAvatar">
+          <text class="wx-avatar-icon">📷</text>
+          <text class="wx-avatar-text">微信授权获取头像</text>
+        </button>
+      </view>
+
+      <view class="nickname-row">
+        <text class="nickname-label">昵称</text>
+        <input
+          class="nickname-input"
+          type="nickname"
+          placeholder="请输入昵称"
+          value="{{nickName}}"
+          bindinput="onNickNameInput"
+          bindblur="onNickNameBlur"
+          focus="{{focusNickname}}"
+          maxlength="20"
+        />
+      </view>
+    </view>
+
+    <!-- 协议 -->
+    <view class="agreement-row" bindtap="onToggleAgreement">
+      <view class="agreement-check {{agreed ? 'checked' : ''}}">
+        <text wx:if="{{agreed}}">✓</text>
+      </view>
+      <text class="agreement-text">阅读并同意</text>
+      <text class="agreement-link" catchtap="onViewAgreement">《用户协议》</text>
+      <text class="agreement-text">和</text>
+      <text class="agreement-link" catchtap="onViewPrivacy">《隐私政策》</text>
+    </view>
+
     <!-- 提交按钮 -->
     <button class="submit-btn" bindtap="onRegister" disabled="{{loading}}">
-      {{loading ? '注册中...' : '开始使用'}}
+      {{loading ? '注册中...' : '完成注册'}}
     </button>
   </view>
 </view>

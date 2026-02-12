@@ -83,15 +83,18 @@ async function resolveAvatars(list, field = 'avatarUrl') {
   const cloudIds = list
     .map(item => item[field])
     .filter(url => url && url.startsWith('cloud://'))
-  if (cloudIds.length === 0) return list
   // 去重
   const uniqueIds = [...new Set(cloudIds)]
-  const urlMap = await resolveCloudFileUrls(uniqueIds)
-  // 替换：转换成功用 HTTPS URL，转换失败清空（让 emoji 降级生效）
+  const urlMap = uniqueIds.length > 0 ? await resolveCloudFileUrls(uniqueIds) : {}
+  // 替换
   return list.map(item => {
     const url = item[field]
     if (url && url.startsWith('cloud://')) {
       return { ...item, [field]: urlMap[url] || '' }
+    }
+    // emoji: 格式的默认头像不能渲染为 image，清空让 emoji fallback 生效
+    if (url && url.startsWith('emoji:')) {
+      return { ...item, [field]: '' }
     }
     return item
   })
@@ -104,6 +107,10 @@ async function resolveAvatars(list, field = 'avatarUrl') {
  */
 async function resolveUserAvatar(userInfo) {
   if (!userInfo || !userInfo.avatarUrl) return userInfo
+  // emoji: 格式的默认头像不能渲染为 image，清空让 emoji fallback 生效
+  if (userInfo.avatarUrl.startsWith('emoji:')) {
+    return { ...userInfo, avatarUrl: '' }
+  }
   if (!userInfo.avatarUrl.startsWith('cloud://')) return userInfo
   const urlMap = await resolveCloudFileUrls([userInfo.avatarUrl])
   // 转换成功用 HTTPS URL，失败清空（让 emoji 降级生效，避免 cloud:// 渲染报错）
