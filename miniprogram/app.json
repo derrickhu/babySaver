@@ -13,7 +13,10 @@
     "pages/product/create/index",
     "pages/product/logs/index",
     "pages/earnings/calendar/index",
-    "pages/family/permissions/index"
+    "pages/family/permissions/index",
+    "pages/task/index",
+    "pages/task/create/index",
+    "pages/task/detail/index"
   ],
   "window": {
     "backgroundColor": "#F5F7FA",
@@ -33,6 +36,12 @@
         "text": "首页",
         "iconPath": "images/icons/home.png",
         "selectedIconPath": "images/icons/home-active.png"
+      },
+      {
+        "pagePath": "pages/task/index",
+        "text": "任务",
+        "iconPath": "images/icons/task.png",
+        "selectedIconPath": "images/icons/task-active.png"
       },
       {
         "pagePath": "pages/earnings/index",

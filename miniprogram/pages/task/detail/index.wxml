@@ -1,0 +1,93 @@
+<!-- 任务详情 -->
+<view class="page-container" wx:if="{{!loading}}">
+  <block wx:if="{{task}}">
+    <!-- 状态横幅 -->
+    <view class="status-banner banner-{{task.status}}">
+      <text class="banner-icon" wx:if="{{task.status === 'open'}}">📋</text>
+      <text class="banner-icon" wx:elif="{{task.status === 'claimed'}}">🏃</text>
+      <text class="banner-icon" wx:elif="{{task.status === 'submitted'}}">⏳</text>
+      <text class="banner-icon" wx:elif="{{task.status === 'approved'}}">🎉</text>
+      <text class="banner-icon" wx:elif="{{task.status === 'rejected'}}">❌</text>
+      <text class="banner-icon" wx:else>⏰</text>
+
+      <text class="banner-text" wx:if="{{task.status === 'open'}}">等待小孩认领</text>
+      <text class="banner-text" wx:elif="{{task.status === 'claimed'}}">{{task.claimerName}} 正在完成</text>
+      <text class="banner-text" wx:elif="{{task.status === 'submitted'}}">{{task.claimerName}} 已提交，待审核</text>
+      <text class="banner-text" wx:elif="{{task.status === 'approved'}}">任务完成！奖金已发放</text>
+      <text class="banner-text" wx:elif="{{task.status === 'rejected'}}">任务未通过</text>
+      <text class="banner-text" wx:else>任务已过期</text>
+    </view>
+
+    <!-- 奖金卡片 -->
+    <view class="reward-card">
+      <text class="reward-label">任务奖金</text>
+      <text class="reward-value">¥{{task.rewardStr}}</text>
+    </view>
+
+    <!-- 任务信息 -->
+    <view class="info-card">
+      <view class="info-title">{{task.title}}</view>
+      <view class="info-desc" wx:if="{{task.description}}">{{task.description}}</view>
+
+      <view class="info-row">
+        <text class="info-key">发布者</text>
+        <text class="info-val">{{task.creatorName}}</text>
+      </view>
+      <view class="info-row">
+        <text class="info-key">截止日期</text>
+        <text class="info-val {{task.isExpiredSoon ? 'val-urgent' : ''}}">
+          {{task.deadlineStr}}
+          <text wx:if="{{task.status === 'open' || task.status === 'claimed'}}">（剩余{{task.remainDays}}天）</text>
+        </text>
+      </view>
+      <view class="info-row">
+        <text class="info-key">发布时间</text>
+        <text class="info-val">{{task.createdAtStr}}</text>
+      </view>
+      <view class="info-row" wx:if="{{task.claimerName}}">
+        <text class="info-key">认领者</text>
+        <text class="info-val">🧒 {{task.claimerName}}</text>
+      </view>
+      <view class="info-row" wx:if="{{task.submittedAtStr}}">
+        <text class="info-key">提交时间</text>
+        <text class="info-val">{{task.submittedAtStr}}</text>
+      </view>
+      <view class="info-row" wx:if="{{task.reviewedAtStr}}">
+        <text class="info-key">审核时间</text>
+        <text class="info-val">{{task.reviewedAtStr}}</text>
+      </view>
+    </view>
+
+    <!-- 发布者操作：编辑 / 删除 -->
+    <view class="creator-actions" wx:if="{{task.isMyTask && (task.canEdit || task.canDelete)}}">
+      <button class="btn-creator btn-edit" bindtap="onEdit" wx:if="{{task.canEdit}}" disabled="{{processing}}">✏️ 编辑任务</button>
+      <button class="btn-creator btn-delete" bindtap="onDelete" wx:if="{{task.canDelete}}" disabled="{{processing}}">🗑️ 删除任务</button>
+    </view>
+
+    <!-- 操作按钮 -->
+    <!-- 小孩：认领 -->
+    <view class="action-bar" wx:if="{{isChild && task.status === 'open'}}">
+      <button class="btn-action btn-primary" bindtap="onClaim" disabled="{{processing}}">
+        {{processing ? '认领中...' : '认领任务'}}
+      </button>
+    </view>
+
+    <!-- 小孩：提交完成 -->
+    <view class="action-bar" wx:if="{{isChild && task.status === 'claimed' && task.isMyClaim}}">
+      <button class="btn-action btn-primary" bindtap="onSubmit" disabled="{{processing}}">
+        {{processing ? '提交中...' : '提交完成'}}
+      </button>
+    </view>
+
+    <!-- 家长：审核 -->
+    <view class="action-bar action-bar-double" wx:if="{{isParent && task.status === 'submitted'}}">
+      <button class="btn-action btn-reject" bindtap="onReject" disabled="{{processing}}">拒绝</button>
+      <button class="btn-action btn-approve" bindtap="onApprove" disabled="{{processing}}">通过并发放奖金</button>
+    </view>
+  </block>
+</view>
+
+<!-- 加载 -->
+<view class="loading-wrap" wx:if="{{loading}}">
+  <text class="loading-text">加载中...</text>
+</view>

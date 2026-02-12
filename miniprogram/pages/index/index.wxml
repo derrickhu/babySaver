@@ -167,7 +167,7 @@
           <text class="quick-label">产品管理</text>
         </view>
         <view class="quick-item" bindtap="goReview" wx:if="{{isParent && canReview && pendingCount > 0}}">
-          <text class="quick-icon">📋</text>
+          <text class="quick-icon">✅</text>
           <text class="quick-label">审批</text>
         </view>
       </view>

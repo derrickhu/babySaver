@@ -65,6 +65,15 @@ exports.main = async (event, context) => {
       case 'updatePermissions': return await updatePermissions(openid, data)
       // 订阅消息
       case 'requestSubscribe': return await requestSubscribe(openid, data)
+      // 任务系统
+      case 'createTask': return await createTask(openid, data)
+      case 'getTasks': return await getTasks(openid, data)
+      case 'getTaskDetail': return await getTaskDetail(openid, data)
+      case 'claimTask': return await claimTask(openid, data)
+      case 'submitTask': return await submitTask(openid, data)
+      case 'reviewTask': return await reviewTask(openid, data)
+      case 'updateTask': return await updateTask(openid, data)
+      case 'deleteTask': return await deleteTask(openid, data)
       default:
         return { code: -1, msg: '未知操作类型' }
     }
@@ -306,7 +315,7 @@ function generateProductExample(rate, type, termDays) {
 // ========== 初始化集合 ==========
 
 async function initCollections() {
-  const collections = ['users', 'families', 'accounts', 'products', 'investments', 'transactions', 'earnings', 'productLogs']
+  const collections = ['users', 'families', 'accounts', 'products', 'investments', 'transactions', 'earnings', 'productLogs', 'tasks']
   const results = []
   for (const name of collections) {
     try {
@@ -1631,4 +1640,297 @@ async function requestSubscribe(openid, data) {
   }
 
   return { code: 0, msg: 'ok', data: { templateIds } }
+}
+
+// ========== 任务系统 ==========
+
+// 家长创建任务
+async function createTask(openid, data) {
+  const { title, description, reward, deadline } = data
+  if (!title || !title.trim()) return { code: -1, msg: '请填写任务名称' }
+  if (!reward || reward <= 0) return { code: -1, msg: '请设置有效的奖金金额' }
+  if (!deadline) return { code: -1, msg: '请设置截止日期' }
+
+  const user = await getUserWithFamily(openid)
+  if (user.role !== 'parent') return { code: -1, msg: '仅家长可发布任务' }
+
+  const now = new Date()
+  const deadlineDate = new Date(deadline + 'T23:59:59')
+  if (deadlineDate <= now) return { code: -1, msg: '截止日期必须晚于今天' }
+
+  await db.collection('tasks').add({
+    data: {
+      familyId: user.familyId,
+      title: title.trim(),
+      description: (description || '').trim(),
+      reward: round2(reward),
+      deadline: deadlineDate,
+      status: 'open',        // open → claimed → submitted → approved/rejected
+      createdBy: openid,
+      creatorName: user.nickName,
+      claimedBy: '',
+      claimerName: '',
+      submittedAt: null,
+      reviewedAt: null,
+      reviewedBy: '',
+      createdAt: now,
+      updatedAt: now
+    }
+  })
+
+  return { code: 0, msg: '任务发布成功' }
+}
+
+// 获取任务列表
+async function getTasks(openid, data) {
+  const { tab = 'open', page = 1, pageSize = 20 } = data
+  const user = await getUserWithFamily(openid)
+  const now = new Date()
+
+  const query = { familyId: user.familyId }
+
+  // 根据 tab 过滤
+  if (tab === 'open') {
+    // 待领取：状态为 open 且未过期
+    query.status = 'open'
+    query.deadline = _.gte(now)
+  } else if (tab === 'active') {
+    // 进行中：已认领 或 已提交待审核
+    query.status = _.in(['claimed', 'submitted'])
+  } else if (tab === 'done') {
+    // 已完成/已结束：已通过、已拒绝、已过期
+    query.status = _.in(['approved', 'rejected', 'expired'])
+  }
+
+  // 先自动将过期未领取的任务标记为 expired
+  if (tab !== 'open') {
+    // 后台静默处理过期任务
+    try {
+      await db.collection('tasks').where({
+        familyId: user.familyId,
+        status: 'open',
+        deadline: _.lt(now)
+      }).update({ data: { status: 'expired', updatedAt: now } })
+    } catch (e) { /* 忽略 */ }
+  }
+
+  const res = await db.collection('tasks')
+    .where(query)
+    .orderBy('createdAt', 'desc')
+    .skip((page - 1) * pageSize)
+    .limit(pageSize)
+    .get()
+
+  return { code: 0, data: res.data }
+}
+
+// 获取任务详情
+async function getTaskDetail(openid, data) {
+  const { taskId } = data
+  if (!taskId) return { code: -1, msg: '缺少任务ID' }
+
+  const user = await getUserWithFamily(openid)
+  const res = await db.collection('tasks').doc(taskId).get()
+  const task = res.data
+
+  if (!task || task.familyId !== user.familyId) {
+    return { code: -1, msg: '任务不存在' }
+  }
+
+  // 检查是否过期
+  if (task.status === 'open' && new Date(task.deadline) < new Date()) {
+    await db.collection('tasks').doc(taskId).update({
+      data: { status: 'expired', updatedAt: new Date() }
+    })
+    task.status = 'expired'
+  }
+
+  return { code: 0, data: task }
+}
+
+// 小孩认领任务
+async function claimTask(openid, data) {
+  const { taskId } = data
+  if (!taskId) return { code: -1, msg: '缺少任务ID' }
+
+  const user = await getUserWithFamily(openid)
+  if (user.role !== 'child') return { code: -1, msg: '仅小孩可认领任务' }
+
+  const res = await db.collection('tasks').doc(taskId).get()
+  const task = res.data
+
+  if (!task || task.familyId !== user.familyId) {
+    return { code: -1, msg: '任务不存在' }
+  }
+  if (task.status !== 'open') return { code: -1, msg: '该任务已被认领或已结束' }
+  if (new Date(task.deadline) < new Date()) return { code: -1, msg: '任务已过期' }
+
+  await db.collection('tasks').doc(taskId).update({
+    data: {
+      status: 'claimed',
+      claimedBy: openid,
+      claimerName: user.nickName,
+      updatedAt: new Date()
+    }
+  })
+
+  return { code: 0, msg: '认领成功，加油完成吧！' }
+}
+
+// 小孩提交任务完成
+async function submitTask(openid, data) {
+  const { taskId } = data
+  if (!taskId) return { code: -1, msg: '缺少任务ID' }
+
+  const user = await getUserWithFamily(openid)
+  if (user.role !== 'child') return { code: -1, msg: '仅小孩可提交任务' }
+
+  const res = await db.collection('tasks').doc(taskId).get()
+  const task = res.data
+
+  if (!task || task.familyId !== user.familyId) {
+    return { code: -1, msg: '任务不存在' }
+  }
+  if (task.status !== 'claimed') return { code: -1, msg: '任务状态异常' }
+  if (task.claimedBy !== openid) return { code: -1, msg: '只能提交自己认领的任务' }
+
+  await db.collection('tasks').doc(taskId).update({
+    data: {
+      status: 'submitted',
+      submittedAt: new Date(),
+      updatedAt: new Date()
+    }
+  })
+
+  return { code: 0, msg: '已提交，等待家长审核' }
+}
+
+// 家长审核任务（通过/拒绝）
+async function reviewTask(openid, data) {
+  const { taskId, action } = data
+  if (!taskId || !['approve', 'reject'].includes(action)) {
+    return { code: -1, msg: '参数无效' }
+  }
+
+  const user = await getUserWithFamily(openid)
+  if (user.role !== 'parent') return { code: -1, msg: '仅家长可审核任务' }
+
+  const res = await db.collection('tasks').doc(taskId).get()
+  const task = res.data
+
+  if (!task || task.familyId !== user.familyId) {
+    return { code: -1, msg: '任务不存在' }
+  }
+  if (task.status !== 'submitted') return { code: -1, msg: '该任务未提交审核' }
+
+  const now = new Date()
+  const newStatus = action === 'approve' ? 'approved' : 'rejected'
+
+  await db.collection('tasks').doc(taskId).update({
+    data: {
+      status: newStatus,
+      reviewedAt: now,
+      reviewedBy: openid,
+      updatedAt: now
+    }
+  })
+
+  // 审批通过：自动发放奖金到小孩默认账户
+  if (action === 'approve') {
+    const childOpenId = task.claimedBy
+    const account = await ensureAccount(childOpenId, task.familyId)
+
+    // 增加余额
+    await db.collection('accounts').doc(account._id).update({
+      data: {
+        balance: round2(account.balance + task.reward),
+        updatedAt: now
+      }
+    })
+
+    // 记录账单
+    await addTransaction({
+      childOpenId,
+      familyId: task.familyId,
+      type: 'deposit',
+      amount: round2(task.reward),
+      remark: `任务奖励 - ${task.title}`,
+      tag: 'reward',
+      relatedId: taskId,
+      relatedName: '任务奖励',
+      status: 'success',
+      createdBy: openid,
+      childName: task.claimerName
+    })
+  }
+
+  const msg = action === 'approve'
+    ? `已通过，¥${task.reward} 奖金已发放到 ${task.claimerName} 的账户`
+    : '已拒绝该任务'
+
+  return { code: 0, msg }
+}
+
+// 发布者编辑任务（仅 open/claimed 状态可编辑）
+async function updateTask(openid, data) {
+  const { taskId, title, description, reward, deadline } = data
+  if (!taskId) return { code: -1, msg: '缺少任务ID' }
+  if (!title || !title.trim()) return { code: -1, msg: '请填写任务名称' }
+  if (!reward || reward <= 0) return { code: -1, msg: '请设置有效的奖金金额' }
+  if (!deadline) return { code: -1, msg: '请设置截止日期' }
+
+  const user = await getUserWithFamily(openid)
+  if (user.role !== 'parent') return { code: -1, msg: '仅家长可编辑任务' }
+
+  const res = await db.collection('tasks').doc(taskId).get()
+  const task = res.data
+  if (!task || task.familyId !== user.familyId) {
+    return { code: -1, msg: '任务不存在' }
+  }
+  if (task.createdBy !== openid) {
+    return { code: -1, msg: '只能编辑自己发布的任务' }
+  }
+  if (!['open', 'claimed'].includes(task.status)) {
+    return { code: -1, msg: '当前状态不可编辑' }
+  }
+
+  const deadlineDate = new Date(deadline + 'T23:59:59')
+
+  await db.collection('tasks').doc(taskId).update({
+    data: {
+      title: title.trim(),
+      description: (description || '').trim(),
+      reward: round2(reward),
+      deadline: deadlineDate,
+      updatedAt: new Date()
+    }
+  })
+
+  return { code: 0, msg: '任务已更新' }
+}
+
+// 发布者删除任务（仅 open 状态可删除，已认领的不可直接删除）
+async function deleteTask(openid, data) {
+  const { taskId } = data
+  if (!taskId) return { code: -1, msg: '缺少任务ID' }
+
+  const user = await getUserWithFamily(openid)
+  if (user.role !== 'parent') return { code: -1, msg: '仅家长可删除任务' }
+
+  const res = await db.collection('tasks').doc(taskId).get()
+  const task = res.data
+  if (!task || task.familyId !== user.familyId) {
+    return { code: -1, msg: '任务不存在' }
+  }
+  if (task.createdBy !== openid) {
+    return { code: -1, msg: '只能删除自己发布的任务' }
+  }
+  // open/expired/rejected 可删除；claimed/submitted/approved 不可删除
+  if (!['open', 'expired', 'rejected'].includes(task.status)) {
+    return { code: -1, msg: '任务已被认领或已完成，无法删除' }
+  }
+
+  await db.collection('tasks').doc(taskId).remove()
+
+  return { code: 0, msg: '任务已删除' }
 }
