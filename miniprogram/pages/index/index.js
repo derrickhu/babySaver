@@ -19,6 +19,7 @@ Page({
     canDeposit: false,
     canReview: false,
     canProductManage: false,
+    canTaskPublish: false,
     // 家长：小孩列表和当前选中
     children: [],
     selectedChildIndex: 0,
@@ -117,6 +118,7 @@ Page({
       canDeposit: myPerms.deposit,
       canReview: myPerms.withdrawReview,
       canProductManage: myPerms.productManage,
+      canTaskPublish: myPerms.taskPublish,
       inviteCode: family ? family.inviteCode : '',
       family
     })

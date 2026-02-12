@@ -1,4 +1,4 @@
-// 权限管理页（仅创建者可操作）
+// 权限管理页（仅管理员可操作）
 const api = require('../../../utils/api')
 
 Page({
@@ -9,9 +9,10 @@ Page({
     permLabels: {
       deposit: '存入',
       withdrawReview: '取现审批',
-      productManage: '产品管理'
+      productManage: '产品管理',
+      taskPublish: '任务发布'
     },
-    permTypes: ['deposit', 'withdrawReview', 'productManage']
+    permTypes: ['deposit', 'withdrawReview', 'productManage', 'taskPublish']
   },
 
   onLoad() {
@@ -61,7 +62,7 @@ Page({
 
     // 不能修改创建者权限
     if (parent.isCreator) {
-      return api.showToast('创建者始终拥有全部权限')
+      return api.showToast('管理员始终拥有全部权限')
     }
 
     const permLabel = this.data.permLabels[perm]

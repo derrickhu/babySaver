@@ -209,10 +209,10 @@ Page({
     }
   },
 
-  // 复制邀请码（仅创建者可用）
+  // 复制邀请码（仅管理员可用）
   onCopyCode() {
     if (!this.data.isCreator) {
-      return api.showToast('仅家庭创建者可分享邀请码')
+      return api.showToast('仅家庭管理员可分享邀请码')
     }
     wx.setClipboardData({
       data: this.data.inviteCode,
@@ -227,10 +227,58 @@ Page({
     wx.navigateTo({ url: '/pages/family/permissions/index' })
   },
 
-  // 退出家庭（非创建者）
+  // 转让管理员
+  async onTransferAdmin() {
+    if (!this.data.isCreator) {
+      return api.showToast('仅管理员可操作')
+    }
+
+    // 获取其他家长成员
+    const otherParents = this.data.members.filter(
+      m => m.role === 'parent' && !m.isCreator
+    )
+
+    if (otherParents.length === 0) {
+      return api.showToast('暂无其他家长可转让')
+    }
+
+    const names = otherParents.map(p => p.nickName || '家长')
+    wx.showActionSheet({
+      itemList: names,
+      success: async (res) => {
+        const target = otherParents[res.tapIndex]
+        if (!target) return
+
+        const confirmRes = await new Promise(resolve => {
+          wx.showModal({
+            title: '转让管理员',
+            content: `确定将管理员转让给「${target.nickName}」？转让后您将失去管理员权限。`,
+            confirmText: '确定转让',
+            confirmColor: '#FF4D4F',
+            success: resolve
+          })
+        })
+
+        if (!confirmRes.confirm) return
+
+        api.showLoading('处理中...')
+        try {
+          const r = await api.callCloud('transferAdmin', { targetOpenId: target._openid })
+          api.hideLoading()
+          api.showToast(r.msg || '转让成功')
+          this.loadData()
+        } catch (err) {
+          api.hideLoading()
+          api.showError(err.msg || '转让失败')
+        }
+      }
+    })
+  },
+
+  // 退出家庭（非管理员）
   async onLeaveFamily() {
     if (this.data.isCreator) {
-      return api.showToast('创建者请使用解散家庭')
+      return api.showToast('管理员请使用解散家庭')
     }
 
     const confirmRes = await new Promise(resolve => {
@@ -262,10 +310,10 @@ Page({
     }
   },
 
-  // 解散家庭（仅创建者）
+  // 解散家庭（仅管理员）
   async onDisbandFamily() {
     if (!this.data.isCreator) {
-      return api.showToast('仅家庭创建者可解散家庭')
+      return api.showToast('仅家庭管理员可解散家庭')
     }
 
     const confirmRes = await new Promise(resolve => {

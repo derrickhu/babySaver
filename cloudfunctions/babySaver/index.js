@@ -33,6 +33,7 @@ exports.main = async (event, context) => {
       case 'getFamilyMembers': return await getFamilyMembers(openid)
       case 'disbandFamily': return await disbandFamily(openid)
       case 'leaveFamily': return await leaveFamily(openid)
+      case 'transferAdmin': return await transferAdmin(openid, data)
       // 默认账户相关
       case 'getAccount': return await getAccount(openid, data)
       case 'getChildAccounts': return await getChildAccounts(openid)
@@ -169,7 +170,7 @@ async function addProductLog(logData) {
 // ========== 权限相关 ==========
 
 // 权限类型
-const PERMISSIONS = ['deposit', 'withdrawReview', 'productManage']
+const PERMISSIONS = ['deposit', 'withdrawReview', 'productManage', 'taskPublish']
 
 // 获取家庭权限配置（创建者始终拥有全部权限）
 async function getFamilyPermissions(familyId) {
@@ -182,6 +183,7 @@ async function getFamilyPermissions(familyId) {
     deposit: perms.deposit || [creatorId],
     withdrawReview: perms.withdrawReview || [creatorId],
     productManage: perms.productManage || [creatorId],
+    taskPublish: perms.taskPublish || [creatorId],
     creatorOpenId: creatorId
   }
 }
@@ -200,8 +202,8 @@ async function verifyParentPermission(openid, permType) {
   const perms = family.data.permissions || {}
   const allowedList = perms[permType] || [creatorId]
   if (!allowedList.includes(openid)) {
-    const permNames = { deposit: '存入', withdrawReview: '取现审批', productManage: '产品管理' }
-    throw new Error(`您没有「${permNames[permType] || permType}」权限，请联系家庭创建者授权`)
+    const permNames = { deposit: '存入', withdrawReview: '取现审批', productManage: '产品管理', taskPublish: '任务发布' }
+    throw new Error(`您没有「${permNames[permType] || permType}」权限，请联系家庭管理员授权`)
   }
   return user
 }
@@ -434,7 +436,8 @@ async function createFamily(openid, data) {
       permissions: {
         deposit: [openid],
         withdrawReview: [openid],
-        productManage: [openid]
+        productManage: [openid],
+        taskPublish: [openid]
       },
       createdAt: now
     }
@@ -505,7 +508,8 @@ async function getFamily(openid) {
   familyData.myPermissions = {
     deposit: familyData.isCreator || (perms.deposit || []).includes(openid),
     withdrawReview: familyData.isCreator || (perms.withdrawReview || []).includes(openid),
-    productManage: familyData.isCreator || (perms.productManage || []).includes(openid)
+    productManage: familyData.isCreator || (perms.productManage || []).includes(openid),
+    taskPublish: familyData.isCreator || (perms.taskPublish || []).includes(openid)
   }
   return { code: 0, data: familyData }
 }
@@ -526,7 +530,7 @@ async function getFamilyMembers(openid) {
   return { code: 0, data: result }
 }
 
-// 解散家庭（仅创建者可操作）
+// 解散家庭（仅管理员可操作）
 async function disbandFamily(openid) {
   const user = await db.collection('users').where({ _openid: openid }).get()
   if (user.data.length === 0 || !user.data[0].familyId) {
@@ -539,7 +543,7 @@ async function disbandFamily(openid) {
 
   const creatorOpenId = family.data.creatorOpenId || family.data.parentOpenId
   if (creatorOpenId !== openid) {
-    return { code: -1, msg: '仅家庭创建者可解散家庭' }
+    return { code: -1, msg: '仅家庭管理员可解散家庭' }
   }
 
   const now = new Date()
@@ -606,7 +610,7 @@ async function leaveFamily(openid) {
 
   const creatorOpenId = family.data.creatorOpenId || family.data.parentOpenId
   if (creatorOpenId === openid) {
-    return { code: -1, msg: '创建者不能退出，请先解散家庭或转移创建者身份' }
+    return { code: -1, msg: '管理员不能退出，请先解散家庭或转让管理员' }
   }
 
   const now = new Date()
@@ -619,7 +623,7 @@ async function leaveFamily(openid) {
   } else {
     const familyData = family.data
     const permUpdate = {}
-    for (const key of ['deposit', 'withdrawReview', 'productManage']) {
+    for (const key of ['deposit', 'withdrawReview', 'productManage', 'taskPublish']) {
       const list = (familyData.permissions && familyData.permissions[key]) || []
       if (list.includes(openid)) {
         permUpdate[`permissions.${key}`] = _.pull(openid)
@@ -661,6 +665,53 @@ async function leaveFamily(openid) {
   sendMemberChangeNotification(familyId, memberName, 'leave').catch(() => {})
 
   return { code: 0, msg: '已退出家庭' }
+}
+
+// 转让管理员（仅当前管理员可操作）
+async function transferAdmin(openid, data) {
+  const { targetOpenId } = data
+  if (!targetOpenId) return { code: -1, msg: '请选择转让目标' }
+
+  const user = await verifyParent(openid)
+  const familyId = user.familyId
+  const family = await db.collection('families').doc(familyId).get()
+  if (!family.data) return { code: -1, msg: '家庭不存在' }
+
+  const creatorId = family.data.creatorOpenId || family.data.parentOpenId
+  if (creatorId !== openid) {
+    return { code: -1, msg: '仅家庭管理员可转让管理员' }
+  }
+  if (targetOpenId === openid) {
+    return { code: -1, msg: '不能转让给自己' }
+  }
+
+  // 验证目标是同家庭的家长
+  const target = await db.collection('users').where({ _openid: targetOpenId }).get()
+  if (target.data.length === 0 || target.data[0].familyId !== familyId || target.data[0].role !== 'parent') {
+    return { code: -1, msg: '目标用户不是家庭内的家长' }
+  }
+
+  // 更新 creatorOpenId
+  // 确保新管理员拥有全部权限
+  const perms = family.data.permissions || {}
+  const updatePerms = {}
+  for (const key of PERMISSIONS) {
+    let list = perms[key] || [creatorId]
+    // 确保新管理员在列表中
+    if (!list.includes(targetOpenId)) list.push(targetOpenId)
+    updatePerms[`permissions.${key}`] = list
+  }
+
+  await db.collection('families').doc(familyId).update({
+    data: {
+      creatorOpenId: targetOpenId,
+      ...updatePerms,
+      updatedAt: new Date()
+    }
+  })
+
+  const targetName = target.data[0].nickName || '家长'
+  return { code: 0, msg: `已将管理员转让给「${targetName}」` }
 }
 
 // ========== 默认账户相关 ==========
@@ -750,7 +801,7 @@ async function setBaseRate(openid, data) {
   // 验证是创建者
   const family = await db.collection('families').doc(user.familyId).get()
   if (family.data.creatorOpenId !== openid) {
-    return { code: -1, msg: '仅家庭创建者可设置基础利率' }
+    return { code: -1, msg: '仅家庭管理员可设置基础利率' }
   }
 
   // 更新家庭利率
@@ -1544,6 +1595,7 @@ async function getPermissions(openid) {
   const depositList = perms.deposit || [creatorId]
   const withdrawReviewList = perms.withdrawReview || [creatorId]
   const productManageList = perms.productManage || [creatorId]
+  const taskPublishList = perms.taskPublish || [creatorId]
 
   const parentList = parents.data.map(p => ({
     openid: p._openid,
@@ -1554,7 +1606,8 @@ async function getPermissions(openid) {
     permissions: {
       deposit: p._openid === creatorId || depositList.includes(p._openid),
       withdrawReview: p._openid === creatorId || withdrawReviewList.includes(p._openid),
-      productManage: p._openid === creatorId || productManageList.includes(p._openid)
+      productManage: p._openid === creatorId || productManageList.includes(p._openid),
+      taskPublish: p._openid === creatorId || taskPublishList.includes(p._openid)
     }
   }))
 
@@ -1573,10 +1626,10 @@ async function updatePermissions(openid, data) {
   const creatorId = family.data.creatorOpenId || family.data.parentOpenId
 
   if (openid !== creatorId) {
-    return { code: -1, msg: '仅家庭创建者可管理权限' }
+    return { code: -1, msg: '仅家庭管理员可管理权限' }
   }
   if (targetOpenId === creatorId) {
-    return { code: -1, msg: '创建者始终拥有全部权限' }
+    return { code: -1, msg: '管理员始终拥有全部权限' }
   }
 
   // 验证目标是同家庭的家长
@@ -1602,7 +1655,7 @@ async function updatePermissions(openid, data) {
 
   await db.collection('families').doc(user.familyId).update({ data: updateObj })
 
-  const permNames = { deposit: '存入', withdrawReview: '取现审批', productManage: '产品管理' }
+  const permNames = { deposit: '存入', withdrawReview: '取现审批', productManage: '产品管理', taskPublish: '任务发布' }
   const targetName = target.data[0].nickName || '家长'
   return {
     code: 0,
@@ -1651,8 +1704,7 @@ async function createTask(openid, data) {
   if (!reward || reward <= 0) return { code: -1, msg: '请设置有效的奖金金额' }
   if (!deadline) return { code: -1, msg: '请设置截止日期' }
 
-  const user = await getUserWithFamily(openid)
-  if (user.role !== 'parent') return { code: -1, msg: '仅家长可发布任务' }
+  const user = await verifyParentPermission(openid, 'taskPublish')
 
   const now = new Date()
   const deadlineDate = new Date(deadline + 'T23:59:59')

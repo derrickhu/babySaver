@@ -84,7 +84,7 @@
           </view>
         </view>
 
-        <!-- 权限管理（仅创建者） -->
+        <!-- 权限管理（仅管理员） -->
         <view class="menu-item" bindtap="goPermissions" wx:if="{{isCreator}}">
           <text class="menu-icon">🔐</text>
           <text class="menu-label">权限管理</text>

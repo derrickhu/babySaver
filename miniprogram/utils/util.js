@@ -167,7 +167,7 @@ function getMemberRoleText(member) {
   if (member.role === 'child') return '小孩'
   if (member.role === 'parent') {
     const title = member.parentTitle ? getParentTitleText(member.parentTitle) : '家长'
-    if (member.isCreator) return title + '（创建者）'
+    if (member.isCreator) return title + '（管理员）'
     return title
   }
   return getRoleText(member.role)

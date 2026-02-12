@@ -6,7 +6,7 @@
 
   <block wx:else>
     <view class="page-tip">
-      <text>存入、取现审批、产品管理默认仅家庭创建者有权限。\n创建者可授权给其他家长。</text>
+      <text>存入、取现审批、产品管理、任务发布默认仅家庭管理员有权限。\n管理员可授权给其他家长。</text>
     </view>
 
     <!-- 家长列表 -->
@@ -19,7 +19,7 @@
         <view class="parent-info">
           <view class="parent-name-row">
             <text class="parent-name">{{item.nickName}}</text>
-            <text class="creator-tag" wx:if="{{item.isCreator}}">创建者</text>
+            <text class="creator-tag" wx:if="{{item.isCreator}}">管理员</text>
           </view>
           <text class="parent-title">{{item.parentTitle}}</text>
         </view>
@@ -42,7 +42,7 @@
       </view>
 
       <view class="perm-note" wx:if="{{item.isCreator}}">
-        <text>创建者始终拥有全部权限</text>
+        <text>管理员始终拥有全部权限</text>
       </view>
     </view>
 

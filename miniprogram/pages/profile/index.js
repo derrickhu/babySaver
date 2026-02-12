@@ -18,7 +18,8 @@ Page({
     baseRate: '',
     canDeposit: false,
     canReview: false,
-    canProductManage: false
+    canProductManage: false,
+    canTaskPublish: false
   },
 
   onLoad() {
@@ -81,7 +82,8 @@ Page({
             baseRate: String(family.baseRate || 2.0),
             canDeposit: myPerms.deposit || family.isCreator,
             canReview: myPerms.withdrawReview || family.isCreator,
-            canProductManage: myPerms.productManage || family.isCreator
+            canProductManage: myPerms.productManage || family.isCreator,
+            canTaskPublish: myPerms.taskPublish || family.isCreator
           })
         }
 

@@ -50,7 +50,7 @@
   <view class="empty-state" wx:if="{{!loading && tasks.length === 0}}">
     <text class="empty-icon">{{activeTab === 'open' ? '📋' : (activeTab === 'active' ? '🏃' : '🏆')}}</text>
     <text class="empty-text">{{activeTab === 'open' ? '暂无待领取任务' : (activeTab === 'active' ? '暂无进行中任务' : '暂无已完成任务')}}</text>
-    <button class="btn-create-empty" wx:if="{{isParent && activeTab === 'open'}}" bindtap="onCreateTask">发布新任务</button>
+    <button class="btn-create-empty" wx:if="{{canTaskPublish && activeTab === 'open'}}" bindtap="onCreateTask">发布新任务</button>
   </view>
 
   <!-- 加载 -->
@@ -61,8 +61,8 @@
     <text class="loading-text">加载中...</text>
   </view>
 
-  <!-- 家长：发布任务按钮 -->
-  <view class="fab-btn" wx:if="{{isParent}}" bindtap="onCreateTask">
+  <!-- 有权限的家长：发布任务按钮 -->
+  <view class="fab-btn" wx:if="{{canTaskPublish}}" bindtap="onCreateTask">
     <text class="fab-icon">+</text>
   </view>
 </view>

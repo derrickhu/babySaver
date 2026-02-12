@@ -6,7 +6,7 @@
       <text class="family-icon">🏠</text>
       <text class="family-name">{{family.familyName}}</text>
 
-      <!-- 邀请区域：仅创建者可见 -->
+      <!-- 邀请区域：仅管理员可见 -->
       <view class="invite-section" wx:if="{{isCreator}}">
         <text class="invite-label">邀请成员加入</text>
         <button class="share-btn" open-type="share">
@@ -21,9 +21,9 @@
         <text class="invite-tip">也可复制邀请码，通过其他方式邀请</text>
       </view>
 
-      <!-- 非创建者提示 -->
+      <!-- 非管理员提示 -->
       <view class="non-creator-tip" wx:elif="{{isParent && !isCreator}}">
-        <text class="tip-text">💡 如需邀请新成员，请联系家庭创建者邀请到微信群</text>
+        <text class="tip-text">💡 如需邀请新成员，请联系家庭管理员邀请到微信群</text>
       </view>
     </view>
 
@@ -38,7 +38,7 @@
         <view class="member-info">
           <view class="member-name-row">
             <text class="member-name">{{item.nickName}}</text>
-            <text class="creator-tag" wx:if="{{item.isCreator}}">创建者</text>
+            <text class="creator-tag" wx:if="{{item.isCreator}}">管理员</text>
           </view>
           <text class="member-role">{{item.roleText}}</text>
         </view>
@@ -52,11 +52,19 @@
       </view>
     </view>
 
-    <!-- 创建者：权限管理入口 -->
+    <!-- 管理员：权限管理入口 -->
     <view class="perm-entry" wx:if="{{isCreator}}" bindtap="goPermissions">
       <text class="perm-entry-icon">🔐</text>
       <text class="perm-entry-text">权限管理</text>
       <text class="perm-entry-desc">管理家长的操作权限</text>
+      <text class="perm-entry-arrow">›</text>
+    </view>
+
+    <!-- 管理员：转让管理员 -->
+    <view class="perm-entry" wx:if="{{isCreator}}" bindtap="onTransferAdmin">
+      <text class="perm-entry-icon">🔄</text>
+      <text class="perm-entry-text">转让管理员</text>
+      <text class="perm-entry-desc">将管理员身份转让给其他家长</text>
       <text class="perm-entry-arrow">›</text>
     </view>
 
@@ -68,14 +76,14 @@
       <text class="perm-entry-arrow">›</text>
     </view>
 
-    <!-- 创建者：解散家庭 -->
+    <!-- 管理员：解散家庭 -->
     <view class="disband-entry" wx:if="{{isCreator}}" bindtap="onDisbandFamily">
       <text class="disband-icon">⚠️</text>
       <text class="disband-text">解散家庭</text>
       <text class="disband-desc">清除所有数据，不可恢复</text>
     </view>
 
-    <!-- 非创建者：退出家庭 -->
+    <!-- 非管理员：退出家庭 -->
     <view class="leave-entry" wx:if="{{!isCreator}}" bindtap="onLeaveFamily">
       <text class="leave-icon">🚪</text>
       <text class="leave-text">退出家庭</text>

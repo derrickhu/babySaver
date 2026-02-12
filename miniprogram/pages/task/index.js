@@ -6,6 +6,7 @@ Page({
   data: {
     isParent: false,
     myOpenId: '',
+    canTaskPublish: false,
     activeTab: 'open',
     tabs: [
       { key: 'open', label: '待领取' },
@@ -27,6 +28,7 @@ Page({
         isParent: userInfo.role === 'parent',
         myOpenId: userInfo._openid || ''
       })
+      this._loadPermissions()
     }
   },
 
@@ -43,8 +45,23 @@ Page({
         isParent: userInfo.role === 'parent',
         myOpenId: userInfo._openid || ''
       })
+      this._loadPermissions()
     }
     this.refreshList()
+  },
+
+  // 加载任务发布权限
+  async _loadPermissions() {
+    if (!this.data.isParent) return
+    try {
+      const res = await api.callCloud('getFamily')
+      if (res.code === 0 && res.data) {
+        const myPerms = res.data.myPermissions || {}
+        this.setData({
+          canTaskPublish: myPerms.taskPublish || res.data.isCreator
+        })
+      }
+    } catch (e) {}
   },
 
   // 刷新列表
