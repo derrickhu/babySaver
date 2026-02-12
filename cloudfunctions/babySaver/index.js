@@ -18,6 +18,7 @@ exports.main = async (event, context) => {
       case 'register': return await register(openid, data)
       case 'getUserInfo': return await getUserInfo(openid)
       case 'updateParentTitle': return await updateParentTitle(openid, data)
+      case 'updateAvatar': return await updateAvatar(openid, data)
       // 家庭相关
       case 'createFamily': return await createFamily(openid, data)
       case 'joinFamily': return await joinFamily(openid, data)
@@ -328,6 +329,20 @@ async function updateParentTitle(openid, data) {
     data: { parentTitle, updatedAt: new Date() }
   })
   return { code: 0, msg: '身份修改成功' }
+}
+
+// 更新头像（云存储 fileID）
+async function updateAvatar(openid, data) {
+  const { avatarUrl } = data
+  if (!avatarUrl) return { code: -1, msg: '头像不能为空' }
+
+  const user = await db.collection('users').where({ _openid: openid }).get()
+  if (user.data.length === 0) return { code: -1, msg: '用户不存在' }
+
+  await db.collection('users').where({ _openid: openid }).update({
+    data: { avatarUrl, updatedAt: new Date() }
+  })
+  return { code: 0, msg: '头像已更新' }
 }
 
 // ========== 家庭相关（保持不变） ==========
@@ -1139,7 +1154,22 @@ async function getTransactions(openid, data) {
     .limit(pageSize)
     .get()
 
-  return { code: 0, data: res.data }
+  // 补充小孩头像信息
+  const childIds = [...new Set(res.data.map(t => t.childOpenId).filter(Boolean))]
+  const childMap = {}
+  if (childIds.length > 0) {
+    const childUsers = await db.collection('users').where({ _openid: _.in(childIds) }).get()
+    for (const c of childUsers.data) {
+      childMap[c._openid] = { avatarUrl: c.avatarUrl || '', nickName: c.nickName }
+    }
+  }
+  const txList = res.data.map(t => ({
+    ...t,
+    childAvatarUrl: (childMap[t.childOpenId] || {}).avatarUrl || '',
+    childName: t.childName || (childMap[t.childOpenId] || {}).nickName || ''
+  }))
+
+  return { code: 0, data: txList }
 }
 
 // ========== 收益计算 ==========

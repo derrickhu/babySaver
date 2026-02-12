@@ -2,10 +2,13 @@
 <view class="profile-page">
   <!-- 用户信息卡 -->
   <view class="user-card" wx:if="{{userInfo}}">
-    <view class="user-avatar-wrap">
-      <image class="user-avatar-img" wx:if="{{userInfo.avatarUrl}}" src="{{userInfo.avatarUrl}}" mode="aspectFill"></image>
-      <text class="user-avatar-emoji" wx:else>{{isParent ? '👨‍👩‍👧' : '🧒'}}</text>
-    </view>
+    <button class="user-avatar-btn" open-type="chooseAvatar" bindchooseavatar="onChooseAvatar">
+      <view class="user-avatar-wrap">
+        <image class="user-avatar-img" wx:if="{{userInfo.avatarUrl}}" src="{{userInfo.avatarUrl}}" mode="aspectFill"></image>
+        <text class="user-avatar-emoji" wx:else>{{isParent ? '👨‍👩‍👧' : '🧒'}}</text>
+      </view>
+      <text class="user-avatar-hint">点击更换头像</text>
+    </button>
     <text class="user-name">{{userInfo.nickName}}</text>
     <text class="user-role-text">{{isParent ? (userInfo.parentTitle || '家长') : '小孩'}}</text>
     <view class="user-stats" wx:if="{{account && !isParent}}">

@@ -6,14 +6,50 @@
     <text class="loading-text">加载中...</text>
   </view>
 
-  <!-- 未加入家庭 -->
-  <view wx:elif="{{!hasFamily}}" class="empty-state">
-    <text class="empty-icon">🏠</text>
-    <text class="empty-text">您还未加入家庭</text>
-    <text class="empty-text" style="margin-bottom: 40rpx;">请先{{isParent ? '创建' : '加入'}}家庭</text>
-    <button class="btn-primary" style="width: 400rpx;" bindtap="goFamily">
-      {{isParent ? '创建家庭' : '加入家庭'}}
-    </button>
+  <!-- 未加入家庭：与家庭管理页一致，展示创建和加入 -->
+  <view wx:elif="{{!hasFamily}}" class="no-family-section">
+    <!-- 家长：创建家庭 + 加入已有家庭 -->
+    <block wx:if="{{isParent}}">
+      <view class="setup-card card">
+        <text class="setup-icon">🏠</text>
+        <text class="setup-title">创建您的家庭</text>
+        <text class="setup-desc">创建后，将生成邀请码\n小孩和其他家长输入邀请码即可加入</text>
+        <button class="btn-primary" style="width: 100%; margin-top: 40rpx;" bindtap="onCreateFamily">创建家庭</button>
+      </view>
+      <view class="setup-card card">
+        <text class="setup-icon">🔗</text>
+        <text class="setup-title">加入已有家庭</text>
+        <text class="setup-desc">如果其他家长已创建家庭，输入邀请码即可加入</text>
+        <view class="code-input-wrap">
+          <input
+            class="code-input"
+            placeholder="请输入6位邀请码"
+            value="{{inputCode}}"
+            bindinput="onCodeInput"
+            maxlength="6"
+          />
+        </view>
+        <button class="btn-secondary" style="width: 100%; margin-top: 32rpx;" bindtap="onJoinFamily">加入家庭</button>
+      </view>
+    </block>
+    <!-- 小孩：加入家庭 -->
+    <block wx:else>
+      <view class="setup-card card">
+        <text class="setup-icon">🔗</text>
+        <text class="setup-title">加入家庭</text>
+        <text class="setup-desc">输入家长分享的邀请码加入家庭</text>
+        <view class="code-input-wrap">
+          <input
+            class="code-input"
+            placeholder="请输入6位邀请码"
+            value="{{inputCode}}"
+            bindinput="onCodeInput"
+            maxlength="6"
+          />
+        </view>
+        <button class="btn-primary" style="width: 100%; margin-top: 32rpx;" bindtap="onJoinFamily">加入家庭</button>
+      </view>
+    </block>
   </view>
 
   <block wx:else>
@@ -21,7 +57,17 @@
     <view class="child-switcher" wx:if="{{isParent && children.length > 0}}">
       <picker bindchange="onChildChange" value="{{selectedChildIndex}}" range="{{children}}" range-key="nickName">
         <view class="child-switcher-inner">
-          <text class="child-switcher-emoji">🧒</text>
+          <view class="child-switcher-avatar-wrap">
+            <image
+              class="child-switcher-avatar"
+              wx:if="{{children[selectedChildIndex].avatarUrl && !children[selectedChildIndex].avatarError}}"
+              src="{{children[selectedChildIndex].avatarUrl}}"
+              mode="aspectFill"
+              binderror="onChildAvatarError"
+              data-index="{{selectedChildIndex}}"
+            ></image>
+            <text class="child-switcher-emoji" wx:else>🧒</text>
+          </view>
           <text class="child-switcher-name">{{children[selectedChildIndex].nickName}}</text>
           <text class="child-switcher-arrow">▼</text>
         </view>

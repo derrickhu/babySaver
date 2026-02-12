@@ -59,20 +59,37 @@ Page({
   },
 
   // 选择头像（Step 1 一键登录触发 / Step 2 更换头像触发）
-  onChooseAvatar(e) {
+  // 临时头像需上传云存储得到永久 fileID，否则会过期导致无法显示
+  async onChooseAvatar(e) {
     if (!this.data.agreed) {
       return api.showToast('请先阅读并同意协议')
     }
 
-    const { avatarUrl } = e.detail
-    if (!avatarUrl) return
+    const { avatarUrl: tempPath } = e.detail
+    if (!tempPath) return
 
-    this.setData({ avatarUrl })
+    // 先展示选中的头像（本地临时）
+    this.setData({ avatarUrl: tempPath })
+
+    // 上传到云存储，获取永久 fileID
+    api.showLoading('上传头像...')
+    try {
+      const cloudPath = `avatars/${Date.now()}_${Math.random().toString(36).slice(2)}.jpg`
+      const uploadRes = await wx.cloud.uploadFile({
+        cloudPath,
+        filePath: tempPath
+      })
+      this.setData({ avatarUrl: uploadRes.fileID })
+    } catch (err) {
+      console.error('头像上传失败:', err)
+      api.showToast('头像上传失败，请重试')
+      this.setData({ avatarUrl: tempPath }) // 仍保留临时路径，注册时可能还在有效期内
+    }
+    api.hideLoading()
 
     // 如果在 Step 1，选完头像自动进入 Step 2
     if (this.data.step === 1) {
       this.setData({ step: 2 })
-      // 延迟聚焦昵称输入框，触发微信昵称键盘
       setTimeout(() => {
         this.setData({ focusNickname: true })
       }, 400)

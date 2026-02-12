@@ -25,7 +25,9 @@ Page({
     selectedChildId: '',
     // 邀请码（家长无小孩时展示）
     inviteCode: '',
-    family: null
+    family: null,
+    // 未加入家庭时的输入
+    inputCode: ''
   },
 
   onLoad() {
@@ -163,6 +165,15 @@ Page({
     }
   },
 
+  // 小孩头像加载失败（如过期 URL）时回退到 emoji
+  onChildAvatarError() {
+    const idx = this.data.selectedChildIndex
+    const children = this.data.children.slice()
+    if (!children[idx]) return
+    children[idx] = { ...children[idx], avatarError: true }
+    this.setData({ children })
+  },
+
   // 家长切换小孩
   onChildChange(e) {
     const index = e.detail.value
@@ -214,6 +225,55 @@ Page({
 
   goFamily() {
     wx.navigateTo({ url: '/pages/family/index' })
+  },
+
+  // 未加入家庭时的操作（与家庭管理页一致）
+  onCodeInput(e) {
+    this.setData({ inputCode: e.detail.value.toUpperCase() })
+  },
+
+  async onCreateFamily() {
+    const api = require('../../utils/api')
+    api.showLoading('创建中...')
+    try {
+      const res = await api.callCloud('createFamily', {})
+      api.hideLoading()
+      api.showToast('家庭创建成功')
+
+      const app = getApp()
+      const userRes = await api.callCloud('getUserInfo')
+      app.globalData.userInfo = userRes.data
+
+      this.loadData()
+    } catch (err) {
+      api.hideLoading()
+      api.showError(err.msg)
+    }
+  },
+
+  async onJoinFamily() {
+    const { inputCode } = this.data
+    if (!inputCode || inputCode.length < 6) {
+      const api = require('../../utils/api')
+      return api.showToast('请输入完整的邀请码')
+    }
+
+    const api = require('../../utils/api')
+    api.showLoading('加入中...')
+    try {
+      await api.callCloud('joinFamily', { inviteCode: inputCode })
+      api.hideLoading()
+      api.showToast('加入家庭成功')
+
+      const app = getApp()
+      const userRes = await api.callCloud('getUserInfo')
+      app.globalData.userInfo = userRes.data
+
+      this.loadData()
+    } catch (err) {
+      api.hideLoading()
+      api.showError(err.msg)
+    }
   },
 
   // 复制邀请码

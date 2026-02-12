@@ -134,9 +134,25 @@
   border-bottom: none;
 }
 
-.member-avatar {
-  font-size: 44rpx;
+.member-avatar-wrap {
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: 50%;
+  overflow: hidden;
+  background: #f0f0f0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   margin-right: 20rpx;
+  flex-shrink: 0;
+}
+.member-avatar-img {
+  width: 72rpx;
+  height: 72rpx;
+  display: block;
+}
+.member-avatar-emoji {
+  font-size: 36rpx;
 }
 
 .member-info {

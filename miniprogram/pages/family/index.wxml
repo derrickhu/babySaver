@@ -31,7 +31,10 @@
     <view class="section-title">家庭成员</view>
     <view class="member-list card">
       <view class="member-item" wx:for="{{members}}" wx:key="_id">
-        <text class="member-avatar">{{item.emoji}}</text>
+        <view class="member-avatar-wrap">
+          <image class="member-avatar-img" wx:if="{{item.avatarUrl}}" src="{{item.avatarUrl}}" mode="aspectFill"></image>
+          <text class="member-avatar-emoji" wx:else>{{item.emoji}}</text>
+        </view>
         <view class="member-info">
           <view class="member-name-row">
             <text class="member-name">{{item.nickName}}</text>

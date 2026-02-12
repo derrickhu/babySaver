@@ -102,6 +102,34 @@ Page({
     this.setData({ loading: false })
   },
 
+  // 更换头像（上传云存储后更新）
+  async onChooseAvatar(e) {
+    const { avatarUrl: tempPath } = e.detail
+    if (!tempPath) return
+
+    api.showLoading('上传头像...')
+    try {
+      const cloudPath = `avatars/${Date.now()}_${Math.random().toString(36).slice(2)}.jpg`
+      const uploadRes = await wx.cloud.uploadFile({
+        cloudPath,
+        filePath: tempPath
+      })
+      await api.callCloud('updateAvatar', { avatarUrl: uploadRes.fileID })
+      api.hideLoading()
+      api.showToast('头像已更新')
+
+      const app = getApp()
+      const userRes = await api.callCloud('getUserInfo')
+      if (userRes.code === 0 && userRes.data) {
+        app.globalData.userInfo = userRes.data
+        this.setData({ userInfo: userRes.data })
+      }
+    } catch (err) {
+      api.hideLoading()
+      api.showError(err.msg || '头像更新失败')
+    }
+  },
+
   goFamily() {
     wx.navigateTo({ url: '/pages/family/index' })
   },
