@@ -163,14 +163,16 @@ Page({
     try {
       const res = await api.callCloud('createFamily', {})
       api.hideLoading()
-      api.showToast('家庭创建成功')
 
       // 刷新用户信息
       const app = getApp()
       const userRes = await api.callCloud('getUserInfo')
       app.globalData.userInfo = userRes.data
+      // 标记需要显示产品亮点
+      app.globalData.showHighlights = true
 
-      this.loadData()
+      // 创建家庭后直接跳转首页
+      wx.switchTab({ url: '/pages/index/index' })
     } catch (err) {
       api.hideLoading()
       api.showError(err.msg)

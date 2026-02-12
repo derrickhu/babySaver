@@ -28,7 +28,11 @@ Page({
     inviteCode: '',
     family: null,
     // 未加入家庭时的输入
-    inputCode: ''
+    inputCode: '',
+    // 产品亮点弹窗 & 新手指引
+    showHighlights: false,
+    showGuide: false,
+    guideStep: 0
   },
 
   onLoad() {
@@ -42,6 +46,11 @@ Page({
     const app = getApp()
     if (app.globalData.isLoggedIn) {
       this.loadData()
+    }
+    // 创建家庭后触发产品亮点弹窗
+    if (app.globalData.showHighlights) {
+      app.globalData.showHighlights = false
+      this.setData({ showHighlights: true })
     }
   },
 
@@ -242,12 +251,14 @@ Page({
     try {
       const res = await api.callCloud('createFamily', {})
       api.hideLoading()
-      api.showToast('家庭创建成功')
 
       const app = getApp()
       const userRes = await api.callCloud('getUserInfo')
       app.globalData.userInfo = userRes.data
+      // 标记需要显示产品亮点
+      app.globalData.showHighlights = true
 
+      // 创建家庭后直接加载首页数据（当前就在首页）
       this.loadData()
     } catch (err) {
       api.hideLoading()
@@ -307,6 +318,26 @@ Page({
 
   goProducts() {
     wx.navigateTo({ url: '/pages/product/manage/index' })
+  },
+
+  // 关闭产品亮点弹窗，自动打开新手指引
+  onCloseHighlights() {
+    this.setData({ showHighlights: false, showGuide: true, guideStep: 0 })
+  },
+
+  // 新手指引：下一步
+  onGuideNext() {
+    const next = this.data.guideStep + 1
+    if (next >= 3) {
+      this.setData({ showGuide: false })
+    } else {
+      this.setData({ guideStep: next })
+    }
+  },
+
+  // 新手指引：跳过
+  onGuideSkip() {
+    this.setData({ showGuide: false })
   },
 
   onPullDownRefresh() {

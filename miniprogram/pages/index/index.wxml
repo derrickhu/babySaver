@@ -1,5 +1,91 @@
 <!-- 首页 - 资产总览（微众银行风格） -->
 <view class="page-container">
+  <!-- 产品亮点弹窗 -->
+  <view class="modal-mask" wx:if="{{showHighlights}}" catchtouchmove="true">
+    <view class="modal-dialog highlights-dialog">
+      <view class="highlights-header">
+        <text class="highlights-emoji">🎉</text>
+        <text class="highlights-title">欢迎使用小孩存钱宝</text>
+        <text class="highlights-subtitle">记录每一笔收入和支出，用虚拟理财培养财商</text>
+      </view>
+      <view class="highlights-body">
+        <view class="highlight-item">
+          <view class="highlight-icon-wrap highlight-icon-blue">
+            <text class="highlight-icon">📒</text>
+          </view>
+          <view class="highlight-text">
+            <text class="highlight-main">收支全记录</text>
+            <text class="highlight-sub">压岁钱、零花钱、奖励收入，以及每笔消费支出，清清楚楚有据可查</text>
+          </view>
+        </view>
+        <view class="highlight-item">
+          <view class="highlight-icon-wrap highlight-icon-orange">
+            <text class="highlight-icon">🏦</text>
+          </view>
+          <view class="highlight-text">
+            <text class="highlight-main">虚拟理财体验</text>
+            <text class="highlight-sub">收到的钱可存入虚拟银行，参照真实利率按天计息，让孩子体会"钱生钱"</text>
+          </view>
+        </view>
+        <view class="highlight-item">
+          <view class="highlight-icon-wrap highlight-icon-green">
+            <text class="highlight-icon">🎯</text>
+          </view>
+          <view class="highlight-text">
+            <text class="highlight-main">任务赚奖励</text>
+            <text class="highlight-sub">家长发布家务、学习任务，孩子完成即可赚取奖励，培养劳动价值观</text>
+          </view>
+        </view>
+        <view class="highlight-item">
+          <view class="highlight-icon-wrap highlight-icon-purple">
+            <text class="highlight-icon">👨‍👩‍👧‍👦</text>
+          </view>
+          <view class="highlight-text">
+            <text class="highlight-main">家长审批花钱</text>
+            <text class="highlight-sub">孩子想花钱需提交申请，家长审批通过后才可使用，花钱有节制</text>
+          </view>
+        </view>
+      </view>
+      <button class="highlights-btn" bindtap="onCloseHighlights">开始使用</button>
+    </view>
+  </view>
+
+  <!-- 新手指引遮罩 -->
+  <view class="modal-mask guide-mask" wx:if="{{showGuide}}" catchtouchmove="true">
+    <view class="guide-modal">
+      <!-- 步骤指示器 -->
+      <view class="guide-steps-bar">
+        <view class="guide-step-dot {{guideStep >= 0 ? 'active' : ''}}"></view>
+        <view class="guide-step-dot {{guideStep >= 1 ? 'active' : ''}}"></view>
+        <view class="guide-step-dot {{guideStep >= 2 ? 'active' : ''}}"></view>
+      </view>
+
+      <!-- 步骤内容 -->
+      <view class="guide-content" wx:if="{{guideStep === 0}}">
+        <text class="guide-modal-emoji">📤</text>
+        <text class="guide-modal-title">第1步：邀请小孩加入</text>
+        <text class="guide-modal-desc">复制上方的家庭邀请码，发给孩子\n孩子打开小程序，输入邀请码即可加入家庭</text>
+      </view>
+      <view class="guide-content" wx:if="{{guideStep === 1}}">
+        <text class="guide-modal-emoji">💰</text>
+        <text class="guide-modal-title">第2步：为孩子存入资金</text>
+        <text class="guide-modal-desc">孩子加入后，在首页点击「存入」为孩子存入虚拟资金\n系统会按设定的利率自动每天计息</text>
+      </view>
+      <view class="guide-content" wx:if="{{guideStep === 2}}">
+        <text class="guide-modal-emoji">🎊</text>
+        <text class="guide-modal-title">第3步：开始理财之旅</text>
+        <text class="guide-modal-desc">孩子可以查看收益增长，申请取现消费\n您可以发布任务让孩子赚取额外奖励</text>
+      </view>
+
+      <!-- 操作按钮 -->
+      <view class="guide-modal-actions">
+        <text class="guide-skip-btn" bindtap="onGuideSkip">跳过</text>
+        <button class="guide-next-btn" bindtap="onGuideNext">
+          {{guideStep >= 2 ? '完成' : '下一步'}}
+        </button>
+      </view>
+    </view>
+  </view>
   <!-- 加载中 -->
   <view class="loading-wrap" wx:if="{{loading}}">
     <view class="loading-spinner"></view>
