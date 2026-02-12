@@ -92,47 +92,80 @@
   margin-bottom: 0;
 }
 
-/* 未登录：身份选择卡片 */
-.card-label-center {
+/* 未登录：身份选择区域 */
+.role-section {
+  padding: 0 24rpx;
+  margin-top: 32rpx;
+}
+.role-section-title {
   display: block;
-  font-size: 30rpx;
-  font-weight: 600;
+  font-size: 32rpx;
+  font-weight: 700;
   color: #333;
-  text-align: center;
   margin-bottom: 24rpx;
+  padding-left: 8rpx;
 }
 .role-picker {
   display: flex;
-  gap: 20rpx;
+  flex-direction: column;
+  gap: 24rpx;
 }
 .role-card {
+  display: flex;
+  align-items: center;
+  padding: 36rpx 32rpx;
+  border-radius: 20rpx;
+  background: #fff;
+  box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.06);
+  border: 2rpx solid transparent;
+  transition: all 0.25s ease;
+  position: relative;
+}
+.role-card:active,
+.role-card-active {
+  border-color: #4a7cf7;
+  background: #f0f5ff;
+  box-shadow: 0 4rpx 20rpx rgba(74,124,247,0.15);
+  transform: scale(0.98);
+}
+.role-icon-wrap {
+  width: 88rpx;
+  height: 88rpx;
+  border-radius: 24rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-right: 24rpx;
+}
+.role-icon-blue { background: #e8effe; }
+.role-icon-orange { background: #fff4e6; }
+.role-emoji {
+  font-size: 44rpx;
+}
+.role-info {
   flex: 1;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  padding: 36rpx 16rpx;
-  border-radius: 20rpx;
-  border: 2rpx solid #eee;
-  background: #FAFAFA;
-  transition: all 0.25s;
-}
-.role-card:active {
-  border-color: #4a7cf7;
-  background: #EBF2FF;
-}
-.role-emoji {
-  font-size: 56rpx;
-  margin-bottom: 12rpx;
+  min-width: 0;
 }
 .role-name {
-  font-size: 30rpx;
+  font-size: 32rpx;
   font-weight: 600;
   color: #333;
-  margin-bottom: 6rpx;
+  display: block;
 }
 .role-desc {
   font-size: 24rpx;
   color: #999;
+  margin-top: 4rpx;
+  display: block;
+}
+.role-arrow {
+  font-size: 36rpx;
+  color: #ccc;
+  flex-shrink: 0;
+  margin-left: 12rpx;
 }
 
 /* 主动登录入口 */
@@ -630,79 +663,3 @@
   border-radius: 44rpx;
 }
 .highlights-btn::after { border: none; }
-
-/* ========== 新手指引弹窗 ========== */
-.guide-mask {
-  z-index: 1001;
-}
-.guide-modal {
-  width: 600rpx;
-  background: #fff;
-  border-radius: 24rpx;
-  padding: 40rpx 36rpx 32rpx;
-  animation: dialogFadeIn 0.3s ease;
-}
-.guide-steps-bar {
-  display: flex;
-  justify-content: center;
-  gap: 12rpx;
-  margin-bottom: 36rpx;
-}
-.guide-step-dot {
-  width: 16rpx;
-  height: 16rpx;
-  border-radius: 50%;
-  background: #e0e0e0;
-  transition: all 0.3s ease;
-}
-.guide-step-dot.active {
-  background: #4a7cf7;
-  width: 32rpx;
-  border-radius: 8rpx;
-}
-.guide-content {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  min-height: 280rpx;
-  justify-content: center;
-}
-.guide-modal-emoji {
-  font-size: 80rpx;
-  margin-bottom: 24rpx;
-}
-.guide-modal-title {
-  font-size: 32rpx;
-  font-weight: 700;
-  color: #333;
-  margin-bottom: 16rpx;
-}
-.guide-modal-desc {
-  font-size: 26rpx;
-  color: #777;
-  line-height: 1.7;
-}
-.guide-modal-actions {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-top: 36rpx;
-}
-.guide-skip-btn {
-  font-size: 26rpx;
-  color: #999;
-  padding: 16rpx 24rpx;
-}
-.guide-next-btn {
-  height: 76rpx;
-  line-height: 76rpx;
-  padding: 0 64rpx;
-  background: linear-gradient(135deg, #4a7cf7, #6c5ce7);
-  color: #fff;
-  font-size: 28rpx;
-  font-weight: 600;
-  border: none;
-  border-radius: 40rpx;
-}
-.guide-next-btn::after { border: none; }

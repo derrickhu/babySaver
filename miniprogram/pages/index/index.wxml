@@ -50,42 +50,6 @@
     </view>
   </view>
 
-  <!-- 新手指引遮罩 -->
-  <view class="modal-mask guide-mask" wx:if="{{showGuide}}" catchtouchmove="true">
-    <view class="guide-modal">
-      <!-- 步骤指示器 -->
-      <view class="guide-steps-bar">
-        <view class="guide-step-dot {{guideStep >= 0 ? 'active' : ''}}"></view>
-        <view class="guide-step-dot {{guideStep >= 1 ? 'active' : ''}}"></view>
-        <view class="guide-step-dot {{guideStep >= 2 ? 'active' : ''}}"></view>
-      </view>
-
-      <!-- 步骤内容 -->
-      <view class="guide-content" wx:if="{{guideStep === 0}}">
-        <text class="guide-modal-emoji">📤</text>
-        <text class="guide-modal-title">第1步：邀请小孩加入</text>
-        <text class="guide-modal-desc">复制上方的家庭邀请码，发给孩子\n孩子打开小程序，输入邀请码即可加入家庭</text>
-      </view>
-      <view class="guide-content" wx:if="{{guideStep === 1}}">
-        <text class="guide-modal-emoji">💰</text>
-        <text class="guide-modal-title">第2步：为孩子存入资金</text>
-        <text class="guide-modal-desc">孩子加入后，在首页点击「存入」为孩子存入虚拟资金\n系统会按设定的利率自动每天计息</text>
-      </view>
-      <view class="guide-content" wx:if="{{guideStep === 2}}">
-        <text class="guide-modal-emoji">🎊</text>
-        <text class="guide-modal-title">第3步：开始理财之旅</text>
-        <text class="guide-modal-desc">孩子可以查看收益增长，申请取现消费\n您可以发布任务让孩子赚取额外奖励</text>
-      </view>
-
-      <!-- 操作按钮 -->
-      <view class="guide-modal-actions">
-        <text class="guide-skip-btn" bindtap="onGuideSkip">跳过</text>
-        <button class="guide-next-btn" bindtap="onGuideNext">
-          {{guideStep >= 2 ? '完成' : '下一步'}}
-        </button>
-      </view>
-    </view>
-  </view>
   <!-- 加载中 -->
   <view class="loading-wrap" wx:if="{{loading}}">
     <view class="loading-spinner"></view>
@@ -145,18 +109,28 @@
 
     <!-- 未登录：选择身份 + 注册入口 -->
     <block wx:if="{{!isLoggedIn}}">
-      <view class="setup-card card">
-        <text class="card-label-center">选择身份</text>
+      <view class="role-section">
+        <text class="role-section-title">选择身份</text>
         <view class="role-picker">
-          <view class="role-card" data-role="parent" bindtap="goRegisterWithRole">
-            <text class="role-emoji">👨‍👩‍👧</text>
-            <text class="role-name">我是家长</text>
-            <text class="role-desc">管理存款和审批</text>
+          <view class="role-card {{selectedRole === 'parent' ? 'role-card-active' : ''}}" data-role="parent" bindtap="goRegisterWithRole">
+            <view class="role-icon-wrap role-icon-blue">
+              <text class="role-emoji">👨‍👩‍👧</text>
+            </view>
+            <view class="role-info">
+              <text class="role-name">我是家长</text>
+              <text class="role-desc">管理存款和审批</text>
+            </view>
+            <text class="role-arrow">›</text>
           </view>
-          <view class="role-card" data-role="child" bindtap="goRegisterWithRole">
-            <text class="role-emoji">🧒</text>
-            <text class="role-name">我是小孩</text>
-            <text class="role-desc">查看存款和取现</text>
+          <view class="role-card {{selectedRole === 'child' ? 'role-card-active' : ''}}" data-role="child" bindtap="goRegisterWithRole">
+            <view class="role-icon-wrap role-icon-orange">
+              <text class="role-emoji">🧒</text>
+            </view>
+            <view class="role-info">
+              <text class="role-name">我是小孩</text>
+              <text class="role-desc">查看存款和取现</text>
+            </view>
+            <text class="role-arrow">›</text>
           </view>
         </view>
       </view>
