@@ -24,6 +24,7 @@ exports.main = async (event, context) => {
       case 'getFamily': return await getFamily(openid)
       case 'getFamilyMembers': return await getFamilyMembers(openid)
       case 'disbandFamily': return await disbandFamily(openid)
+      case 'leaveFamily': return await leaveFamily(openid)
       // 默认账户相关
       case 'getAccount': return await getAccount(openid, data)
       case 'getChildAccounts': return await getChildAccounts(openid)
@@ -513,6 +514,73 @@ async function disbandFamily(openid) {
   await db.collection('families').doc(familyId).remove()
 
   return { code: 0, msg: '家庭已解散' }
+}
+
+// 退出家庭（非创建者可操作）
+async function leaveFamily(openid) {
+  const user = await db.collection('users').where({ _openid: openid }).get()
+  if (user.data.length === 0 || !user.data[0].familyId) {
+    return { code: -1, msg: '未加入家庭' }
+  }
+
+  const familyId = user.data[0].familyId
+  const userRole = user.data[0].role
+  const family = await db.collection('families').doc(familyId).get()
+  if (!family.data) return { code: -1, msg: '家庭不存在' }
+
+  const creatorOpenId = family.data.creatorOpenId || family.data.parentOpenId
+  if (creatorOpenId === openid) {
+    return { code: -1, msg: '创建者不能退出，请先解散家庭或转移创建者身份' }
+  }
+
+  const now = new Date()
+
+  // 1. 从家庭的成员列表中移除
+  if (userRole === 'child') {
+    await db.collection('families').doc(familyId).update({
+      data: { childOpenIds: _.pull(openid), updatedAt: now }
+    })
+  } else {
+    const familyData = family.data
+    const permUpdate = {}
+    for (const key of ['deposit', 'withdrawReview', 'productManage']) {
+      const list = (familyData.permissions && familyData.permissions[key]) || []
+      if (list.includes(openid)) {
+        permUpdate[`permissions.${key}`] = _.pull(openid)
+      }
+    }
+    await db.collection('families').doc(familyId).update({
+      data: { parentOpenIds: _.pull(openid), ...permUpdate, updatedAt: now }
+    })
+  }
+
+  // 2. 小孩退出时，删除其在该家庭下的账户及关联数据
+  if (userRole === 'child') {
+    const collectionsToClean = ['accounts', 'investments', 'transactions', 'earnings']
+    for (const collName of collectionsToClean) {
+      let hasMore = true
+      while (hasMore) {
+        const batch = await db.collection(collName)
+          .where({ familyId, childOpenId: openid })
+          .limit(20)
+          .get()
+        if (batch.data.length === 0) {
+          hasMore = false
+          break
+        }
+        for (const doc of batch.data) {
+          await db.collection(collName).doc(doc._id).remove()
+        }
+      }
+    }
+  }
+
+  // 3. 清除用户家庭关联
+  await db.collection('users').where({ _openid: openid }).update({
+    data: { familyId: '', updatedAt: now }
+  })
+
+  return { code: 0, msg: '已退出家庭' }
 }
 
 // ========== 默认账户相关 ==========

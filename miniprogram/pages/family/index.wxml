@@ -64,6 +64,13 @@
       <text class="disband-desc">清除所有数据，不可恢复</text>
     </view>
 
+    <!-- 非创建者：退出家庭 -->
+    <view class="leave-entry" wx:if="{{!isCreator}}" bindtap="onLeaveFamily">
+      <text class="leave-icon">🚪</text>
+      <text class="leave-text">退出家庭</text>
+      <text class="leave-desc">退出后需重新输入邀请码加入</text>
+    </view>
+
     <button class="btn-primary" style="margin: 40rpx 32rpx;" bindtap="goHome">返回首页</button>
   </block>
 

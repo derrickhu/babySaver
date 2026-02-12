@@ -267,3 +267,29 @@
   color: var(--text-hint);
   text-align: right;
 }
+
+/* 退出家庭入口 */
+.leave-entry {
+  display: flex;
+  align-items: center;
+  margin: 16rpx 32rpx 0;
+  padding: 24rpx;
+  border-radius: 16rpx;
+  background: var(--bg-page);
+  border: 1rpx solid var(--border);
+}
+.leave-icon {
+  font-size: 32rpx;
+  margin-right: 12rpx;
+}
+.leave-text {
+  font-size: 28rpx;
+  color: #666;
+  font-weight: 500;
+}
+.leave-desc {
+  flex: 1;
+  font-size: 24rpx;
+  color: var(--text-hint);
+  text-align: right;
+}

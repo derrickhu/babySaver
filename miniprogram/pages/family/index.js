@@ -157,6 +157,41 @@ Page({
     wx.navigateTo({ url: '/pages/family/permissions/index' })
   },
 
+  // 退出家庭（非创建者）
+  async onLeaveFamily() {
+    if (this.data.isCreator) {
+      return api.showToast('创建者请使用解散家庭')
+    }
+
+    const confirmRes = await new Promise(resolve => {
+      wx.showModal({
+        title: '退出家庭',
+        content: '退出后，您在该家庭的存款和收益数据将被清除。确定要退出吗？',
+        confirmText: '确定退出',
+        confirmColor: '#FF4D4F',
+        success: resolve
+      })
+    })
+
+    if (!confirmRes.confirm) return
+
+    api.showLoading('退出中...')
+    try {
+      await api.callCloud('leaveFamily')
+      api.hideLoading()
+      api.showToast('已退出家庭')
+
+      const app = getApp()
+      const userRes = await api.callCloud('getUserInfo')
+      app.globalData.userInfo = userRes.data
+
+      this.loadData()
+    } catch (err) {
+      api.hideLoading()
+      api.showError(err.msg)
+    }
+  },
+
   // 解散家庭（仅创建者）
   async onDisbandFamily() {
     if (!this.data.isCreator) {
