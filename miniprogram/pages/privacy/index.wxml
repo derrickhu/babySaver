@@ -1,0 +1,59 @@
+<view class="privacy-page">
+  <view class="privacy-header">
+    <text class="privacy-title">隐私政策</text>
+    <text class="privacy-version">版本 1.0 · 生效日期 2025-02-12</text>
+  </view>
+
+  <scroll-view class="privacy-content" scroll-y>
+    <view class="privacy-section">
+      <text class="section-title">一、引言</text>
+      <text class="section-text">1. 小孩存钱宝（以下简称“我们”）非常重视用户的隐私保护。本政策旨在说明我们如何收集、使用、存储和保护您的个人信息。</text>
+      <text class="section-text">2. 请您在使用本小程序前仔细阅读本政策。如您不同意本政策的任何内容，请立即停止使用。</text>
+      <text class="section-text">3. 如您为未成年人，请确保在法定监护人的指导与同意下使用本小程序。</text>
+    </view>
+
+    <view class="privacy-section">
+      <text class="section-title">二、我们收集的信息</text>
+      <text class="section-text">1. 账号信息：您在注册时提供的昵称、头像、选择的身份（家长/小孩）、家长身份标识（如爸爸、妈妈等）。</text>
+      <text class="section-text">2. 家庭信息：您创建或加入的家庭信息，包括家庭名称、家庭成员关系、虚拟资产数据等。</text>
+      <text class="section-text">3. 操作记录：您的存款、取现、任务发布与完成等操作记录，用于展示资产变化和提供审批功能。</text>
+      <text class="section-text">4. 设备信息：为保障服务正常运行，我们可能会收集您的设备型号、操作系统版本、小程序版本等基础信息。</text>
+    </view>
+
+    <view class="privacy-section">
+      <text class="section-title">三、信息的使用</text>
+      <text class="section-text">1. 我们收集的信息仅用于以下目的：</text>
+      <text class="section-text">   - 提供虚拟存款管理、资产展示、任务发布等核心功能</text>
+      <text class="section-text">   - 优化用户体验，改进服务质量</text>
+      <text class="section-text">   - 保障账号与数据安全，防止欺诈行为</text>
+      <text class="section-text">   - 遵守法律法规要求</text>
+      <text class="section-text">2. 我们不会将您的个人信息用于任何商业营销或分享给第三方用于推广目的。</text>
+    </view>
+
+    <view class="privacy-section">
+      <text class="section-title">四、信息的存储与保护</text>
+      <text class="section-text">1. 您的信息存储于腾讯云服务器，我们采取合理的技术措施保障数据安全。</text>
+      <text class="section-text">2. 我们仅会在实现本政策所述目的所需的期限内保留您的个人信息，除非法律要求或允许更长的保留期。</text>
+      <text class="section-text">3. 尽管我们尽力保护您的个人信息，但任何安全措施都无法做到绝对无风险，请您理解。</text>
+    </view>
+
+    <view class="privacy-section">
+      <text class="section-title">五、您的权利</text>
+      <text class="section-text">1. 访问与更正：您可以随时查看并更正您的个人信息（如昵称、头像）。</text>
+      <text class="section-text">2. 删除账号：您可以通过个人中心注销账号，届时我们将删除您的个人信息（法律法规要求保留的除外）。</text>
+      <text class="section-text">3. 撤回同意：您可以通过停止使用本小程序来撤回对我们收集信息的同意。</text>
+    </view>
+
+    <view class="privacy-section">
+      <text class="section-title">六、政策更新</text>
+      <text class="section-text">1. 我们可能适时修订本政策，修订后的政策将在小程序内公示。</text>
+      <text class="section-text">2. 如您继续使用本小程序，即表示接受更新后的政策。</text>
+    </view>
+
+    <view class="privacy-footer">
+      <text class="footer-text">如果您对本政策有任何疑问或建议，请联系我们：</text>
+      <text class="footer-contact">邮箱：support@example.com</text>
+      <text class="footer-update">最后更新：2025年2月12日</text>
+    </view>
+  </scroll-view>
+</view>

@@ -16,7 +16,9 @@
     "pages/family/permissions/index",
     "pages/task/index",
     "pages/task/create/index",
-    "pages/task/detail/index"
+    "pages/task/detail/index",
+    "pages/agreement/index",
+    "pages/privacy/index"
   ],
   "window": {
     "backgroundColor": "#F5F7FA",

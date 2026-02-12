@@ -68,11 +68,11 @@ Page({
   },
 
   onViewAgreement() {
-    wx.showModal({ title: '用户协议', content: '暂无内容', showCancel: false })
+    wx.navigateTo({ url: '/pages/agreement/index' })
   },
 
   onViewPrivacy() {
-    wx.showModal({ title: '隐私政策', content: '暂无内容', showCancel: false })
+    wx.navigateTo({ url: '/pages/privacy/index' })
   },
 
   // Step 1: 选择角色 → 自动进入 Step 2
