@@ -20,15 +20,22 @@ Page({
     this.loadData()
   },
 
-  // 分享到微信群/好友（创建者邀请成员时使用）
-  onShareAppMessage() {
-    const { inviteCode, family, isCreator } = this.data
-    if (!isCreator || !inviteCode) {
-      return { title: '小孩存钱宝 - 培养孩子的理财好习惯' }
+  // 分享小程序（区分普通分享和邀请分享）
+  onShareAppMessage(res) {
+    // 仅通过「邀请到微信群」按钮触发时才带 inviteCode
+    if (res.from === 'button') {
+      const { inviteCode, family } = this.data
+      if (inviteCode) {
+        return {
+          title: `邀请你加入「${family ? family.familyName : '我的'}」家庭，一起培养孩子的理财习惯`,
+          path: `/pages/family/index?inviteCode=${inviteCode}`
+        }
+      }
     }
+    // 右上角菜单分享：普通分享，不带邀请码
     return {
-      title: `邀请你加入「${family ? family.familyName : '我的'}」家庭，一起培养孩子的理财习惯`,
-      path: `/pages/family/index?inviteCode=${inviteCode}`
+      title: '小孩存钱宝 - 培养孩子的理财好习惯',
+      path: '/pages/index/index'
     }
   },
 
