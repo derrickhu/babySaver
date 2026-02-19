@@ -340,14 +340,16 @@ Page({
       if (inviteCode) {
         return {
           title: `邀请你加入「${family ? family.familyName : '我的'}」家庭，一起培养孩子的理财习惯`,
-          path: `/pages/family/index?inviteCode=${inviteCode}`
+          path: `/pages/family/index?inviteCode=${inviteCode}`,
+          imageUrl: '/images/avatar.png'
         }
       }
     }
     // 右上角菜单分享：普通分享，不带邀请码
     return {
       title: '小孩存钱宝 - 培养孩子的理财好习惯',
-      path: '/pages/index/index'
+      path: '/pages/index/index',
+      imageUrl: '/images/avatar.png'
     }
   },
 
