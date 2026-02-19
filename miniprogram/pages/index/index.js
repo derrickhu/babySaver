@@ -341,7 +341,7 @@ Page({
         return {
           title: `邀请你加入「${family ? family.familyName : '我的'}」家庭，一起培养孩子的理财习惯`,
           path: `/pages/family/index?inviteCode=${inviteCode}`,
-          imageUrl: '/images/avatar.png'
+          imageUrl: '/images/share_card.png'
         }
       }
     }
@@ -349,7 +349,7 @@ Page({
     return {
       title: '小孩存钱宝 - 培养孩子的理财好习惯',
       path: '/pages/index/index',
-      imageUrl: '/images/avatar.png'
+      imageUrl: '/images/share_card.png'
     }
   },
 
