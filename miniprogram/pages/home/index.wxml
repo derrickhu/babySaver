@@ -1,0 +1,125 @@
+<view class="home" bindtap="onBlank">
+  <view class="hero">
+    <view class="hero-top">
+      <view class="hero-label">{{heroLabel}}</view>
+    </view>
+    <view class="hero-value">¥{{heroValue}}</view>
+    <view class="hero-split">
+      <view class="split">
+        <text class="split-k">微信</text>
+        <text class="split-v">¥{{heroWx}}</text>
+      </view>
+      <view class="split-rule"></view>
+      <view class="split">
+        <text class="split-k">抖音</text>
+        <text class="split-v">¥{{heroDy}}</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="sheet">
+    <view class="sheet-head">
+      <view>
+        <view class="sheet-title">{{chartTitle}}<text wx:if="{{refreshing}}" class="live"> 更新中</text></view>
+        <view class="sheet-sum">区间合计 ¥{{rangeText}}</view>
+        <view wx:if="{{trendNote}}" class="sheet-note {{trendUp ? 'up' : 'down'}}">{{trendNote}}</view>
+      </view>
+      <view class="grain">
+        <view class="g {{grain === 'mtd' ? 'on' : ''}}" data-v="mtd" bindtap="onGrain">当月</view>
+        <view class="g {{grain === 'month30' ? 'on' : ''}}" data-v="month30" bindtap="onGrain">近一月</view>
+        <view class="g {{grain === 'year' ? 'on' : ''}}" data-v="year" bindtap="onGrain">近一年</view>
+      </view>
+    </view>
+
+    <view class="chart-wrap" catchtap="onHold">
+      <canvas
+        type="2d"
+        id="trend"
+        class="chart"
+        catchtouchstart="onScrub"
+        catchtouchmove="onScrub"
+        catchtouchend="onScrub"
+        catchtouchcancel="onScrub"
+      ></canvas>
+      <view wx:if="{{tip.show}}" class="tip" style="left: {{tip.left}}px; top: {{tip.top}}px;">
+        <view class="tip-date">{{tip.date}}</view>
+        <view class="tip-val">¥{{tip.value}}</view>
+      </view>
+      <view wx:if="{{loading && !games.length}}" class="mask">正在读取云上数据…</view>
+      <view wx:elif="{{error}}" class="mask error">{{error}}</view>
+      <view wx:elif="{{empty}}" class="mask">这段时间还没有收入</view>
+    </view>
+
+    <view class="legend" wx:if="{{!loading && !error && !empty}}">
+      <block wx:if="{{channel === 'total'}}">
+        <view class="lg"><view class="swatch s-total"></view>合计</view>
+        <view class="lg"><view class="swatch s-wx"></view>微信</view>
+        <view class="lg"><view class="swatch s-dy"></view>抖音</view>
+      </block>
+      <view class="lg hint">{{scrubHint}}</view>
+    </view>
+
+    <view class="segbar">
+      <view class="seg {{channel === 'total' ? 'on' : ''}}" data-v="total" bindtap="onChannel">总收入</view>
+      <view class="seg {{channel === 'wechat' ? 'on' : ''}}" data-v="wechat" bindtap="onChannel">微信</view>
+      <view class="seg {{channel === 'douyin' ? 'on' : ''}}" data-v="douyin" bindtap="onChannel">抖音</view>
+    </view>
+  </view>
+
+  <view class="games-head">
+    <text>游戏</text>
+    <text class="games-count">按当日日活</text>
+  </view>
+  <view
+    class="game"
+    wx:for="{{games}}"
+    wx:key="key"
+    data-key="{{item.key}}"
+    bindtap="onGame"
+    hover-class="pressed"
+    style="animation-delay: {{item.delay}}"
+  >
+    <view class="game-main">
+      <image wx:if="{{item.icon}}" class="icon" src="{{item.icon}}" mode="aspectFill" data-key="{{item.key}}" binderror="onIconError" />
+      <view wx:else class="icon mono">{{item.mark}}</view>
+      <view class="game-copy">
+        <view class="game-name-row">
+          <text class="game-name">{{item.name}}</text>
+          <text class="game-go">大盘</text>
+        </view>
+        <view class="game-meta">今日日活 {{item.dau}} · 曝光 {{item.ads}}</view>
+      </view>
+      <view class="game-side">
+        <view class="game-rev">¥{{item.revenue}}</view>
+        <view class="game-rev-k">{{item.revLabel}}</view>
+      </view>
+    </view>
+    <view catchtap="onHold">
+      <spark
+        values="{{item.spark}}"
+        labels="{{labels}}"
+        color="{{sparkColor}}"
+        active="{{sparkKey === item.key ? sparkIndex : -1}}"
+        data-key="{{item.key}}"
+        bindscrub="onSpark"
+      />
+    </view>
+    <view class="pills">
+      <view
+        class="pill pill-{{p.platform}}"
+        wx:for="{{item.platforms}}"
+        wx:for-item="p"
+        wx:key="platform"
+        catchtap="onPlatform"
+        data-key="{{item.key}}"
+        data-platform="{{p.platform}}"
+        hover-class="pill-on"
+      >
+        <text class="pill-name">{{p.label}}</text>
+        <text class="pill-dau">日活 {{p.dau}}</text>
+        <text class="pill-ads">曝光 {{p.ads}}</text>
+        <text class="pill-rev">¥{{p.revenue}}</text>
+      </view>
+    </view>
+  </view>
+</view>

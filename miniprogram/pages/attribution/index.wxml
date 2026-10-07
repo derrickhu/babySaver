@@ -1,0 +1,9 @@
+<view class="page sub">
+  <filter-bar show-window="{{false}}" bind:change="onFilter" />
+  <view class="dates">
+    <picker mode="date" value="{{fromDate}}" bindchange="onFrom"><view class="date-chip">从 {{fromDate}}</view></picker>
+    <picker mode="date" value="{{toDate}}" bindchange="onTo"><view class="date-chip">到 {{toDate}}</view></picker>
+  </view>
+  <button class="btn ghost recompute" size="mini" bindtap="onRecompute">回算归因</button>
+  <report loading="{{loading}}" refreshing="{{refreshing}}" error="{{error}}" sections="{{sections}}" />
+</view>

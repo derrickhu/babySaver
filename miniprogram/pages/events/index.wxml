@@ -1,0 +1,25 @@
+<view class="page sub">
+  <filter-bar bind:change="onFilter" />
+  <view class="search">
+    <input placeholder="用户编号 / 匿名编号" value="{{keyword}}" bindinput="onKeyword" confirm-type="search" bindconfirm="onSearch" />
+    <view class="search-btn" bindtap="onSearch">搜索</view>
+  </view>
+  <scroll-view scroll-x class="names" enhanced show-scrollbar="{{false}}">
+    <view class="chip {{eventName === '' ? 'on' : ''}}" data-name="" bindtap="onName">全部</view>
+    <view class="chip {{eventName === item.name ? 'on' : ''}}" wx:for="{{names}}" wx:key="name" data-name="{{item.name}}" bindtap="onName">{{item.label}}</view>
+  </scroll-view>
+  <view wx:if="{{refreshing}}" class="refresh-inline">正在更新，筛选仍然可以改</view>
+  <view wx:if="{{error}}" class="banner">{{error}}</view>
+  <view wx:if="{{loading && !events.length}}" class="skel-note">正在读取云上数据…</view>
+  <block wx:else>
+    <view class="count">{{total}} 条</view>
+    <view class="event" wx:for="{{events}}" wx:key="id">
+      <view class="name">{{item.name}}</view>
+      <view class="meta">{{item.meta}}</view>
+      <view wx:if="{{item.device}}" class="meta">{{item.device}}</view>
+      <view wx:if="{{item.params}}" class="params">{{item.params}}</view>
+    </view>
+    <view wx:if="{{!events.length}}" class="state">这个窗口里没有事件</view>
+    <button wx:if="{{events.length && events.length < total}}" class="btn ghost more" bindtap="onMore">继续加载</button>
+  </block>
+</view>

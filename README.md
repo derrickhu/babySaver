@@ -1,12 +1,9 @@
-# 云开发 quickstart
+# 经分
 
-这是云开发的快速启动指引，其中演示了如何上手使用云开发的三大基础能力：
+微信小程序，读取云托管上的经分服务 `game-analysis`（环境 `rosa-env-d7grf78r5dbd37323`）。存钱宝的页面和云函数已去掉。
 
-- 数据库：一个既可在小程序前端操作，也能在云函数中读写的 JSON 文档型数据库
-- 文件存储：在小程序前端直接上传/下载云端文件，在云开发控制台可视化管理
-- 云函数：在云端运行的代码，微信私有协议天然鉴权，开发者只需编写业务逻辑代码
+用微信开发者工具打开本目录，进去就是总览，页面上不再要访问密码。
 
-## 参考文档
+数据走官网 `https://www.luckygua.cn/game-analysis`。开发者工具里域名校验是关的；真机预览要把 `www.luckygua.cn` 加到 request 合法域名。
 
-- [云开发文档](https://developers.weixin.qq.com/miniprogram/dev/wxcloud/basis/getting-started.html)
-
+页面：总览、大盘、玩法、留存、商业化、归因、玩家档案、原始事件、系统运维。

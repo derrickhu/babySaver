@@ -1,0 +1,14 @@
+<view class="legend">
+  <view class="lg" wx:for="{{series}}" wx:key="name">
+    <view class="swatch" style="background: {{item.color}};"></view>
+    <text>{{item.name}}</text>
+  </view>
+</view>
+<canvas
+  type="2d"
+  id="trend"
+  class="trend"
+  catchtouchstart="onScrub"
+  catchtouchmove="onScrub"
+></canvas>
+<view wx:if="{{tip}}" class="tip">{{tip}}</view>

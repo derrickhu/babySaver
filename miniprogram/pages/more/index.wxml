@@ -1,0 +1,21 @@
+<view class="page">
+  <view class="more-lead">
+    <view class="more-kicker">经分</view>
+    <view class="more-title">继续看</view>
+  </view>
+  <view
+    class="menu-item"
+    wx:for="{{items}}"
+    wx:key="url"
+    data-url="{{item.url}}"
+    bindtap="open"
+    hover-class="pressed"
+  >
+    <view class="menu-index">{{item.no}}</view>
+    <view class="menu-copy">
+      <view class="menu-title">{{item.title}}</view>
+      <view class="menu-desc">{{item.desc}}</view>
+    </view>
+    <view class="menu-arrow">›</view>
+  </view>
+</view>

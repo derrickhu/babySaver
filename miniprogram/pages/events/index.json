@@ -1,0 +1,7 @@
+{
+  "navigationBarTitleText": "原始事件",
+  "enablePullDownRefresh": true,
+  "usingComponents": {
+    "filter-bar": "/components/filter-bar/index"
+  }
+}

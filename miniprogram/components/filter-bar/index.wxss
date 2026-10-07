@@ -1,0 +1,28 @@
+.filter {
+  margin-bottom: 16rpx;
+  padding: 14rpx 14rpx 2rpx;
+  background: #fffdf8;
+  border-radius: 24rpx;
+  box-shadow: 0 10rpx 28rpx rgba(48, 36, 18, 0.05);
+}
+
+.row {
+  white-space: nowrap;
+  margin-bottom: 12rpx;
+}
+
+.chip {
+  display: inline-block;
+  margin-right: 10rpx;
+  padding: 12rpx 22rpx;
+  border-radius: 999rpx;
+  background: #efeae2;
+  color: #6f675e;
+  font-size: 24rpx;
+}
+
+.chip.on {
+  background: #1f4b99;
+  color: #fffdf8;
+  font-weight: 650;
+}

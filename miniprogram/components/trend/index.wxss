@@ -1,0 +1,33 @@
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8rpx 18rpx;
+  margin-bottom: 4rpx;
+}
+
+.lg {
+  display: flex;
+  align-items: center;
+  color: #6f675e;
+  font-size: 22rpx;
+}
+
+.swatch {
+  width: 22rpx;
+  height: 6rpx;
+  margin-right: 8rpx;
+  border-radius: 99rpx;
+}
+
+.trend {
+  width: 100%;
+  height: 360rpx;
+  display: block;
+}
+
+.tip {
+  margin-top: 4rpx;
+  color: #241e18;
+  font-size: 22rpx;
+  line-height: 1.4;
+}

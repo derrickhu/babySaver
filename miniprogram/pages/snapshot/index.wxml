@@ -1,0 +1,9 @@
+<view class="page sub">
+  <filter-bar show-window="{{false}}" bind:change="onFilter" />
+  <view wx:if="{{supported}}" class="search">
+    <input placeholder="搜索用户编号" value="{{keyword}}" bindinput="onKeyword" confirm-type="search" bindconfirm="onSearch" />
+    <view class="search-btn" bindtap="onSearch">搜索</view>
+  </view>
+  <button wx:if="{{supported}}" class="btn ghost pull" size="mini" bindtap="onPullNow">立即拉取云存档</button>
+  <report loading="{{loading}}" refreshing="{{refreshing}}" error="{{error}}" sections="{{sections}}" />
+</view>

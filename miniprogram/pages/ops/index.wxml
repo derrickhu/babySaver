@@ -1,0 +1,13 @@
+<view class="page sub">
+  <view class="hint">下面的拉取和重算作用在当前选中的游戏。</view>
+  <filter-bar show-platform="{{false}}" show-window="{{false}}" />
+  <view class="btn-row">
+    <button class="btn" size="mini" bindtap="onIngest">立即拉取事件</button>
+    <button class="btn ghost" size="mini" bindtap="onBuckets">重算 24 小时桶</button>
+    <button class="btn ghost" size="mini" bindtap="onLtv">重算用户价值</button>
+    <button class="btn ghost" size="mini" bindtap="onPass">重算别捞水果通关率</button>
+    <button class="btn ghost" size="mini" bindtap="onDry">清理预演</button>
+    <button class="btn warn" size="mini" bindtap="onClean">立即清理</button>
+  </view>
+  <report loading="{{loading}}" refreshing="{{refreshing}}" error="{{error}}" sections="{{sections}}" />
+</view>

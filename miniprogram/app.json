@@ -1,62 +1,34 @@
 {
+  "entryPagePath": "pages/home/index",
   "pages": [
-    "pages/index/index",
-    "pages/earnings/index",
-    "pages/profile/index",
-    "pages/login/index",
-    "pages/family/index",
-    "pages/deposit/index",
-    "pages/withdraw/apply/index",
-    "pages/withdraw/review/index",
-    "pages/product/manage/index",
-    "pages/product/detail/index",
-    "pages/product/create/index",
-    "pages/product/logs/index",
-    "pages/earnings/calendar/index",
-    "pages/family/permissions/index",
-    "pages/task/index",
-    "pages/task/create/index",
-    "pages/task/detail/index",
-    "pages/agreement/index",
-    "pages/privacy/index"
+    "pages/home/index",
+    "pages/dashboard/index",
+    "pages/gameplay/index",
+    "pages/more/index",
+    "pages/retention/index",
+    "pages/commercial/index",
+    "pages/attribution/index",
+    "pages/snapshot/index",
+    "pages/events/index",
+    "pages/ops/index"
   ],
   "window": {
-    "backgroundColor": "#F5F7FA",
-    "backgroundTextStyle": "light",
-    "navigationBarBackgroundColor": "#5B8FF9",
-    "navigationBarTitleText": "小孩存钱宝",
+    "backgroundColor": "#F3F0E8",
+    "backgroundTextStyle": "dark",
+    "navigationBarBackgroundColor": "#1F4B99",
+    "navigationBarTitleText": "经分",
     "navigationBarTextStyle": "white"
   },
   "tabBar": {
-    "color": "#999999",
-    "selectedColor": "#5B8FF9",
+    "custom": true,
+    "color": "#6B7280",
+    "selectedColor": "#1F4B99",
     "backgroundColor": "#ffffff",
-    "borderStyle": "black",
     "list": [
-      {
-        "pagePath": "pages/index/index",
-        "text": "首页",
-        "iconPath": "images/icons/home.png",
-        "selectedIconPath": "images/icons/home-active.png"
-      },
-      {
-        "pagePath": "pages/task/index",
-        "text": "任务",
-        "iconPath": "images/icons/task.png",
-        "selectedIconPath": "images/icons/task-active.png"
-      },
-      {
-        "pagePath": "pages/earnings/index",
-        "text": "账单",
-        "iconPath": "images/icons/goods.png",
-        "selectedIconPath": "images/icons/goods-active.png"
-      },
-      {
-        "pagePath": "pages/profile/index",
-        "text": "我的",
-        "iconPath": "images/icons/usercenter.png",
-        "selectedIconPath": "images/icons/usercenter-active.png"
-      }
+      { "pagePath": "pages/home/index", "text": "总览" },
+      { "pagePath": "pages/dashboard/index", "text": "大盘" },
+      { "pagePath": "pages/gameplay/index", "text": "玩法" },
+      { "pagePath": "pages/more/index", "text": "更多" }
     ]
   },
   "sitemapLocation": "sitemap.json",

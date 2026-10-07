@@ -1,175 +1,216 @@
-/**
- * 小孩存钱宝 - 全局样式
- */
-
-/* 主题色变量 */
 page {
-  --primary: #5B8FF9;
-  --primary-light: #E8F0FE;
-  --accent: #FFB800;
-  --accent-light: #FFF8E7;
-  --success: #52C41A;
-  --danger: #FF4D4F;
-  --warning: #FAAD14;
-  --text-primary: #333333;
-  --text-secondary: #666666;
-  --text-hint: #999999;
-  --border: #E8E8E8;
-  --bg-page: #F5F7FA;
-  --bg-card: #FFFFFF;
-  --shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.06);
-
-  background: var(--bg-page);
-  font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Helvetica Neue', sans-serif;
-  color: var(--text-primary);
+  background: #f3f0e8;
+  color: #241e18;
   font-size: 28rpx;
-  line-height: 1.6;
+  font-family: "PingFang SC", "Hiragino Sans GB", "Noto Sans SC", sans-serif;
 }
 
-/* 容器 */
-.container {
-  display: flex;
-  flex-direction: column;
+.page {
   min-height: 100vh;
   box-sizing: border-box;
+  padding: 24rpx 24rpx calc(140rpx + env(safe-area-inset-bottom));
 }
 
-/* 卡片 */
-.card {
-  background: var(--bg-card);
-  border-radius: 16rpx;
-  padding: 32rpx;
-  margin: 24rpx;
-  box-shadow: var(--shadow);
+.page.sub {
+  padding-bottom: calc(32rpx + env(safe-area-inset-bottom));
 }
 
-/* 按钮样式重置 */
-button {
-  background: initial;
-  padding: 0;
+.menu-item {
+  background: #fffdf8;
+  border-radius: 24rpx;
+  padding: 26rpx 24rpx;
+  margin-bottom: 14rpx;
+  display: flex;
+  align-items: center;
+  box-shadow: 0 10rpx 28rpx rgba(48, 36, 18, 0.05);
+}
+
+.menu-item.pressed { opacity: 0.72; }
+
+.menu-index {
+  width: 64rpx;
+  font-family: "DIN Alternate", "Avenir Next Condensed", "PingFang SC", sans-serif;
+  font-size: 28rpx;
+  font-weight: 700;
+  color: #1f4b99;
+  flex: none;
+}
+
+.menu-copy { flex: 1; min-width: 0; }
+
+.menu-title {
+  font-size: 32rpx;
+  font-weight: 700;
+  color: #241e18;
+}
+
+.menu-desc {
+  margin-top: 6rpx;
+  color: #8c8276;
+  font-size: 24rpx;
+}
+
+.menu-arrow {
+  color: #a3988c;
+  font-size: 36rpx;
+  margin-left: 12rpx;
+}
+
+.more-lead { margin: 8rpx 8rpx 22rpx; }
+.more-kicker {
+  color: #1f4b99;
+  font-size: 22rpx;
+  letter-spacing: 2rpx;
+}
+.more-title {
+  margin-top: 4rpx;
+  font-size: 44rpx;
+  font-weight: 700;
+  color: #241e18;
+}
+
+.btn {
   margin: 0;
-  font-size: inherit;
-  line-height: inherit;
+  background: #1f4b99;
+  color: #fffdf8;
+  border-radius: 14rpx;
+  font-size: 26rpx;
+  line-height: 2.2;
 }
 
-button:focus {
-  outline: 0;
-}
-
-button::after {
+.btn::after {
   border: none;
 }
 
-/* 主按钮 */
-.btn-primary {
-  background: var(--primary) !important;
-  color: #fff !important;
-  border-radius: 48rpx !important;
-  height: 88rpx;
-  line-height: 88rpx;
-  font-size: 32rpx;
-  font-weight: 500;
-  text-align: center;
+.btn.ghost {
+  background: #efeae2;
+  color: #1f4b99;
 }
 
-.btn-primary:active {
-  opacity: 0.85;
+.btn.warn {
+  background: #fde8ec;
+  color: #e11d48;
 }
 
-/* 次要按钮 */
-.btn-secondary {
-  background: var(--primary-light) !important;
-  color: var(--primary) !important;
-  border-radius: 48rpx !important;
-  height: 88rpx;
-  line-height: 88rpx;
-  font-size: 32rpx;
-  font-weight: 500;
-  text-align: center;
+.btn-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12rpx;
+  margin: 8rpx 0 20rpx;
 }
 
-/* 警告按钮 */
-.btn-danger {
-  background: var(--danger) !important;
-  color: #fff !important;
-  border-radius: 48rpx !important;
-  height: 88rpx;
-  line-height: 88rpx;
-  font-size: 32rpx;
-  font-weight: 500;
-  text-align: center;
+.btn-row .btn {
+  width: auto;
+  padding: 0 20rpx;
 }
 
-/* 文字链接 */
-.link {
-  color: var(--primary);
-  font-size: 28rpx;
+.field {
+  background: #fffdf8;
+  border-radius: 20rpx;
+  padding: 20rpx 24rpx;
+  margin-bottom: 16rpx;
+  box-shadow: 0 8rpx 20rpx rgba(48, 36, 18, 0.04);
 }
 
-/* 标签 */
-.tag {
+.field-label {
+  color: #8c8276;
+  font-size: 24rpx;
+  margin-bottom: 8rpx;
+}
+
+.field input {
+  font-size: 30rpx;
+}
+
+.hint {
+  color: #8c8276;
+  font-size: 24rpx;
+  line-height: 1.6;
+  margin-bottom: 16rpx;
+}
+
+.search {
+  display: flex;
+  align-items: center;
+  background: #fffdf8;
+  border-radius: 20rpx;
+  padding: 8rpx 8rpx 8rpx 20rpx;
+  margin-bottom: 12rpx;
+  box-shadow: 0 8rpx 20rpx rgba(48, 36, 18, 0.04);
+}
+
+.search input { flex: 1; }
+
+.search-btn {
+  color: #1f4b99;
+  font-weight: 650;
+  padding: 12rpx 16rpx;
+}
+
+.dates, .segs, .names { white-space: nowrap; margin-bottom: 12rpx; }
+
+.date-chip, .seg, .chip {
   display: inline-block;
-  padding: 4rpx 16rpx;
-  border-radius: 8rpx;
+  margin-right: 12rpx;
+  padding: 12rpx 22rpx;
+  border-radius: 999rpx;
+  background: #fffdf8;
+  color: #6f675e;
+  font-size: 24rpx;
+  box-shadow: 0 6rpx 16rpx rgba(48, 36, 18, 0.04);
+}
+
+.seg.on, .chip.on {
+  background: #1f4b99;
+  color: #fffdf8;
+  font-weight: 650;
+}
+
+.count {
+  color: #8c8276;
+  font-size: 24rpx;
+  margin-bottom: 8rpx;
+}
+
+.event {
+  background: #fffdf8;
+  border-radius: 20rpx;
+  padding: 20rpx;
+  margin-bottom: 12rpx;
+  box-shadow: 0 8rpx 20rpx rgba(48, 36, 18, 0.04);
+}
+
+.event .name { font-weight: 700; color: #241e18; }
+.event .meta { margin-top: 6rpx; color: #8c8276; font-size: 22rpx; }
+.event .params {
+  margin-top: 8rpx;
+  color: #6f675e;
   font-size: 22rpx;
+  line-height: 1.45;
+  word-break: break-all;
+}
+
+.refresh-inline {
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+  margin-bottom: 12rpx;
+  color: #8c8276;
+  font-size: 22rpx;
+}
+
+.banner {
+  margin-bottom: 12rpx;
+  padding: 16rpx 20rpx;
+  border-radius: 16rpx;
+  background: #fde8ec;
+  color: #e11d48;
+  font-size: 24rpx;
   line-height: 1.5;
 }
 
-.tag-pending {
-  background: #FFF7E6;
-  color: #FA8C16;
-}
-
-.tag-approved {
-  background: #F6FFED;
-  color: #52C41A;
-}
-
-.tag-rejected {
-  background: #FFF1F0;
-  color: #FF4D4F;
-}
-
-/* 空状态 */
-.empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 120rpx 60rpx;
-}
-
-.empty-state .empty-icon {
-  font-size: 120rpx;
-  margin-bottom: 24rpx;
-}
-
-.empty-state .empty-text {
-  color: var(--text-hint);
-  font-size: 28rpx;
+.skel-note, .state {
   text-align: center;
-}
-
-/* 分割线 */
-.divider {
-  height: 1rpx;
-  background: var(--border);
-  margin: 24rpx 0;
-}
-
-/* 金额文字 */
-.money {
-  font-weight: 600;
-  color: var(--accent);
-}
-
-.money-large {
-  font-size: 56rpx;
-  font-weight: 700;
-  color: var(--accent);
-}
-
-/* 安全底部 */
-.safe-bottom {
-  padding-bottom: env(safe-area-inset-bottom);
+  color: #8c8276;
+  padding: 40rpx 0;
 }

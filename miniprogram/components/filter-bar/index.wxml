@@ -1,0 +1,32 @@
+<view class="filter">
+  <scroll-view scroll-x class="row" enhanced show-scrollbar="{{false}}">
+    <view
+      class="chip {{filter.gameKey === item.gameKey ? 'on' : ''}}"
+      wx:for="{{games}}"
+      wx:key="gameKey"
+      data-field="gameKey"
+      data-value="{{item.gameKey}}"
+      bindtap="pick"
+    >{{item.displayName}}</view>
+  </scroll-view>
+  <scroll-view wx:if="{{showPlatform}}" scroll-x class="row" enhanced show-scrollbar="{{false}}">
+    <view
+      class="chip {{filter.platform === item.key ? 'on' : ''}}"
+      wx:for="{{platforms}}"
+      wx:key="key"
+      data-field="platform"
+      data-value="{{item.key}}"
+      bindtap="pick"
+    >{{item.label}}</view>
+  </scroll-view>
+  <scroll-view wx:if="{{showWindow}}" scroll-x class="row" enhanced show-scrollbar="{{false}}">
+    <view
+      class="chip {{filter.windowKey === item.key ? 'on' : ''}}"
+      wx:for="{{windows}}"
+      wx:key="key"
+      data-field="windowKey"
+      data-value="{{item.key}}"
+      bindtap="pick"
+    >{{item.label}}</view>
+  </scroll-view>
+</view>

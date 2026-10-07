@@ -1,0 +1,13 @@
+.spark {
+  width: 100%;
+  height: 88rpx;
+  display: block;
+}
+
+.spark-tip {
+  margin-top: 4rpx;
+  color: #241e18;
+  font-family: "DIN Alternate", "Avenir Next Condensed", "PingFang SC", sans-serif;
+  font-size: 22rpx;
+  line-height: 1.4;
+}

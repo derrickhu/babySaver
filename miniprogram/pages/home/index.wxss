@@ -1,0 +1,376 @@
+page {
+  background: #f3f0e8;
+}
+
+.home {
+  min-height: 100vh;
+  padding-bottom: calc(128rpx + env(safe-area-inset-bottom));
+  font-family: "PingFang SC", "Hiragino Sans GB", "Noto Sans SC", sans-serif;
+}
+
+.hero {
+  background: #1f4b99;
+  color: #f7f4ee;
+  padding: 28rpx 36rpx 78rpx;
+}
+
+.hero-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.hero-label {
+  font-size: 24rpx;
+  letter-spacing: 1rpx;
+  opacity: 0.82;
+}
+
+.reset {
+  padding: 8rpx 18rpx;
+  border-radius: 999rpx;
+  background: rgba(255, 253, 248, 0.16);
+  font-size: 22rpx;
+}
+
+.hero-value {
+  margin-top: 8rpx;
+  font-family: "DIN Alternate", "Avenir Next Condensed", "PingFang SC", sans-serif;
+  font-size: 84rpx;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -1rpx;
+}
+
+.hero-split {
+  display: flex;
+  align-items: center;
+  margin-top: 22rpx;
+}
+
+.split {
+  min-width: 180rpx;
+}
+
+.split-k {
+  display: block;
+  font-size: 22rpx;
+  opacity: 0.72;
+}
+
+.split-v {
+  display: block;
+  margin-top: 4rpx;
+  font-family: "DIN Alternate", "Avenir Next Condensed", "PingFang SC", sans-serif;
+  font-size: 34rpx;
+  font-weight: 650;
+}
+
+.split-rule {
+  width: 1rpx;
+  height: 48rpx;
+  margin: 0 28rpx;
+  background: rgba(247, 244, 238, 0.35);
+}
+
+.sheet-note {
+  margin-top: 6rpx;
+  font-size: 22rpx;
+}
+
+.sheet-note.up { color: #078a4d; }
+.sheet-note.down { color: #e11d48; }
+
+.sheet {
+  position: relative;
+  margin-top: -40rpx;
+  background: #fffdf8;
+  border-radius: 32rpx 32rpx 0 0;
+  padding: 28rpx 24rpx 22rpx;
+  box-shadow: 0 -16rpx 40rpx rgba(20, 32, 64, 0.12);
+}
+
+.sheet-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16rpx;
+}
+
+.sheet-title {
+  font-size: 32rpx;
+  font-weight: 700;
+  color: #241e18;
+}
+
+.live {
+  margin-left: 8rpx;
+  color: #8c8276;
+  font-size: 22rpx;
+  font-weight: 400;
+}
+
+.sheet-sum {
+  margin-top: 4rpx;
+  color: #8c8276;
+  font-size: 22rpx;
+}
+
+.grain {
+  display: flex;
+  background: #efeae2;
+  border-radius: 14rpx;
+  padding: 4rpx;
+}
+
+.g {
+  padding: 10rpx 14rpx;
+  border-radius: 12rpx;
+  color: #6f675e;
+  font-size: 22rpx;
+  white-space: nowrap;
+}
+
+.g.on {
+  background: #fffdf8;
+  color: #1f4b99;
+  font-weight: 650;
+}
+
+.chart-wrap {
+  position: relative;
+  margin-top: 8rpx;
+}
+
+.chart {
+  width: 100%;
+  height: 440rpx;
+  display: block;
+}
+
+.tip {
+  position: absolute;
+  width: 168rpx;
+  padding: 8rpx 12rpx;
+  border-radius: 12rpx;
+  background: #241e18;
+  color: #fffdf8;
+  pointer-events: none;
+}
+
+.tip-date {
+  font-size: 20rpx;
+  opacity: 0.72;
+}
+
+.tip-val {
+  font-family: "DIN Alternate", "Avenir Next Condensed", "PingFang SC", sans-serif;
+  font-size: 26rpx;
+  font-weight: 700;
+}
+
+.mask {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 28rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 253, 248, 0.94);
+  color: #8c8276;
+  font-size: 26rpx;
+}
+
+.mask.error {
+  color: #e11d48;
+  padding: 0 24rpx;
+  line-height: 1.5;
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16rpx 22rpx;
+  margin: 4rpx 8rpx 16rpx;
+}
+
+.lg {
+  display: flex;
+  align-items: center;
+  color: #6f675e;
+  font-size: 22rpx;
+}
+
+.lg.hint {
+  margin-left: auto;
+  color: #a3988c;
+}
+
+.swatch {
+  width: 22rpx;
+  height: 6rpx;
+  margin-right: 8rpx;
+  border-radius: 99rpx;
+}
+
+.s-total { background: #1f4b99; }
+.s-wx { background: #078a4d; }
+.s-dy { background: #e11d48; }
+
+.segbar {
+  display: flex;
+  background: #efeae2;
+  border-radius: 16rpx;
+  padding: 6rpx;
+}
+
+.seg {
+  flex: 1;
+  text-align: center;
+  padding: 16rpx 0;
+  border-radius: 12rpx;
+  color: #6f675e;
+  font-size: 26rpx;
+}
+
+.seg.on {
+  background: #fffdf8;
+  color: #1f4b99;
+  font-weight: 700;
+  box-shadow: 0 4rpx 12rpx rgba(36, 30, 24, 0.06);
+}
+
+.games-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin: 28rpx 36rpx 12rpx;
+  color: #241e18;
+  font-size: 32rpx;
+  font-weight: 700;
+}
+
+.games-count {
+  color: #8c8276;
+  font-size: 22rpx;
+  font-weight: 400;
+}
+
+.game {
+  margin: 0 24rpx 16rpx;
+  padding: 20rpx 20rpx 16rpx;
+  background: #fffdf8;
+  border-radius: 24rpx;
+  box-shadow: 0 10rpx 28rpx rgba(48, 36, 18, 0.05);
+  animation: rise 0.4s ease both;
+}
+
+.pressed { opacity: 0.72; }
+
+.game-main {
+  display: flex;
+  align-items: center;
+}
+
+.icon {
+  width: 96rpx;
+  height: 96rpx;
+  border-radius: 22rpx;
+  flex-shrink: 0;
+  background: #efeae2;
+}
+
+.mono {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #1f4b99;
+  font-size: 36rpx;
+  font-weight: 700;
+}
+
+.game-copy {
+  flex: 1;
+  min-width: 0;
+  margin-left: 18rpx;
+}
+
+.game-name-row {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+}
+
+.game-name {
+  font-size: 32rpx;
+  font-weight: 700;
+  color: #241e18;
+}
+
+.game-go {
+  color: #1f4b99;
+  font-size: 22rpx;
+}
+
+.game-meta {
+  margin-top: 6rpx;
+  color: #8c8276;
+  font-size: 22rpx;
+}
+
+.game-side {
+  text-align: right;
+  margin-left: 12rpx;
+}
+
+.game-rev {
+  font-family: "DIN Alternate", "Avenir Next Condensed", "PingFang SC", sans-serif;
+  font-size: 34rpx;
+  font-weight: 700;
+  color: #241e18;
+}
+
+.game-rev-k {
+  color: #8c8276;
+  font-size: 20rpx;
+}
+
+.pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10rpx;
+  margin-top: 8rpx;
+}
+
+.pill {
+  display: flex;
+  align-items: baseline;
+  gap: 8rpx;
+  padding: 10rpx 14rpx;
+  border-radius: 999rpx;
+  background: #f6f1e8;
+  font-size: 22rpx;
+}
+
+.pill-on { opacity: 0.7; }
+
+.pill-name { font-weight: 650; }
+.pill-dau,
+.pill-ads { color: #6f675e; }
+.pill-rev {
+  font-family: "DIN Alternate", "Avenir Next Condensed", "PingFang SC", sans-serif;
+  color: #241e18;
+}
+
+.pill-wechat .pill-name { color: #078a4d; }
+.pill-douyin .pill-name { color: #e11d48; }
+.pill-taptap .pill-name { color: #0e8f98; }
+.pill-huawei .pill-name { color: #9a3412; }
+
+@keyframes rise {
+  from { opacity: 0; transform: translateY(16rpx); }
+  to { opacity: 1; transform: none; }
+}

@@ -1,164 +1,113 @@
-/**
- * 云函数调用封装
- * 统一调用 babySaver 云函数
- */
+const config = require('./config')
 
-function callCloud(type, data = {}) {
+function base64(input) {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
+  const bytes = []
+  const text = String(input)
+  for (let i = 0; i < text.length; i += 1) {
+    let code = text.charCodeAt(i)
+    if (code < 128) bytes.push(code)
+    else if (code < 2048) bytes.push(192 | (code >> 6), 128 | (code & 63))
+    else {
+      bytes.push(224 | (code >> 12), 128 | ((code >> 6) & 63), 128 | (code & 63))
+    }
+  }
+  let out = ''
+  for (let i = 0; i < bytes.length; i += 3) {
+    const b0 = bytes[i]
+    const b1 = i + 1 < bytes.length ? bytes[i + 1] : 0
+    const b2 = i + 2 < bytes.length ? bytes[i + 2] : 0
+    out += chars[b0 >> 2]
+    out += chars[((b0 & 3) << 4) | (b1 >> 4)]
+    out += i + 1 < bytes.length ? chars[((b1 & 15) << 2) | (b2 >> 6)] : '='
+    out += i + 2 < bytes.length ? chars[b2 & 63] : '='
+  }
+  return out
+}
+
+function toQuery(query) {
+  if (!query) return ''
+  return Object.keys(query)
+    .filter((key) => query[key] !== undefined && query[key] !== null && query[key] !== '')
+    .map((key) => `${encodeURIComponent(key)}=${encodeURIComponent(query[key])}`)
+    .join('&')
+}
+
+function withQuery(path, query) {
+  const qs = toQuery(query)
+  return qs ? `${path}?${qs}` : path
+}
+
+function headers() {
+  const header = {
+    'content-type': 'application/json',
+    'X-WX-SERVICE': config.service,
+  }
+  if (config.accessPassword) header.Authorization = `Basic ${base64(`ga:${config.accessPassword}`)}`
+  return header
+}
+
+function unwrap(res) {
+  const status = res.statusCode || 200
+  let data = res.data
+  if (typeof data === 'string') {
+    try {
+      data = JSON.parse(data)
+    } catch (error) {
+      data = { ok: false, error: data.slice(0, 180) }
+    }
+  }
+  if (status === 401) {
+    const err = new Error('访问密码不正确')
+    err.code = 401
+    err.statusCode = 401
+    throw err
+  }
+  if (status >= 400) {
+    const err = new Error((data && (data.error || data.message)) || `请求失败 ${status}`)
+    err.statusCode = status
+    throw err
+  }
+  return data
+}
+
+function http(path, method, data, header) {
   return new Promise((resolve, reject) => {
-    wx.cloud.callFunction({
-      name: 'babySaver',
-      data: { type, data }
-    }).then(res => {
-      const result = res.result
-      if (result.code === 0) {
-        resolve(result)
-      } else if (result.code === 1) {
-        // 业务状态码1表示数据为空等非错误情况
-        resolve(result)
-      } else {
-        reject(result)
-      }
-    }).catch(err => {
-      console.error(`[API] ${type} 调用失败:`, err)
-      reject({ code: -1, msg: '网络异常，请稍后重试' })
+    wx.request({
+      url: config.publicBase + path,
+      method,
+      header,
+      data: method === 'GET' || method === 'DELETE' ? undefined : data,
+      timeout: 60000,
+      success: resolve,
+      fail: reject,
     })
   })
 }
 
-// 显示加载中
-function showLoading(title = '加载中...') {
-  wx.showLoading({ title, mask: true })
-}
-
-// 隐藏加载
-function hideLoading() {
-  wx.hideLoading()
-}
-
-// 显示提示
-function showToast(title, icon = 'none') {
-  wx.showToast({ title, icon, duration: 2000 })
-}
-
-// 显示错误提示
-function showError(msg) {
-  wx.showToast({ title: msg || '操作失败', icon: 'none', duration: 2500 })
-}
-
-/**
- * 将 cloud:// fileID 转换为临时可访问的 HTTPS URL
- * cloud:// 在某些基础库版本 / 真机环境下 image 组件无法直接渲染，
- * 通过 getTempFileURL 拿到临时 HTTPS 链接可确保跨设备显示。
- * @param {string[]} fileIDs - cloud:// 开头的文件 ID 数组
- * @returns {Object} fileID → tempUrl 映射
- */
-async function resolveCloudFileUrls(fileIDs) {
-  if (!fileIDs || fileIDs.length === 0) return {}
-  try {
-    const res = await wx.cloud.getTempFileURL({ fileList: fileIDs })
-    const map = {}
-    if (res.fileList) {
-      res.fileList.forEach(item => {
-        if (item.status === 0 && item.tempFileURL) {
-          map[item.fileID] = item.tempFileURL
-        }
-      })
-    }
-    return map
-  } catch (err) {
-    console.error('getTempFileURL 失败:', err)
-    return {}
+function raise(error) {
+  const message = (error && (error.message || error.errMsg)) || '网络请求失败'
+  if (/url not in domain list|合法域名/i.test(message)) {
+    throw new Error('请求域名未配置。请把 https://www.luckygua.cn 加入 request 合法域名。')
   }
+  throw new Error(message)
 }
 
-/**
- * 批量解析对象数组中的 avatarUrl（cloud:// → https://）
- * @param {Array} list - 包含 avatarUrl 字段的对象数组
- * @param {string} field - 头像字段名，默认 'avatarUrl'
- * @returns {Array} 替换后的数组
- */
-async function resolveAvatars(list, field = 'avatarUrl') {
-  if (!list || list.length === 0) return list
-  // 收集需要转换的 cloud:// fileID
-  const cloudIds = list
-    .map(item => item[field])
-    .filter(url => url && url.startsWith('cloud://'))
-  // 去重
-  const uniqueIds = [...new Set(cloudIds)]
-  const urlMap = uniqueIds.length > 0 ? await resolveCloudFileUrls(uniqueIds) : {}
-  // 替换
-  return list.map(item => {
-    const url = item[field]
-    if (url && url.startsWith('cloud://')) {
-      return { ...item, [field]: urlMap[url] || '' }
-    }
-    // emoji: 格式的默认头像不能渲染为 image，清空让 emoji fallback 生效
-    if (url && url.startsWith('emoji:')) {
-      return { ...item, [field]: '' }
-    }
-    return item
-  })
+function request(method, path, query, data) {
+  const fullPath = withQuery(path, query)
+  return http(fullPath, method, data, headers()).then(unwrap).catch(raise)
 }
 
-/**
- * 解析单个用户的 avatarUrl
- * @param {Object} userInfo - 用户对象
- * @returns {Object} 替换后的用户对象
- */
-async function resolveUserAvatar(userInfo) {
-  if (!userInfo || !userInfo.avatarUrl) return userInfo
-  // emoji: 格式的默认头像不能渲染为 image，清空让 emoji fallback 生效
-  if (userInfo.avatarUrl.startsWith('emoji:')) {
-    return { ...userInfo, avatarUrl: '' }
-  }
-  if (!userInfo.avatarUrl.startsWith('cloud://')) return userInfo
-  const urlMap = await resolveCloudFileUrls([userInfo.avatarUrl])
-  // 转换成功用 HTTPS URL，失败清空（让 emoji 降级生效，避免 cloud:// 渲染报错）
-  return { ...userInfo, avatarUrl: urlMap[userInfo.avatarUrl] || '' }
+function get(path, query) {
+  return request('GET', path, query)
 }
 
-// ========== 订阅消息（模板 ID 与云函数保持一致） ==========
-// 重要：这些 ID 必须与云函数中的模板 ID 完全一致
-const TMPL_WITHDRAW = '5It1FyqknG1-gC4hKelmrgbZeHFpqD5p8cbtZio-_s8'   // 取现申请通知（家长收）
-const TMPL_REVIEW   = 'GPmqW3cLc99XxTKVDX282D_-NwIYnQBOYJu2h1Y9Mwo'   // 审核结果通知（小孩收）
-const TMPL_MEMBER   = '5It1FyqknG1-gC4hKelmrgbZeHFpqD5p8cbtZio-_s8'   // 成员变动通知（创建者收）
-
-/**
- * 请求订阅消息授权（必须在 tap 事件的同步调用栈中直接调用）
- * 不能在 await 之后调用，否则真机不弹窗！
- * @param {string[]} tmplIds - 模板 ID 数组
- * @returns {Promise<Object>} 各模板的授权结果
- */
-function requestSubscribe(tmplIds) {
-  return new Promise(resolve => {
-    if (!tmplIds || tmplIds.length === 0) {
-      return resolve({})
-    }
-    wx.requestSubscribeMessage({
-      tmplIds,
-      success: (res) => {
-        console.log('订阅授权结果:', res)
-        resolve(res)
-      },
-      fail: (err) => {
-        console.warn('订阅授权失败:', err)
-        resolve({})
-      }
-    })
-  })
+function post(path, data, query) {
+  return request('POST', path, query, data || {})
 }
 
-module.exports = {
-  callCloud,
-  showLoading,
-  hideLoading,
-  showToast,
-  showError,
-  resolveCloudFileUrls,
-  resolveAvatars,
-  resolveUserAvatar,
-  requestSubscribe,
-  TMPL_WITHDRAW,
-  TMPL_REVIEW,
-  TMPL_MEMBER
+function del(path, query) {
+  return request('DELETE', path, query)
 }
+
+module.exports = { get, post, del }

@@ -1,0 +1,4 @@
+<view class="page">
+  <filter-bar bind:change="onFilter" />
+  <report loading="{{loading}}" refreshing="{{refreshing}}" error="{{error}}" sections="{{sections}}" />
+</view>

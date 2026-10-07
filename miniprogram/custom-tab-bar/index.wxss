@@ -1,0 +1,40 @@
+.tabbar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 100;
+  display: flex;
+  background: #f7f4ee;
+  border-top: 1rpx solid #e6dfd4;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.tab {
+  flex: 1;
+  height: 96rpx;
+  line-height: 96rpx;
+  text-align: center;
+  font-size: 28rpx;
+  color: #8c8276;
+}
+
+.tab.on {
+  color: #1f4b99;
+  font-weight: 700;
+}
+
+.tab {
+  position: relative;
+}
+
+.tab.on::before {
+  content: '';
+  position: absolute;
+  left: 28%;
+  right: 28%;
+  top: 0;
+  height: 6rpx;
+  border-radius: 0 0 6rpx 6rpx;
+  background: #1f4b99;
+}

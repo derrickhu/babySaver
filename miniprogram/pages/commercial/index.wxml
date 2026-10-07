@@ -1,0 +1,47 @@
+<view class="page sub">
+  <filter-bar bind:change="onFilter" />
+  <view class="switch">
+    <view class="seg {{maturity === 3 ? 'on' : ''}}" data-v="3" bindtap="onMaturity">决策按第3天</view>
+    <view class="seg {{maturity === 7 ? 'on' : ''}}" data-v="7" bindtap="onMaturity">决策按第7天</view>
+  </view>
+  <view class="btn-row">
+    <button class="btn" size="mini" bindtap="onAi">智能分析</button>
+    <button class="btn ghost" size="mini" data-kind="ads" bindtap="onPull">同步广告消耗</button>
+    <button class="btn ghost" size="mini" data-kind="wx" bindtap="onPull">同步微信收入</button>
+    <button class="btn ghost" size="mini" data-kind="dy" bindtap="onPull">同步抖音收入</button>
+    <button class="btn ghost" size="mini" data-kind="insight" bindtap="onPull">同步广告洞察</button>
+  </view>
+  <view class="field">
+    <view class="hint">录入一天的真实消耗和流量主收入。同一天再次保存会覆盖。</view>
+    <view class="field-label">日期</view>
+    <picker mode="date" value="{{form.date_key}}" data-k="date_key" bindchange="onForm">
+      <view>{{form.date_key}}</view>
+    </picker>
+  </view>
+  <view class="field">
+    <view class="field-label">投放消耗（元）</view>
+    <input type="digit" data-k="spend_cny" value="{{form.spend_cny}}" bindinput="onForm" />
+  </view>
+  <view class="field">
+    <view class="field-label">微信广告收入（元）</view>
+    <input type="digit" data-k="wechat_ad_revenue_cny" value="{{form.wechat_ad_revenue_cny}}" bindinput="onForm" />
+  </view>
+  <view class="field">
+    <view class="field-label">抖音广告收入（元）</view>
+    <input type="digit" data-k="douyin_ad_revenue_cny" value="{{form.douyin_ad_revenue_cny}}" bindinput="onForm" />
+  </view>
+  <view class="field">
+    <view class="field-label">微信曝光</view>
+    <input type="number" data-k="wechat_ad_impressions" value="{{form.wechat_ad_impressions}}" bindinput="onForm" />
+  </view>
+  <view class="field">
+    <view class="field-label">微信点击</view>
+    <input type="number" data-k="wechat_clicks" value="{{form.wechat_clicks}}" bindinput="onForm" />
+  </view>
+  <view class="field">
+    <view class="field-label">备注</view>
+    <input data-k="note" value="{{form.note}}" bindinput="onForm" />
+  </view>
+  <button class="btn save" bindtap="onSave">保存这天</button>
+  <report loading="{{loading}}" refreshing="{{refreshing}}" error="{{error}}" sections="{{sections}}" bind:card="onCard" />
+</view>

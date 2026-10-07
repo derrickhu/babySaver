@@ -1,0 +1,5 @@
+.pull {
+  width: auto;
+  margin-bottom: 16rpx;
+  padding: 0 24rpx;
+}

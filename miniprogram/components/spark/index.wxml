@@ -1,0 +1,8 @@
+<canvas
+  type="2d"
+  id="spark"
+  class="spark"
+  catchtouchstart="onTouch"
+  catchtouchmove="onTouch"
+></canvas>
+<view wx:if="{{tip}}" class="spark-tip">{{tip}}</view>

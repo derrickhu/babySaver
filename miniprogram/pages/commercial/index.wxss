@@ -1,0 +1,7 @@
+.switch {
+  display: flex;
+  gap: 12rpx;
+  margin-bottom: 12rpx;
+}
+
+.save { margin-bottom: 20rpx; }

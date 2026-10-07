@@ -1,0 +1,7 @@
+{
+  "navigationBarTitleText": "总览",
+  "enablePullDownRefresh": true,
+  "usingComponents": {
+    "spark": "/components/spark/index"
+  }
+}

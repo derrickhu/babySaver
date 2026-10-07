@@ -1,0 +1,61 @@
+<view class="report">
+  <view wx:if="{{refreshing}}" class="refresh"><view class="refresh-dot"></view>正在更新</view>
+  <view wx:if="{{error}}" class="banner">{{error}}</view>
+  <view wx:if="{{loading && !sections.length}}" class="skel">
+    <view class="skel-card">
+      <view class="skel-line lg"></view>
+      <view class="skel-row"><view class="skel-box"></view><view class="skel-box"></view></view>
+      <view class="skel-line"></view>
+      <view class="skel-line short"></view>
+    </view>
+    <view class="skel-card">
+      <view class="skel-line lg"></view>
+      <view class="skel-line"></view>
+      <view class="skel-line"></view>
+    </view>
+  </view>
+  <block wx:elif="{{sections.length}}">
+    <view class="card" wx:for="{{sections}}" wx:key="id">
+      <view class="card-title">{{item.title}}</view>
+      <view wx:if="{{item.notice}}" class="notice">{{item.notice}}</view>
+      <view wx:if="{{item.error}}" class="state error">{{item.error}}</view>
+      <view class="kpis" wx:if="{{item.kpis.length}}">
+        <view class="kpi" wx:for="{{item.kpis}}" wx:for-item="kpi" wx:key="label">
+          <view class="kpi-label">{{kpi.label}}</view>
+          <view class="kpi-value">{{kpi.value}}</view>
+          <view wx:if="{{kpi.sub}}" class="kpi-sub" style="color: {{kpi.subColor}};">{{kpi.sub}}</view>
+        </view>
+      </view>
+      <trend wx:if="{{item.chart}}" labels="{{item.chart.labels}}" series="{{item.chart.series}}" axis="{{item.chart.axis}}" />
+      <view class="bars" wx:if="{{item.bars.length}}">
+        <view class="bar-row" wx:for="{{item.bars}}" wx:for-item="bar" wx:key="label">
+          <view class="bar-label">{{bar.label}}</view>
+          <view class="bar-track"><view class="bar-fill" style="width: {{bar.pct}}%;"></view></view>
+          <view class="bar-text">{{bar.text}}</view>
+        </view>
+      </view>
+      <scroll-view wx:if="{{item.table}}" scroll-x class="table-scroll" enhanced show-scrollbar="{{false}}">
+        <view class="table">
+          <view class="tr th">
+            <view class="td" wx:for="{{item.table.columns}}" wx:for-item="col" wx:key="key">{{col.label}}</view>
+          </view>
+          <view class="tr" wx:for="{{item.table.rows}}" wx:for-item="row" wx:for-index="rowIndex" wx:key="rowIndex">
+            <view class="td" wx:for="{{row}}" wx:for-item="cell" wx:for-index="cellIndex" wx:key="cellIndex">{{cell}}</view>
+          </view>
+        </view>
+      </scroll-view>
+      <view class="lines" wx:if="{{item.lines.length}}">
+        <view class="line" wx:for="{{item.lines}}" wx:for-item="line" wx:for-index="lineIndex" wx:key="lineIndex">{{line}}</view>
+      </view>
+      <view class="mini" wx:for="{{item.cards}}" wx:for-item="card" wx:for-index="cardIndex" wx:key="cardIndex">
+        <view class="mini-top">
+          <view class="mini-title">{{card.title}}</view>
+          <view wx:if="{{card.extra}}" class="mini-extra" data-id="{{card.id}}" catchtap="onCard">{{card.extra}}</view>
+        </view>
+        <view class="mini-meta">{{card.meta}}</view>
+        <view class="mini-line" wx:for="{{card.lines}}" wx:for-item="line" wx:for-index="lineIndex" wx:key="lineIndex">{{line}}</view>
+      </view>
+    </view>
+  </block>
+  <view wx:elif="{{!error}}" class="state">暂无数据</view>
+</view>
