@@ -25,7 +25,6 @@
         <view wx:if="{{trendNote}}" class="sheet-note {{trendUp ? 'up' : 'down'}}">{{trendNote}}</view>
       </view>
       <view class="grain">
-        <view class="g {{grain === 'today' ? 'on' : ''}}" data-v="today" bindtap="onGrain">当日</view>
         <view class="g {{grain === 'yesterday' ? 'on' : ''}}" data-v="yesterday" bindtap="onGrain">昨日</view>
         <view class="g {{grain === 'mtd' ? 'on' : ''}}" data-v="mtd" bindtap="onGrain">当月</view>
         <view class="g {{grain === 'month30' ? 'on' : ''}}" data-v="month30" bindtap="onGrain">近一月</view>

@@ -109,7 +109,6 @@ function trendSource(data, grain) {
   if (grain === 'year') return { source: data.monthly_trend, byMonth: true }
   const daily = data.daily_trend
   if (grain === 'month30') return { source: daily, byMonth: false }
-  if (grain === 'today') return { source: oneDay(data, data.date_key), byMonth: false }
   if (grain === 'yesterday') return { source: oneDay(data, data.month_t1_date), byMonth: false }
   const days = (daily && daily.days) || []
   const monthKey = String(data.month_from_date || '').slice(0, 7)
@@ -157,7 +156,7 @@ function findRevenue(games, gameKey) {
   return (found && found.revenue) || []
 }
 
-const RANGE_NAME = { today: '当日', yesterday: '昨日', mtd: '当月', month30: '近一月', year: '近一年' }
+const RANGE_NAME = { yesterday: '昨日', mtd: '当月', month30: '近一月', year: '近一年' }
 
 function channelSeries(daily, channel) {
   if (!daily) return []
@@ -397,11 +396,9 @@ Page({
     if (!bundle.primary.length) this._active = null
     else if (this._active != null && this._active >= bundle.primary.length) this._active = bundle.primary.length - 1
     const pinned = this._active != null
-    const note = grain === 'today'
-      ? dayNote(data, channel, data.date_key, '当日结算通常次日入账')
-      : grain === 'yesterday'
-        ? dayNote(data, channel, data.month_t1_date, '还没有昨日结算')
-        : endNote(bundle.primary, bundle.byMonth)
+    const note = grain === 'yesterday'
+      ? dayNote(data, channel, data.month_t1_date, '还没有昨日结算')
+      : endNote(bundle.primary, bundle.byMonth)
     const rangeName = RANGE_NAME[grain] || '当月'
     const hero = pinned ? this.pointHero(bundle, this._active, channel) : this.rangeHero(data, bundle, grain, channel)
     const games = (data.games || []).slice().sort((a, b) => (
@@ -458,11 +455,9 @@ Page({
     const scope = channel === 'wechat' ? '微信' : channel === 'douyin' ? '抖音' : ''
     const until = grain === 'mtd' && data.month_t1_date
       ? ` · 截至 ${data.month_t1_date}`
-      : grain === 'today' && data.date_key
-        ? ` · ${data.date_key}`
-        : grain === 'yesterday' && data.month_t1_date
-          ? ` · ${data.month_t1_date}`
-          : ''
+      : grain === 'yesterday' && data.month_t1_date
+        ? ` · ${data.month_t1_date}`
+        : ''
     return {
       heroLabel: `${rangeName}${scope}收入${until}`,
       heroValue: formatYuan(sum(bundle.primary)),
