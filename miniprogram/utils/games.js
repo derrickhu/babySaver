@@ -7,6 +7,7 @@ const GAMES = [
   { gameKey: 'cunkou', displayName: '村口大战外星人', panels: ['level_progress'] },
   { gameKey: 'jiancai', displayName: '扫荡菜场', panels: ['jiancai_gameplay'] },
   { gameKey: 'blackrosa', displayName: '墨字防线', panels: ['level_progress'] },
+  { gameKey: 'dresssort', displayName: '一裙又一裙', panels: ['level_progress'] },
 ]
 
 const SNAPSHOT_GAMES = ['huahua', 'hotpot', 'petTower']

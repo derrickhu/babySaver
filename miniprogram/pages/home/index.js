@@ -14,6 +14,7 @@ const ICONS = {
   cunkou: '/images/games/cunkou.png',
   jiancai: '/images/games/jiancai.png',
   blackrosa: '/images/games/blackrosa.png',
+  dresssort: '/images/games/dresssort.png',
 }
 
 const COLORS = {
@@ -75,10 +76,41 @@ function sliceDaily(daily, indexes) {
   }
 }
 
+function zeroGames(list) {
+  return (list || []).map((game) => ({
+    game_key: game.game_key,
+    display_name: game.display_name,
+    revenue: [0],
+  }))
+}
+
+function oneDay(data, dateKey) {
+  const daily = data.daily_trend
+  const days = (daily && daily.days) || []
+  const index = dateKey ? days.indexOf(dateKey) : -1
+  if (index >= 0) return sliceDaily(daily, [index])
+  const games = zeroGames((daily && daily.games) || data.games)
+  return {
+    days: dateKey ? [dateKey] : [],
+    total: [0],
+    games,
+    wechat: {
+      total: [0],
+      games: zeroGames(daily && daily.wechat && daily.wechat.games),
+    },
+    douyin: {
+      total: [0],
+      games: zeroGames(daily && daily.douyin && daily.douyin.games),
+    },
+  }
+}
+
 function trendSource(data, grain) {
   if (grain === 'year') return { source: data.monthly_trend, byMonth: true }
   const daily = data.daily_trend
   if (grain === 'month30') return { source: daily, byMonth: false }
+  if (grain === 'today') return { source: oneDay(data, data.date_key), byMonth: false }
+  if (grain === 'yesterday') return { source: oneDay(data, data.month_t1_date), byMonth: false }
   const days = (daily && daily.days) || []
   const monthKey = String(data.month_from_date || '').slice(0, 7)
   const indexes = []
@@ -125,7 +157,31 @@ function findRevenue(games, gameKey) {
   return (found && found.revenue) || []
 }
 
-const RANGE_NAME = { mtd: '当月', month30: '近一月', year: '近一年' }
+const RANGE_NAME = { today: '当日', yesterday: '昨日', mtd: '当月', month30: '近一月', year: '近一年' }
+
+function channelSeries(daily, channel) {
+  if (!daily) return []
+  if (channel === 'wechat') return (daily.wechat && daily.wechat.total) || []
+  if (channel === 'douyin') return (daily.douyin && daily.douyin.total) || []
+  return daily.total || []
+}
+
+function dayNote(data, channel, dateKey, missingText) {
+  const daily = data.daily_trend
+  const days = (daily && daily.days) || []
+  const index = dateKey ? days.indexOf(dateKey) : -1
+  if (index < 0) return { text: missingText, up: true }
+  const series = channelSeries(daily, channel)
+  const curr = Number(series[index]) || 0
+  const prev = index > 0 ? Number(series[index - 1]) || 0 : 0
+  if (!prev) return { text: `¥${formatYuan(curr)}`, up: curr >= 0 }
+  const pct = ((curr - prev) / prev) * 100
+  const sign = pct > 0 ? '+' : ''
+  return {
+    text: `¥${formatYuan(curr)} · 较前一日 ${sign}${pct.toFixed(1)}%`,
+    up: pct >= 0,
+  }
+}
 
 function endNote(values, byMonth) {
   if (!values || values.length < 2) return { text: '', up: true }
@@ -160,6 +216,7 @@ Page({
     error: '',
     empty: false,
     pinned: false,
+    lockScroll: false,
     heroLabel: '当月收入',
     heroValue: '-',
     heroWx: '-',
@@ -232,13 +289,38 @@ Page({
     const touch = (event.touches && event.touches[0]) || (event.changedTouches && event.changedTouches[0])
     if (!touch || !this._plot || !this._plot.xs.length || typeof touch.x !== 'number') return
     const index = nearest(this._plot.xs, touch.x)
-    const y = this._plot.ys[index]
-    const hit = y != null && Math.abs(touch.y - y) <= 46
-    if (event.type === 'touchstart') this._tracking = hit
-    if (!this._tracking) {
-      if (event.type === 'touchstart') this.onBlank()
+    const curveY = this._plot.ys[index]
+    const hit = curveY != null && Math.abs(touch.y - curveY) <= 46
+    if (event.type === 'touchstart') {
+      this._originX = touch.x
+      this._originY = touch.y
+      this._moved = false
+      this._tracking = hit
+      if (hit) {
+        this.pickPoint(touch)
+        if (!this.data.lockScroll) this.setData({ lockScroll: true })
+      } else if (this.data.lockScroll) {
+        this.setData({ lockScroll: false })
+      }
       return
     }
+    if (event.type === 'touchmove') {
+      const dx = touch.x - this._originX
+      const dy = touch.y - this._originY
+      if (Math.abs(dx) > 8 || Math.abs(dy) > 8) this._moved = true
+      if (this._tracking) this.pickPoint(touch)
+      return
+    }
+    const tracking = this._tracking
+    const moved = this._moved
+    this._tracking = false
+    this._moved = false
+    if (this.data.lockScroll) this.setData({ lockScroll: false })
+    if (!tracking && !moved) this.onBlank()
+  },
+
+  pickPoint(touch) {
+    const index = nearest(this._plot.xs, touch.x)
     this._pickedAt = Date.now()
     if (index === this._active && !this._sparkKey) return
     this._active = index
@@ -315,7 +397,11 @@ Page({
     if (!bundle.primary.length) this._active = null
     else if (this._active != null && this._active >= bundle.primary.length) this._active = bundle.primary.length - 1
     const pinned = this._active != null
-    const note = endNote(bundle.primary, bundle.byMonth)
+    const note = grain === 'today'
+      ? dayNote(data, channel, data.date_key, '当日结算通常次日入账')
+      : grain === 'yesterday'
+        ? dayNote(data, channel, data.month_t1_date, '还没有昨日结算')
+        : endNote(bundle.primary, bundle.byMonth)
     const rangeName = RANGE_NAME[grain] || '当月'
     const hero = pinned ? this.pointHero(bundle, this._active, channel) : this.rangeHero(data, bundle, grain, channel)
     const games = (data.games || []).slice().sort((a, b) => (
@@ -351,7 +437,9 @@ Page({
       grain,
       pinned,
       chartTitle: `${rangeName}收入`,
-      scrubHint: bundle.byMonth ? '按住曲线看单月，点空白取消' : '按住曲线看单日，点空白取消',
+      scrubHint: bundle.buckets.length <= 1
+        ? ''
+        : (bundle.byMonth ? '按住曲线看单月，点空白取消' : '按住曲线看单日，点空白取消'),
       labels: bundle.labels,
       sparkKey: this._sparkKey || '',
       sparkIndex: this._sparkIndex == null ? -1 : this._sparkIndex,
@@ -368,7 +456,13 @@ Page({
   rangeHero(data, bundle, grain, channel) {
     const rangeName = RANGE_NAME[grain] || '当月'
     const scope = channel === 'wechat' ? '微信' : channel === 'douyin' ? '抖音' : ''
-    const until = grain === 'mtd' && data.month_t1_date ? ` · 截至 ${data.month_t1_date}` : ''
+    const until = grain === 'mtd' && data.month_t1_date
+      ? ` · 截至 ${data.month_t1_date}`
+      : grain === 'today' && data.date_key
+        ? ` · ${data.date_key}`
+        : grain === 'yesterday' && data.month_t1_date
+          ? ` · ${data.month_t1_date}`
+          : ''
     return {
       heroLabel: `${rangeName}${scope}收入${until}`,
       heroValue: formatYuan(sum(bundle.primary)),

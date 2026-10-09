@@ -94,7 +94,8 @@ page {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 16rpx;
+  flex-wrap: wrap;
+  gap: 12rpx 16rpx;
 }
 
 .sheet-title {
@@ -118,13 +119,16 @@ page {
 
 .grain {
   display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  max-width: 100%;
   background: #efeae2;
   border-radius: 14rpx;
   padding: 4rpx;
 }
 
 .g {
-  padding: 10rpx 14rpx;
+  padding: 8rpx 12rpx;
   border-radius: 12rpx;
   color: #6f675e;
   font-size: 22rpx;
