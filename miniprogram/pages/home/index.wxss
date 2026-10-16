@@ -90,6 +90,41 @@ page {
   box-shadow: 0 -16rpx 40rpx rgba(20, 32, 64, 0.12);
 }
 
+.sheet-next {
+  margin-top: 16rpx;
+  border-radius: 0;
+  box-shadow: none;
+  border-top: 1rpx solid #efeae2;
+}
+
+.activity-kpis {
+  display: flex;
+  gap: 28rpx;
+  margin-top: 12rpx;
+}
+
+.activity-k {
+  display: block;
+  color: #8c8276;
+  font-size: 22rpx;
+}
+
+.activity-v {
+  display: block;
+  margin-top: 2rpx;
+  color: #241e18;
+  font-family: "DIN Alternate", "Avenir Next Condensed", "PingFang SC", sans-serif;
+  font-size: 40rpx;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.activity-u {
+  font-size: 22rpx;
+  font-weight: 500;
+  color: #8c8276;
+}
+
 .sheet-head {
   display: flex;
   align-items: flex-start;

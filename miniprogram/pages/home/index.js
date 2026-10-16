@@ -200,6 +200,78 @@ function sum(values) {
   return (values || []).reduce((total, value) => total + (Number(value) || 0), 0)
 }
 
+function average(values) {
+  if (!values || !values.length) return 0
+  return Math.round(sum(values) / values.length)
+}
+
+function sliceMetric(metric, indexes) {
+  if (!metric) return { total: [], games: [] }
+  return {
+    total: pickAt(metric.total, indexes),
+    games: (metric.games || []).map((game) => ({
+      game_key: game.game_key,
+      display_name: game.display_name,
+      values: pickAt(game.values, indexes),
+    })),
+  }
+}
+
+function sliceActivity(source, indexes) {
+  const buckets = (source && source.buckets) || []
+  return {
+    buckets: indexes.map((index) => buckets[index]),
+    dau: sliceMetric(source && source.dau, indexes),
+    ad_show: sliceMetric(source && source.ad_show, indexes),
+  }
+}
+
+function activitySource(data, grain) {
+  if (grain === 'year') return { source: data.activity_monthly, byMonth: true }
+  const daily = data.activity_daily
+  if (grain === 'month30') return { source: daily, byMonth: false }
+  if (grain === 'yesterday') {
+    const buckets = (daily && daily.buckets) || []
+    const index = data.month_t1_date ? buckets.indexOf(data.month_t1_date) : -1
+    return { source: sliceActivity(daily, index >= 0 ? [index] : []), byMonth: false }
+  }
+  const buckets = (daily && daily.buckets) || []
+  const monthKey = String(data.month_from_date || '').slice(0, 7)
+  const indexes = []
+  buckets.forEach((day, index) => {
+    if (monthKey && String(day).slice(0, 7) === monthKey) indexes.push(index)
+  })
+  return { source: sliceActivity(daily, indexes), byMonth: false }
+}
+
+function activityBundle(data, grain, metric) {
+  const empty = { buckets: [], labels: [], longLabels: [], primary: [], byMonth: false }
+  if (!data) return empty
+  const picked = activitySource(data, grain)
+  const source = picked.source
+  if (!source) return empty
+  const branch = metric === 'ads' ? source.ad_show : source.dau
+  const buckets = source.buckets || []
+  const byMonth = picked.byMonth
+  return {
+    buckets,
+    labels: buckets.map((bucket) => (byMonth ? monthLabel(bucket) : dayLabel(bucket))),
+    longLabels: buckets.map((bucket) => (byMonth ? monthLong(bucket) : dayLong(bucket))),
+    primary: (branch && branch.total) || [],
+    byMonth,
+  }
+}
+
+function todayTotals(data) {
+  const games = (data && data.games) || []
+  const dau = Number(data && data.today_total_dau)
+  const ads = Number(data && data.today_total_ad_show)
+  return {
+    dau: Number.isFinite(dau) ? dau : games.reduce((total, game) => total + (Number(game.total_dau) || 0), 0),
+    ads: Number.isFinite(ads) ? ads : games.reduce((total, game) => total + (Number(game.total_ad_show) || 0), 0),
+  }
+}
+
 function leadPlatform(platforms) {
   let best = platforms[0]
   platforms.forEach((item) => {
@@ -233,6 +305,13 @@ Page({
     sparkKey: '',
     sparkIndex: -1,
     games: [],
+    activityMetric: 'dau',
+    todayDau: '-',
+    todayAds: '-',
+    activityCurveText: '',
+    activityEmpty: false,
+    activityHint: '按住曲线看单日',
+    activityTip: { show: false, left: 0, top: 0, date: '', value: '' },
   },
 
   onShow() {
@@ -277,11 +356,63 @@ Page({
 
   onBlank() {
     if (this._pickedAt && Date.now() - this._pickedAt < 350) return
-    if (this._active == null && !this._sparkKey) return
+    if (this._active == null && !this._sparkKey && this._activityActive == null) return
     this._active = null
     this._sparkKey = ''
     this._sparkIndex = -1
+    this._activityActive = null
     this.refreshView()
+  },
+
+  onActivity(event) {
+    const next = event.currentTarget.dataset.v
+    if (!next || next === this._activityMetric) return
+    this._activityMetric = next
+    this._activityActive = null
+    this.refreshView()
+  },
+
+  onActivityScrub(event) {
+    const touch = (event.touches && event.touches[0]) || (event.changedTouches && event.changedTouches[0])
+    if (!touch || !this._activityPlot || !this._activityPlot.xs.length || typeof touch.x !== 'number') return
+    const index = nearest(this._activityPlot.xs, touch.x)
+    const curveY = this._activityPlot.ys[index]
+    const hit = curveY != null && Math.abs(touch.y - curveY) <= 46
+    if (event.type === 'touchstart') {
+      this._originX = touch.x
+      this._originY = touch.y
+      this._moved = false
+      this._activityTracking = hit
+      if (hit) {
+        this.pickActivity(touch)
+        if (!this.data.lockScroll) this.setData({ lockScroll: true })
+      } else if (this.data.lockScroll) {
+        this.setData({ lockScroll: false })
+      }
+      return
+    }
+    if (event.type === 'touchmove') {
+      const dx = touch.x - this._originX
+      const dy = touch.y - this._originY
+      if (Math.abs(dx) > 8 || Math.abs(dy) > 8) this._moved = true
+      if (this._activityTracking) this.pickActivity(touch)
+      return
+    }
+    const tracking = this._activityTracking
+    const moved = this._moved
+    this._activityTracking = false
+    this._moved = false
+    if (this.data.lockScroll) this.setData({ lockScroll: false })
+    if (!tracking && !moved) this.onBlank()
+  },
+
+  pickActivity(touch) {
+    const index = nearest(this._activityPlot.xs, touch.x)
+    this._pickedAt = Date.now()
+    if (index === this._activityActive) return
+    this._activityActive = index
+    try { wx.vibrateShort({ type: 'light' }) } catch (error) { /* 模拟器可能没有振动 */ }
+    this.drawActivityChart()
   },
 
   onScrub(event) {
@@ -400,6 +531,23 @@ Page({
       ? dayNote(data, channel, data.month_t1_date, '还没有昨日结算')
       : endNote(bundle.primary, bundle.byMonth)
     const rangeName = RANGE_NAME[grain] || '当月'
+    const activityMetric = this._activityMetric || 'dau'
+    const activity = activityBundle(data, grain, activityMetric)
+    this._activityBundle = activity
+    if (!activity.primary.length) this._activityActive = null
+    else if (this._activityActive != null && this._activityActive >= activity.primary.length) {
+      this._activityActive = activity.primary.length - 1
+    }
+    const today = todayTotals(data)
+    const activityCurveText = activity.buckets.length === 0
+      ? ''
+      : activityMetric === 'ads'
+        ? `曲线区间合计 ${formatNum(sum(activity.primary))} 次`
+        : activity.byMonth
+          ? `曲线最新月活 ${formatNum(activity.primary[activity.primary.length - 1] || 0)} 人`
+          : activity.primary.length <= 1
+            ? `曲线 ${formatNum(activity.primary[0] || 0)} 人`
+            : `曲线日均 ${formatNum(average(activity.primary))} 人`
     const hero = pinned ? this.pointHero(bundle, this._active, channel) : this.rangeHero(data, bundle, grain, channel)
     const games = (data.games || []).slice().sort((a, b) => (
       (b.total_dau || 0) - (a.total_dau || 0)
@@ -447,7 +595,19 @@ Page({
       empty: bundle.buckets.length === 0,
       games,
       tip: pinned ? this.data.tip : { show: false, left: 0, top: 0, date: '', value: '' },
-    }, hero), () => this.drawChart())
+      activityMetric,
+      todayDau: formatNum(today.dau),
+      todayAds: formatNum(today.ads),
+      activityCurveText,
+      activityEmpty: activity.buckets.length === 0,
+      activityHint: activity.buckets.length <= 1
+        ? '时间跟上面的昨日、当月一致'
+        : (activity.byMonth ? '按住曲线看单月，点空白取消' : '按住曲线看单日，点空白取消'),
+      activityTip: this._activityActive != null ? this.data.activityTip : { show: false, left: 0, top: 0, date: '', value: '' },
+    }, hero), () => {
+      this.drawChart()
+      this.drawActivityChart()
+    })
   },
 
   rangeHero(data, bundle, grain, channel) {
@@ -545,11 +705,77 @@ Page({
     })
   },
 
+  ensureActivityCanvas() {
+    if (this._activityCtx && this._activityWidth) return Promise.resolve()
+    return new Promise((resolve) => {
+      wx.createSelectorQuery().in(this).select('#activity').fields({ node: true, size: true }).exec((res) => {
+        const info = res && res[0]
+        if (!info || !info.node || !info.width) {
+          resolve()
+          return
+        }
+        this._activityCanvas = info.node
+        this._activityCtx = info.node.getContext('2d')
+        this._activityWidth = info.width
+        this._activityHeight = info.height
+        resolve()
+      })
+    })
+  },
+
+  drawActivityChart() {
+    const seq = (this._activityDrawSeq || 0) + 1
+    this._activityDrawSeq = seq
+    const bundle = this._activityBundle
+    return this.ensureActivityCanvas().then(() => {
+      if (seq !== this._activityDrawSeq || !this._activityCtx || !bundle || !this._activityWidth) return
+      const dpr = (wx.getWindowInfo && wx.getWindowInfo().pixelRatio) || 2
+      this._activityCanvas.width = Math.round(this._activityWidth * dpr)
+      this._activityCanvas.height = Math.round(this._activityHeight * dpr)
+      this._activityCtx.setTransform(dpr, 0, 0, dpr, 0, 0)
+      const metric = this._activityMetric || 'dau'
+      this._activityPlot = drawTrend(this._activityCtx, this._activityWidth, this._activityHeight, {
+        primary: bundle.primary,
+        labels: bundle.labels,
+        active: this._activityActive,
+        color: metric === 'ads' ? '#C2410C' : '#0F766E',
+        axis: 'count',
+      })
+      this.placeActivityTip()
+    })
+  },
+
+  placeActivityTip() {
+    if (this._activityActive == null || !this._activityPlot || !this._activityBundle) return
+    const index = this._activityActive
+    const x = this._activityPlot.xs[index]
+    const y = this._activityPlot.ys[index]
+    if (x == null) return
+    const tipW = 92
+    const width = this._activityWidth || 300
+    let left = x - tipW / 2
+    left = Math.max(8, Math.min(left, width - tipW - 8))
+    let top = y - 54
+    if (top < 4) top = y + 16
+    const metric = this._activityMetric || 'dau'
+    const value = formatNum(this._activityBundle.primary[index] || 0)
+    this.setData({
+      activityTip: {
+        show: true,
+        left,
+        top,
+        date: this._activityBundle.labels[index] || '',
+        value: metric === 'ads' ? `${value} 次` : `${value} 人`,
+      },
+    })
+  },
+
   load() {
     const seq = (this._seq || 0) + 1
     this._seq = seq
     this._channel = this._channel || 'total'
     this._grain = this._grain || 'mtd'
+    this._activityMetric = this._activityMetric || 'dau'
     const cached = !this._raw && session.take('home')
     if (cached && cached.raw) {
       this._raw = cached.raw

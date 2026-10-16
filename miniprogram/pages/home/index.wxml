@@ -68,6 +68,51 @@
     </view>
   </view>
 
+  <view class="sheet sheet-next">
+    <view class="sheet-head">
+      <view>
+        <view class="sheet-title">全部游戏</view>
+        <view class="activity-kpis">
+          <view class="activity-kpi">
+            <text class="activity-k">今日总日活</text>
+            <text class="activity-v">{{todayDau}}<text class="activity-u"> 人</text></text>
+          </view>
+          <view class="activity-kpi">
+            <text class="activity-k">今日总曝光</text>
+            <text class="activity-v">{{todayAds}}<text class="activity-u"> 次</text></text>
+          </view>
+        </view>
+        <view wx:if="{{activityCurveText}}" class="sheet-sum">{{activityCurveText}}</view>
+      </view>
+      <view class="grain">
+        <view class="g {{activityMetric === 'dau' ? 'on' : ''}}" data-v="dau" bindtap="onActivity">日活</view>
+        <view class="g {{activityMetric === 'ads' ? 'on' : ''}}" data-v="ads" bindtap="onActivity">曝光</view>
+      </view>
+    </view>
+
+    <view class="chart-wrap" catchtap="onHold">
+      <canvas
+        type="2d"
+        id="activity"
+        class="chart"
+        disable-scroll="{{lockScroll}}"
+        bindtouchstart="onActivityScrub"
+        bindtouchmove="onActivityScrub"
+        bindtouchend="onActivityScrub"
+        bindtouchcancel="onActivityScrub"
+      ></canvas>
+      <view wx:if="{{activityTip.show}}" class="tip" style="left: {{activityTip.left}}px; top: {{activityTip.top}}px;">
+        <view class="tip-date">{{activityTip.date}}</view>
+        <view class="tip-val">{{activityTip.value}}</view>
+      </view>
+      <view wx:if="{{activityEmpty && !loading}}" class="mask">这段时间还没有{{activityMetric === 'ads' ? '曝光' : '日活'}}</view>
+    </view>
+
+    <view class="legend" wx:if="{{!activityEmpty}}">
+      <view class="lg hint">{{activityHint}}</view>
+    </view>
+  </view>
+
   <view class="games-head">
     <text>游戏</text>
     <text class="games-count">按当日日活</text>
