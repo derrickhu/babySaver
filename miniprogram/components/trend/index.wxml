@@ -8,7 +8,10 @@
   type="2d"
   id="trend"
   class="trend"
+  disable-scroll="{{lockScroll}}"
   catchtouchstart="onScrub"
   catchtouchmove="onScrub"
+  catchtouchend="onScrub"
+  catchtouchcancel="onScrub"
 ></canvas>
 <view wx:if="{{tip}}" class="tip">{{tip}}</view>

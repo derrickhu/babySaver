@@ -113,6 +113,47 @@
     </view>
   </view>
 
+  <view class="sheet sheet-next">
+    <view class="sheet-head">
+      <view>
+        <view class="sheet-title">当前在线<text wx:if="{{refreshing}}" class="live"> 更新中</text></view>
+        <view class="activity-kpis">
+          <view class="activity-kpi">
+            <text class="activity-k">此刻</text>
+            <text class="activity-v">{{onlineNow}}<text class="activity-u"> 人</text></text>
+          </view>
+          <view class="activity-kpi" wx:if="{{onlinePeak}}">
+            <text class="activity-k">峰值 {{onlinePeakAt}}</text>
+            <text class="activity-v">{{onlinePeak}}<text class="activity-u"> 人</text></text>
+          </view>
+        </view>
+        <view class="sheet-sum">全部游戏合计，近 24 小时，最右是此刻</view>
+      </view>
+    </view>
+
+    <view class="chart-wrap" catchtap="onHold">
+      <canvas
+        type="2d"
+        id="online"
+        class="chart"
+        disable-scroll="{{lockScroll}}"
+        bindtouchstart="onOnlineScrub"
+        bindtouchmove="onOnlineScrub"
+        bindtouchend="onOnlineScrub"
+        bindtouchcancel="onOnlineScrub"
+      ></canvas>
+      <view wx:if="{{onlineTip.show}}" class="tip" style="left: {{onlineTip.left}}px; top: {{onlineTip.top}}px;">
+        <view class="tip-date">{{onlineTip.date}}</view>
+        <view class="tip-val">{{onlineTip.value}}</view>
+      </view>
+      <view wx:if="{{onlineEmpty && !loading}}" class="mask">近 24 小时还没有在线记录</view>
+    </view>
+
+    <view class="legend" wx:if="{{!onlineEmpty}}">
+      <view class="lg hint">{{onlineHint}}</view>
+    </view>
+  </view>
+
   <view class="games-head">
     <text>游戏</text>
     <text class="games-count">按当日日活</text>

@@ -17,7 +17,7 @@ Component({
     axis: { type: String, value: 'count' },
   },
 
-  data: { tip: '' },
+  data: { tip: '', lockScroll: false },
 
   lifetimes: {
     ready() {
@@ -63,17 +63,40 @@ Component({
       })
     },
 
-    onScrub(event) {
-      const touch = (event.touches && event.touches[0]) || (event.changedTouches && event.changedTouches[0])
-      if (!touch || !this._plot || typeof touch.x !== 'number') return
-      const index = nearest(this._plot.xs, touch.x)
+    pick(index) {
       if (index === this._active) return
       this._active = index
       const axis = this.data.axis || 'count'
       const label = (this.data.labels || [])[index] || ''
       const parts = (this.data.series || []).map((item) => `${item.name} ${tipNumber(axis, (item.values || [])[index])}`)
-      this.setData({ tip: [label].concat(parts).join('  ') })
+      this.setData({ tip: [label].concat(parts).filter(Boolean).join('\n') })
       this.draw(true)
+    },
+
+    onScrub(event) {
+      const touch = (event.touches && event.touches[0]) || (event.changedTouches && event.changedTouches[0])
+      if (!touch || !this._plot || !this._plot.xs.length || typeof touch.x !== 'number') {
+        if (event.type !== 'touchmove' && this.data.lockScroll) this.setData({ lockScroll: false })
+        return
+      }
+      const index = nearest(this._plot.xs, touch.x)
+      const curveY = this._plot.ys[index]
+      const hit = curveY != null && Math.abs(touch.y - curveY) <= 48
+      if (event.type === 'touchstart') {
+        this._tracking = hit
+        if (hit) {
+          const show = () => this.pick(index)
+          if (!this.data.lockScroll) this.setData({ lockScroll: true }, show)
+          else show()
+        }
+        return
+      }
+      if (event.type === 'touchmove') {
+        if (this._tracking) this.pick(index)
+        return
+      }
+      this._tracking = false
+      if (this.data.lockScroll) this.setData({ lockScroll: false })
     },
   },
 })

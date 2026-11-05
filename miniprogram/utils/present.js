@@ -568,6 +568,7 @@ function blank(title, extra) {
     cards: [],
     chart: null,
     table: null,
+    sheet: null,
   }, extra)
 }
 

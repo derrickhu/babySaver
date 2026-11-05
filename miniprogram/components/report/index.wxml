@@ -28,11 +28,57 @@
       </view>
       <trend wx:if="{{item.chart}}" labels="{{item.chart.labels}}" series="{{item.chart.series}}" axis="{{item.chart.axis}}" />
       <view class="bars" wx:if="{{item.bars.length}}">
-        <view class="bar-row" wx:for="{{item.bars}}" wx:for-item="bar" wx:key="label">
-          <view class="bar-label">{{bar.label}}</view>
-          <view class="bar-track"><view class="bar-fill" style="width: {{bar.pct}}%;"></view></view>
-          <view class="bar-text">{{bar.text}}</view>
-        </view>
+        <block wx:for="{{item.bars}}" wx:for-item="bar" wx:for-index="barIndex" wx:key="barIndex">
+          <view wx:if="{{bar.wide}}" class="bar-wide">
+            <view class="bar-wide-top">
+              <view class="bar-wide-name">{{bar.label}}</view>
+              <view class="bar-wide-text">{{bar.text}}</view>
+            </view>
+            <view class="bar-track"><view class="bar-fill" style="width: {{bar.pct}}%;"></view></view>
+          </view>
+          <view wx:else class="bar-row">
+            <view class="bar-label">{{bar.label}}</view>
+            <view class="bar-track"><view class="bar-fill" style="width: {{bar.pct}}%;"></view></view>
+            <view class="bar-text">{{bar.text}}</view>
+          </view>
+        </block>
+      </view>
+      <view wx:if="{{item.sheet}}" class="sheet-block">
+        <view class="sheet-hint">左右滑动看留存，点一行看获客成本</view>
+        <scroll-view scroll-x enhanced using-sticky show-scrollbar="{{false}}" class="sheet-scroll">
+          <view class="sheet" style="width: {{item.sheet.width}}rpx;">
+            <view class="sheet-row head">
+              <view
+                class="sheet-cell {{col.pin ? 'pin' : ''}}"
+                wx:for="{{item.sheet.columns}}"
+                wx:for-item="col"
+                wx:key="label"
+                style="{{col.style}}"
+              >{{col.label}}</view>
+            </view>
+            <block wx:for="{{item.sheet.rows}}" wx:for-item="row" wx:key="id">
+              <view
+                class="sheet-row {{row.live ? 'live' : ''}} {{openKey === item.id + ':' + row.id ? 'open' : ''}}"
+                data-section="{{item.id}}"
+                data-row="{{row.id}}"
+                bindtap="onSheetRow"
+              >
+                <view
+                  class="sheet-cell {{col.pin ? 'pin' : ''}} {{row.cells[colIndex].tone}}"
+                  wx:for="{{item.sheet.columns}}"
+                  wx:for-item="col"
+                  wx:for-index="colIndex"
+                  wx:key="label"
+                  style="{{col.style}}"
+                >
+                  <text>{{row.cells[colIndex].text}}</text>
+                  <text wx:if="{{row.cells[colIndex].tag}}" class="sheet-tag">{{row.cells[colIndex].tag}}</text>
+                </view>
+              </view>
+              <view wx:if="{{openKey === item.id + ':' + row.id}}" class="sheet-detail">{{row.detail}}</view>
+            </block>
+          </view>
+        </scroll-view>
       </view>
       <scroll-view wx:if="{{item.table}}" scroll-x class="table-scroll" enhanced show-scrollbar="{{false}}">
         <view class="table">

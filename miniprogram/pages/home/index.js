@@ -15,6 +15,8 @@ const ICONS = {
   jiancai: '/images/games/jiancai.png',
   blackrosa: '/images/games/blackrosa.png',
   dresssort: '/images/games/dresssort.png',
+  songjiang: '/images/games/songjiang.png',
+  biehuang: '/images/games/biehuang.png',
 }
 
 const COLORS = {
@@ -262,6 +264,36 @@ function activityBundle(data, grain, metric) {
   }
 }
 
+function clockOf(label) {
+  const text = String(label || '')
+  const time = text.indexOf(' ') >= 0 ? text.split(' ').pop() : text
+  return time || text
+}
+
+function onlineBundle(data) {
+  const online = data && data.online_today
+  const buckets = (online && online.buckets) || []
+  const total = (online && online.total) || []
+  let peak = 0
+  let peakLabel = ''
+  total.forEach((value, index) => {
+    const n = Number(value) || 0
+    if (n >= peak) {
+      peak = n
+      peakLabel = buckets[index] || ''
+    }
+  })
+  const now = Number(data && data.online_now)
+  return {
+    labels: buckets.map(clockOf),
+    longLabels: buckets,
+    primary: total,
+    peak,
+    peakLabel,
+    now: Number.isFinite(now) ? now : (total.length ? Number(total[total.length - 1]) || 0 : 0),
+  }
+}
+
 function todayTotals(data) {
   const games = (data && data.games) || []
   const dau = Number(data && data.today_total_dau)
@@ -312,6 +344,12 @@ Page({
     activityEmpty: false,
     activityHint: '按住曲线看单日',
     activityTip: { show: false, left: 0, top: 0, date: '', value: '' },
+    onlineNow: '-',
+    onlinePeak: '',
+    onlinePeakAt: '',
+    onlineEmpty: false,
+    onlineHint: '按住曲线看某一时刻，点空白取消',
+    onlineTip: { show: false, left: 0, top: 0, date: '', value: '' },
   },
 
   onShow() {
@@ -356,11 +394,12 @@ Page({
 
   onBlank() {
     if (this._pickedAt && Date.now() - this._pickedAt < 350) return
-    if (this._active == null && !this._sparkKey && this._activityActive == null) return
+    if (this._active == null && !this._sparkKey && this._activityActive == null && this._onlineActive == null) return
     this._active = null
     this._sparkKey = ''
     this._sparkIndex = -1
     this._activityActive = null
+    this._onlineActive = null
     this.refreshView()
   },
 
@@ -404,6 +443,49 @@ Page({
     this._moved = false
     if (this.data.lockScroll) this.setData({ lockScroll: false })
     if (!tracking && !moved) this.onBlank()
+  },
+
+  onOnlineScrub(event) {
+    const touch = (event.touches && event.touches[0]) || (event.changedTouches && event.changedTouches[0])
+    if (!touch || !this._onlinePlot || !this._onlinePlot.xs.length || typeof touch.x !== 'number') return
+    const index = nearest(this._onlinePlot.xs, touch.x)
+    const curveY = this._onlinePlot.ys[index]
+    const hit = curveY != null && Math.abs(touch.y - curveY) <= 46
+    if (event.type === 'touchstart') {
+      this._originX = touch.x
+      this._originY = touch.y
+      this._moved = false
+      this._onlineTracking = hit
+      if (hit) {
+        this.pickOnline(touch)
+        if (!this.data.lockScroll) this.setData({ lockScroll: true })
+      } else if (this.data.lockScroll) {
+        this.setData({ lockScroll: false })
+      }
+      return
+    }
+    if (event.type === 'touchmove') {
+      const dx = touch.x - this._originX
+      const dy = touch.y - this._originY
+      if (Math.abs(dx) > 8 || Math.abs(dy) > 8) this._moved = true
+      if (this._onlineTracking) this.pickOnline(touch)
+      return
+    }
+    const tracking = this._onlineTracking
+    const moved = this._moved
+    this._onlineTracking = false
+    this._moved = false
+    if (this.data.lockScroll) this.setData({ lockScroll: false })
+    if (!tracking && !moved) this.onBlank()
+  },
+
+  pickOnline(touch) {
+    const index = nearest(this._onlinePlot.xs, touch.x)
+    this._pickedAt = Date.now()
+    if (index === this._onlineActive) return
+    this._onlineActive = index
+    try { wx.vibrateShort({ type: 'light' }) } catch (error) { /* 模拟器可能没有振动 */ }
+    this.drawOnlineChart()
   },
 
   pickActivity(touch) {
@@ -539,6 +621,12 @@ Page({
       this._activityActive = activity.primary.length - 1
     }
     const today = todayTotals(data)
+    const online = onlineBundle(data)
+    this._onlineBundle = online
+    if (!online.primary.length) this._onlineActive = null
+    else if (this._onlineActive != null && this._onlineActive >= online.primary.length) {
+      this._onlineActive = online.primary.length - 1
+    }
     const activityCurveText = activity.buckets.length === 0
       ? ''
       : activityMetric === 'ads'
@@ -604,9 +692,16 @@ Page({
         ? '时间跟上面的昨日、当月一致'
         : (activity.byMonth ? '按住曲线看单月，点空白取消' : '按住曲线看单日，点空白取消'),
       activityTip: this._activityActive != null ? this.data.activityTip : { show: false, left: 0, top: 0, date: '', value: '' },
+      onlineNow: formatNum(online.now),
+      onlinePeak: online.primary.length ? formatNum(online.peak) : '',
+      onlinePeakAt: online.peakLabel ? clockOf(online.peakLabel) : '',
+      onlineEmpty: online.primary.length === 0,
+      onlineHint: online.primary.length <= 1 ? '' : '按住曲线看某一时刻，点空白取消',
+      onlineTip: this._onlineActive != null ? this.data.onlineTip : { show: false, left: 0, top: 0, date: '', value: '' },
     }, hero), () => {
       this.drawChart()
       this.drawActivityChart()
+      this.drawOnlineChart()
     })
   },
 
@@ -766,6 +861,68 @@ Page({
         top,
         date: this._activityBundle.labels[index] || '',
         value: metric === 'ads' ? `${value} 次` : `${value} 人`,
+      },
+    })
+  },
+
+  ensureOnlineCanvas() {
+    if (this._onlineCtx && this._onlineWidth) return Promise.resolve()
+    return new Promise((resolve) => {
+      wx.createSelectorQuery().in(this).select('#online').fields({ node: true, size: true }).exec((res) => {
+        const info = res && res[0]
+        if (!info || !info.node || !info.width) {
+          resolve()
+          return
+        }
+        this._onlineCanvas = info.node
+        this._onlineCtx = info.node.getContext('2d')
+        this._onlineWidth = info.width
+        this._onlineHeight = info.height
+        resolve()
+      })
+    })
+  },
+
+  drawOnlineChart() {
+    const seq = (this._onlineDrawSeq || 0) + 1
+    this._onlineDrawSeq = seq
+    const bundle = this._onlineBundle
+    return this.ensureOnlineCanvas().then(() => {
+      if (seq !== this._onlineDrawSeq || !this._onlineCtx || !bundle || !this._onlineWidth) return
+      const dpr = (wx.getWindowInfo && wx.getWindowInfo().pixelRatio) || 2
+      this._onlineCanvas.width = Math.round(this._onlineWidth * dpr)
+      this._onlineCanvas.height = Math.round(this._onlineHeight * dpr)
+      this._onlineCtx.setTransform(dpr, 0, 0, dpr, 0, 0)
+      this._onlinePlot = drawTrend(this._onlineCtx, this._onlineWidth, this._onlineHeight, {
+        primary: bundle.primary,
+        labels: bundle.labels,
+        active: this._onlineActive,
+        color: '#1F4B99',
+        axis: 'count',
+      })
+      this.placeOnlineTip()
+    })
+  },
+
+  placeOnlineTip() {
+    if (this._onlineActive == null || !this._onlinePlot || !this._onlineBundle) return
+    const index = this._onlineActive
+    const x = this._onlinePlot.xs[index]
+    const y = this._onlinePlot.ys[index]
+    if (x == null) return
+    const tipW = 108
+    const width = this._onlineWidth || 300
+    let left = x - tipW / 2
+    left = Math.max(8, Math.min(left, width - tipW - 8))
+    let top = y - 54
+    if (top < 4) top = y + 16
+    this.setData({
+      onlineTip: {
+        show: true,
+        left,
+        top,
+        date: this._onlineBundle.longLabels[index] || this._onlineBundle.labels[index] || '',
+        value: `${formatNum(this._onlineBundle.primary[index] || 0)} 人`,
       },
     })
   },

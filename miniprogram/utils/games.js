@@ -8,6 +8,8 @@ const GAMES = [
   { gameKey: 'jiancai', displayName: '扫荡菜场', panels: ['jiancai_gameplay'] },
   { gameKey: 'blackrosa', displayName: '墨字防线', panels: ['level_progress'] },
   { gameKey: 'dresssort', displayName: '一裙又一裙', panels: ['level_progress'] },
+  { gameKey: 'songjiang', displayName: '营救宋江', panels: ['level_progress'] },
+  { gameKey: 'biehuang', displayName: '宋江别慌张', panels: ['level_progress'] },
 ]
 
 const SNAPSHOT_GAMES = ['huahua', 'hotpot', 'petTower']

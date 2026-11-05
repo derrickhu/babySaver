@@ -3,7 +3,7 @@ const auth = require('../../utils/auth')
 Page({
   data: {
     items: [
-      { no: '01', title: '留存', desc: '新增用户的次日到30日留存', url: '/pages/retention/index' },
+      { no: '01', title: '留存', desc: '按设备看次日到 30 日留存。回本在大盘', url: '/pages/retention/index' },
       { no: '02', title: '商业化', desc: '回本决策、用户价值、真实收入录入', url: '/pages/commercial/index' },
       { no: '03', title: '归因', desc: '计划质量、回流和回传', url: '/pages/attribution/index' },
       { no: '04', title: '玩家档案', desc: '云存档每日快照', url: '/pages/snapshot/index' },

@@ -68,6 +68,7 @@
 .kpi-label {
   color: #8c8276;
   font-size: 22rpx;
+  line-height: 1.35;
 }
 
 .kpi-value {
@@ -92,9 +93,10 @@
 }
 
 .bar-label {
-  width: 132rpx;
+  width: 148rpx;
   color: #8c8276;
   font-size: 22rpx;
+  line-height: 1.3;
   flex: none;
 }
 
@@ -119,6 +121,129 @@
   font-size: 22rpx;
   color: #241e18;
   flex: none;
+}
+
+.bar-wide {
+  margin-top: 18rpx;
+}
+
+.bar-wide-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16rpx;
+}
+
+.bar-wide-name {
+  flex: 1;
+  color: #241e18;
+  font-size: 26rpx;
+  line-height: 1.35;
+  font-weight: 650;
+}
+
+.bar-wide-text {
+  flex: none;
+  font-family: "DIN Alternate", "Avenir Next Condensed", "PingFang SC", sans-serif;
+  font-size: 26rpx;
+  color: #241e18;
+}
+
+.bar-wide .bar-track {
+  width: 100%;
+  margin-top: 8rpx;
+}
+
+.sheet-block {
+  margin-top: 8rpx;
+}
+
+.sheet-hint {
+  margin-bottom: 8rpx;
+  color: #8c8276;
+  font-size: 22rpx;
+}
+
+.sheet-scroll {
+  width: 100%;
+  margin-left: -4rpx;
+}
+
+.sheet-row {
+  display: flex;
+  align-items: stretch;
+}
+
+.sheet-cell {
+  box-sizing: border-box;
+  flex: none;
+  height: 76rpx;
+  padding: 0 10rpx;
+  display: flex;
+  align-items: center;
+  border-bottom: 1rpx solid #efeae2;
+  color: #241e18;
+  font-size: 24rpx;
+  font-family: "DIN Alternate", "Avenir Next Condensed", "PingFang SC", sans-serif;
+  white-space: nowrap;
+}
+
+.sheet-cell.pin {
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  background: #fffdf8;
+  font-weight: 700;
+  box-shadow: 8rpx 0 12rpx rgba(48, 36, 18, 0.05);
+}
+
+.sheet-row.head .sheet-cell {
+  height: 64rpx;
+  color: #8c8276;
+  font-size: 22rpx;
+  font-weight: 650;
+  font-family: "PingFang SC", sans-serif;
+}
+
+.sheet-row.live {
+  background: #eef3fb;
+}
+
+.sheet-row.live .sheet-cell.pin,
+.sheet-row.open .sheet-cell.pin {
+  background: #eef3fb;
+}
+
+.sheet-row.open {
+  background: #f4efe6;
+}
+
+.sheet-cell.muted { color: #8c8276; }
+.sheet-cell.up { color: #15803d; }
+.sheet-cell.live { color: #1f4b99; }
+
+.sheet-tag {
+  margin-left: 6rpx;
+  padding: 0 8rpx;
+  border-radius: 8rpx;
+  background: #e7eef8;
+  color: #1f4b99;
+  font-size: 18rpx;
+  line-height: 30rpx;
+  font-weight: 650;
+  font-family: "PingFang SC", sans-serif;
+}
+
+.sheet-detail {
+  position: sticky;
+  left: 0;
+  width: 654rpx;
+  box-sizing: border-box;
+  padding: 10rpx 12rpx 16rpx;
+  background: #f7f1e6;
+  color: #6f675e;
+  font-size: 22rpx;
+  line-height: 1.45;
 }
 
 .table-scroll {
