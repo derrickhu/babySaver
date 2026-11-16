@@ -653,9 +653,20 @@ function arraySection(key, rows) {
   const nameKey = keys.find((item) => typeof sample[item] === 'string')
   if (nameKey && numKeys.length) {
     const metric = pickMetric(numKeys)
+    if (rows.length > 8) {
+      return blank(label(key), {
+        notice: `共 ${rows.length} 项，按住图表左右拖，点柱子看数值`,
+        columns: {
+          labels: rows.map((row) => phrase(row[nameKey]).slice(0, 10)),
+          values: rows.map((row) => Number(row[metric]) || 0),
+          unit: '',
+          valueUnit: '',
+        },
+      })
+    }
     const max = Math.max(...rows.map((row) => Number(row[metric]) || 0), 1)
     return blank(label(key), {
-      bars: rows.slice(0, 8).map((row) => ({
+      bars: rows.map((row) => ({
         label: phrase(row[nameKey]).slice(0, 12),
         pct: Math.round(((Number(row[metric]) || 0) / max) * 100),
         text: formatValue(metric, row[metric]),

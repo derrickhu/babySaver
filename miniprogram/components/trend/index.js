@@ -52,13 +52,18 @@ Component({
         ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
         const [first, ...rest] = series
         this._cssWidth = info.width
+        const axis = this.data.axis || 'count'
+        const activeText = this._active == null
+          ? ''
+          : tipNumber(axis, (first.values || [])[this._active])
         this._plot = drawTrend(ctx, info.width, info.height, {
           primary: first.values || [],
           overlays: rest.map((item) => ({ values: item.values || [], color: item.color, width: 1.6 })),
           labels,
           active: this._active,
+          activeText,
           color: first.color || '#1F4B99',
-          axis: this.data.axis || 'count',
+          axis,
         })
       })
     },
@@ -80,22 +85,12 @@ Component({
         return
       }
       const index = nearest(this._plot.xs, touch.x)
-      const curveY = this._plot.ys[index]
-      const hit = curveY != null && Math.abs(touch.y - curveY) <= 48
-      if (event.type === 'touchstart') {
-        this._tracking = hit
-        if (hit) {
-          const show = () => this.pick(index)
-          if (!this.data.lockScroll) this.setData({ lockScroll: true }, show)
-          else show()
-        }
+      if (event.type === 'touchstart' || event.type === 'touchmove') {
+        const show = () => this.pick(index)
+        if (!this.data.lockScroll) this.setData({ lockScroll: true }, show)
+        else show()
         return
       }
-      if (event.type === 'touchmove') {
-        if (this._tracking) this.pick(index)
-        return
-      }
-      this._tracking = false
       if (this.data.lockScroll) this.setData({ lockScroll: false })
     },
   },

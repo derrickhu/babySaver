@@ -1,0 +1,30 @@
+<view class="columns">
+  <view wx:if="{{chips.length}}" class="chips">
+    <view
+      class="chip {{active === item.index ? 'on' : ''}}"
+      wx:for="{{chips}}"
+      wx:key="index"
+      data-index="{{item.index}}"
+      bindtap="onChip"
+    >
+      <text class="chip-k">{{item.label}}</text>
+      <text class="chip-v">{{item.text}}</text>
+    </view>
+  </view>
+  <view class="stage">
+    <canvas type="2d" id="axis" class="axis"></canvas>
+    <view class="plot-box">
+      <canvas
+        type="2d"
+        id="plot"
+        class="plot"
+        catchtouchstart="onTouchStart"
+        catchtouchmove="onTouchMove"
+        catchtouchend="onTouchEnd"
+        catchtouchcancel="onTouchEnd"
+      ></canvas>
+    </view>
+  </view>
+  <view wx:if="{{scrollable}}" class="hint">按住图表左右拖，查看后面的档位</view>
+  <view wx:if="{{readout}}" class="readout">{{readout}}</view>
+</view>

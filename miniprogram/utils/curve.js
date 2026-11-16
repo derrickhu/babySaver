@@ -85,6 +85,37 @@ function dot(ctx, x, y, color, radius) {
   ctx.fill()
 }
 
+function roundRect(ctx, x, y, w, h, r) {
+  const radius = Math.min(r, w / 2, h / 2)
+  ctx.beginPath()
+  ctx.moveTo(x + radius, y)
+  ctx.arcTo(x + w, y, x + w, y + h, radius)
+  ctx.arcTo(x + w, y + h, x, y + h, radius)
+  ctx.arcTo(x, y + h, x, y, radius)
+  ctx.arcTo(x, y, x + w, y, radius)
+  ctx.closePath()
+}
+
+function drawPill(ctx, x, y, text, color, width) {
+  if (!text) return
+  ctx.save()
+  ctx.font = '12px PingFang SC, sans-serif'
+  const w = Math.ceil(ctx.measureText(String(text)).width) + 16
+  const h = 22
+  let left = x - w / 2
+  left = Math.max(6, Math.min(left, width - w - 6))
+  let top = y - h - 10
+  if (top < 4) top = y + 12
+  ctx.fillStyle = color
+  roundRect(ctx, left, top, w, h, 8)
+  ctx.fill()
+  ctx.fillStyle = '#FFFDF8'
+  ctx.textAlign = 'left'
+  ctx.textBaseline = 'middle'
+  ctx.fillText(String(text), left + 8, top + h / 2 + 0.5)
+  ctx.restore()
+}
+
 function drawTrend(ctx, width, height, spec) {
   const primary = spec.primary || []
   const overlays = spec.overlays || []
@@ -94,7 +125,7 @@ function drawTrend(ctx, width, height, spec) {
   const axis = spec.axis || 'yuan'
   const count = Math.max(labels.length, primary.length, 1)
   ctx.clearRect(0, 0, width, height)
-  const pad = { l: 40, r: 14, t: 18, b: 30 }
+  const pad = { l: 40, r: 14, t: 28, b: 30 }
   const plotW = Math.max(1, width - pad.l - pad.r)
   const plotH = Math.max(1, height - pad.t - pad.b)
   let max = 0
@@ -192,6 +223,7 @@ function drawTrend(ctx, width, height, spec) {
     ctx.stroke()
     ctx.restore()
     dot(ctx, xs[active], ys[active], color, 5.5)
+    if (spec.activeText) drawPill(ctx, xs[active], ys[active], spec.activeText, color, width)
   }
 
   return { xs, ys, top: pad.t, bottom: pad.t + plotH }

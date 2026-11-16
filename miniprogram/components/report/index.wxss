@@ -102,7 +102,7 @@
 
 .bar-track {
   flex: 1;
-  height: 12rpx;
+  height: 16rpx;
   background: #efeae2;
   border-radius: 999rpx;
   overflow: hidden;

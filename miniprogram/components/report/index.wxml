@@ -26,6 +26,13 @@
           <view wx:if="{{kpi.sub}}" class="kpi-sub" style="color: {{kpi.subColor}};">{{kpi.sub}}</view>
         </view>
       </view>
+      <columns
+        wx:if="{{item.columns}}"
+        labels="{{item.columns.labels}}"
+        values="{{item.columns.values}}"
+        unit="{{item.columns.unit}}"
+        value-unit="{{item.columns.valueUnit}}"
+      />
       <trend wx:if="{{item.chart}}" labels="{{item.chart.labels}}" series="{{item.chart.series}}" axis="{{item.chart.axis}}" />
       <view class="bars" wx:if="{{item.bars.length}}">
         <block wx:for="{{item.bars}}" wx:for-item="bar" wx:for-index="barIndex" wx:key="barIndex">

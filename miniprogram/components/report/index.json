@@ -1,6 +1,7 @@
 {
   "component": true,
-  "usingComponents": {
-    "trend": "/components/trend/index"
+    "usingComponents": {
+    "trend": "/components/trend/index",
+    "columns": "/components/columns/index"
   }
 }

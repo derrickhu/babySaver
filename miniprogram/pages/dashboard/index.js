@@ -4,7 +4,7 @@ const filterStore = require('../../utils/filter')
 const { findGame } = require('../../utils/games')
 const { formatNum, formatYuan, formatRate, formatPctPoints, formatMinutes, formatDuration, formatTime, delta } = require('../../utils/format')
 const { windowQuery, dateRangeQuery, dateKey, addDays } = require('../../utils/window')
-const { blank, chartFrom, barsFrom, phrase } = require('../../utils/present')
+const { blank, chartFrom, phrase } = require('../../utils/present')
 const { sceneName } = require('../../utils/scenes')
 const session = require('../../utils/session')
 
@@ -380,18 +380,17 @@ Page({
   sectionDuration(overview) {
     const bins = (overview && overview.duration_histogram) || []
     if (!bins.length) return null
-    const rows = bins.map((bin) => ({ label: `${bin.label}分`, users: bin.users }))
-    const maxUsers = Math.max(...rows.map((item) => Number(item.users) || 0), 1)
-    const bars = rows.length <= 16
-      ? rows.map((row) => ({
-        label: row.label,
-        pct: Math.round(((Number(row.users) || 0) / maxUsers) * 100),
-        text: formatNum(row.users),
-      }))
-      : barsFrom(rows, 'label', 'users')
+    const labels = bins.map((bin) => String(bin.label))
+    const values = bins.map((bin) => Number(bin.users) || 0)
+    const people = values.reduce((sum, value) => sum + value, 0)
     return blank('在线时长分布', {
-      notice: '每人在当前时间段里累计在线多久',
-      bars,
+      notice: `共 ${formatNum(people)} 人。按住图表左右拖；上面的档位点一下直接跳过去`,
+      columns: {
+        labels,
+        values,
+        unit: '分钟',
+        valueUnit: '人',
+      },
     })
   },
 

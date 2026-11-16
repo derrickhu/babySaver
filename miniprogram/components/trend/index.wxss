@@ -26,7 +26,10 @@
 }
 
 .tip {
-  margin-top: 8rpx;
+  margin-top: 10rpx;
+  padding: 12rpx 16rpx;
+  border-radius: 14rpx;
+  background: #f4efe6;
   color: #241e18;
   font-size: 22rpx;
   line-height: 1.45;
