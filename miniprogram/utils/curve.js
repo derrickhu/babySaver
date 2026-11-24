@@ -209,6 +209,17 @@ function drawTrend(ctx, width, height, spec) {
     ctx.stroke()
   })
 
+  const lines = [ys]
+  overlays.forEach((layer) => {
+    const overlayYs = []
+    const values = layer.values || []
+    for (let i = 0; i < count; i += 1) {
+      const n = finite(values[i])
+      overlayYs.push(n === null ? null : yAt(n))
+    }
+    lines.push(overlayYs)
+  })
+
   const lastPart = primaryParts[primaryParts.length - 1]
   const last = lastPart && lastPart[lastPart.length - 1]
   if (last && (active == null || active === last.index)) dot(ctx, last.x, last.y, color, 3.5)
@@ -226,7 +237,45 @@ function drawTrend(ctx, width, height, spec) {
     if (spec.activeText) drawPill(ctx, xs[active], ys[active], spec.activeText, color, width)
   }
 
-  return { xs, ys, top: pad.t, bottom: pad.t + plotH }
+  return { xs, ys, lines, top: pad.t, bottom: pad.t + plotH }
+}
+
+function distToSegment(x1, y1, x2, y2, x, y) {
+  const dx = x2 - x1
+  const dy = y2 - y1
+  const len2 = dx * dx + dy * dy
+  if (!(len2 > 0)) return { dist: Math.hypot(x - x1, y - y1), t: 0 }
+  const t = Math.max(0, Math.min(1, ((x - x1) * dx + (y - y1) * dy) / len2))
+  return { dist: Math.hypot(x - (x1 + dx * t), y - (y1 + dy * t)), t }
+}
+
+/**
+ * 点到折线的最近点。ys 可以是一条线，或同 x 的多条线（合计 / 微信 / 抖音）。
+ * 命中落在两点之间时，归到更近的那个数据点，返回的就是这个点的真实下标。
+ * 离所有线都超过 maxDist 时返回 -1，避免点到空白却显示邻近日。
+ */
+function nearestOnCurve(xs, ys, x, y, maxDist) {
+  const lines = ys && ys.length && Array.isArray(ys[0]) ? ys : [ys || []]
+  let best = -1
+  let dist = maxDist
+  const consider = (index, gap) => {
+    if (index < 0 || !(gap <= dist)) return
+    dist = gap
+    best = index
+  }
+  lines.forEach((line) => {
+    if (!line) return
+    for (let i = 0; i < xs.length; i += 1) {
+      if (line[i] == null || xs[i] == null) continue
+      consider(i, Math.hypot(xs[i] - x, line[i] - y))
+    }
+    for (let i = 0; i < xs.length - 1; i += 1) {
+      if (line[i] == null || line[i + 1] == null || xs[i] == null || xs[i + 1] == null) continue
+      const proj = distToSegment(xs[i], line[i], xs[i + 1], line[i + 1], x, y)
+      consider(proj.t < 0.5 ? i : i + 1, proj.dist)
+    }
+  })
+  return best
 }
 
 function drawSpark(ctx, width, height, values, color, active) {
@@ -292,4 +341,5 @@ module.exports = {
   drawTrend,
   drawSpark,
   nearest,
+  nearestOnCurve,
 }

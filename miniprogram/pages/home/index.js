@@ -1,23 +1,10 @@
 const api = require('../../utils/api')
+const icons = require('../../utils/game-icon')
 const auth = require('../../utils/auth')
 const filterStore = require('../../utils/filter')
-const { drawTrend, nearest } = require('../../utils/curve')
+const { drawTrend, nearestOnCurve } = require('../../utils/curve')
 const { formatNum, formatYuan } = require('../../utils/format')
 const session = require('../../utils/session')
-
-const ICONS = {
-  hotpot: '/images/games/hotpot.png',
-  huahua: '/images/games/huahua.png',
-  caizhu: '/images/games/caizhu.png',
-  petTower: '/images/games/petTower.png',
-  wujin_wenzhang: '/images/games/wujin_wenzhang.png',
-  cunkou: '/images/games/cunkou.png',
-  jiancai: '/images/games/jiancai.png',
-  blackrosa: '/images/games/blackrosa.png',
-  dresssort: '/images/games/dresssort.png',
-  songjiang: '/images/games/songjiang.png',
-  biehuang: '/images/games/biehuang.png',
-}
 
 const COLORS = {
   total: '#1F4B99',
@@ -158,6 +145,13 @@ function findRevenue(games, gameKey) {
   return (found && found.revenue) || []
 }
 
+function atSeries(games, gameKey, index) {
+  const found = (games || []).find((item) => item.game_key === gameKey)
+  const values = (found && (found.values || found.revenue)) || []
+  const n = Number(values[index])
+  return Number.isFinite(n) ? n : 0
+}
+
 const RANGE_NAME = { yesterday: '昨日', mtd: '当月', month30: '近一月', year: '近一年' }
 
 function channelSeries(daily, channel) {
@@ -260,6 +254,10 @@ function activityBundle(data, grain, metric) {
     labels: buckets.map((bucket) => (byMonth ? monthLabel(bucket) : dayLabel(bucket))),
     longLabels: buckets.map((bucket) => (byMonth ? monthLong(bucket) : dayLong(bucket))),
     primary: (branch && branch.total) || [],
+    dauGames: (source.dau && source.dau.games) || [],
+    adsGames: (source.ad_show && source.ad_show.games) || [],
+    dauTotal: (source.dau && source.dau.total) || [],
+    adsTotal: (source.ad_show && source.ad_show.total) || [],
     byMonth,
   }
 }
@@ -288,6 +286,7 @@ function onlineBundle(data) {
     labels: buckets.map(clockOf),
     longLabels: buckets,
     primary: total,
+    games: (online && online.games) || [],
     peak,
     peakLabel,
     now: Number.isFinite(now) ? now : (total.length ? Number(total[total.length - 1]) || 0 : 0),
@@ -328,8 +327,10 @@ Page({
     trendUp: true,
     channel: 'total',
     grain: 'mtd',
+    gamesNote: '按当日日活',
     chartTitle: '当月收入',
-    scrubHint: '按住曲线看单日',
+    focused: false,
+    scrubHint: '点曲线看某一天',
     rangeText: '-',
     sparkColor: COLORS.total,
     tip: { show: false, left: 0, top: 0, date: '', value: '' },
@@ -338,17 +339,19 @@ Page({
     sparkIndex: -1,
     games: [],
     activityMetric: 'dau',
+    dauKpiLabel: '今日总日活',
+    adsKpiLabel: '今日总曝光',
     todayDau: '-',
     todayAds: '-',
     activityCurveText: '',
     activityEmpty: false,
-    activityHint: '按住曲线看单日',
+    activityHint: '点曲线看某一天',
     activityTip: { show: false, left: 0, top: 0, date: '', value: '' },
     onlineNow: '-',
     onlinePeak: '',
     onlinePeakAt: '',
     onlineEmpty: false,
-    onlineHint: '按住曲线看某一时刻，点空白取消',
+    onlineHint: '点曲线看某一时刻，点空白取消',
     onlineTip: { show: false, left: 0, top: 0, date: '', value: '' },
   },
 
@@ -384,7 +387,10 @@ Page({
     const next = event.currentTarget.dataset.v
     if (!next || next === this._grain) return
     this._grain = next
+    this._focusBucket = ''
     this._active = null
+    this._activityActive = null
+    this._onlineActive = null
     this._sparkKey = ''
     this._sparkIndex = -1
     this.refreshView()
@@ -394,12 +400,81 @@ Page({
 
   onBlank() {
     if (this._pickedAt && Date.now() - this._pickedAt < 350) return
-    if (this._active == null && !this._sparkKey && this._activityActive == null && this._onlineActive == null) return
+    if (!this._focusBucket && this._active == null && !this._sparkKey && this._activityActive == null && this._onlineActive == null) return
+    this._focusBucket = ''
     this._active = null
     this._sparkKey = ''
     this._sparkIndex = -1
     this._activityActive = null
     this._onlineActive = null
+    this.refreshView()
+  },
+
+  localTouch(event, rect) {
+    const touch = (event.touches && event.touches[0]) || (event.changedTouches && event.changedTouches[0])
+    if (!touch) return null
+    if (rect && Number.isFinite(touch.clientX) && Number.isFinite(touch.clientY)) {
+      return { x: touch.clientX - rect.left, y: touch.clientY - rect.top }
+    }
+    if (Number.isFinite(touch.x) && Number.isFinite(touch.y)) return { x: touch.x, y: touch.y }
+    return null
+  },
+
+  hitIndex(plot, point) {
+    if (!point || !plot || !plot.xs || !plot.xs.length) return -1
+    return nearestOnCurve(plot.xs, plot.lines || plot.ys, point.x, point.y, 36)
+  },
+
+  trackScrub(event, rect, plot, onHit) {
+    const point = this.localTouch(event, rect)
+    const index = this.hitIndex(plot, point)
+    if (event.type === 'touchstart') {
+      this._originX = point ? point.x : 0
+      this._originY = point ? point.y : 0
+      this._moved = false
+      this._tracking = index >= 0
+      if (index >= 0) {
+        onHit(index)
+        if (!this.data.lockScroll) this.setData({ lockScroll: true })
+      } else if (this.data.lockScroll) {
+        this.setData({ lockScroll: false })
+      }
+      return
+    }
+    if (event.type === 'touchmove') {
+      if (point && (Math.abs(point.x - this._originX) > 8 || Math.abs(point.y - this._originY) > 8)) this._moved = true
+      if (this._tracking && index >= 0) onHit(index)
+      return
+    }
+    const tracking = this._tracking
+    const moved = this._moved
+    this._tracking = false
+    this._moved = false
+    if (this.data.lockScroll) this.setData({ lockScroll: false })
+    if (!tracking && !moved) this.onBlank()
+  },
+
+  selectDay(bucket) {
+    if (!bucket || (this._focusBucket === bucket && this._onlineActive == null)) return
+    this._focusBucket = bucket
+    this._onlineActive = null
+    this._sparkKey = ''
+    this._sparkIndex = -1
+    this._pickedAt = Date.now()
+    try { wx.vibrateShort({ type: 'light' }) } catch (error) { /* 模拟器可能没有振动 */ }
+    this.refreshView()
+  },
+
+  selectOnline(index) {
+    if (this._onlineActive === index && !this._focusBucket) return
+    this._focusBucket = ''
+    this._active = null
+    this._activityActive = null
+    this._onlineActive = index
+    this._sparkKey = ''
+    this._sparkIndex = -1
+    this._pickedAt = Date.now()
+    try { wx.vibrateShort({ type: 'light' }) } catch (error) { /* 模拟器可能没有振动 */ }
     this.refreshView()
   },
 
@@ -412,165 +487,30 @@ Page({
   },
 
   onActivityScrub(event) {
-    const touch = (event.touches && event.touches[0]) || (event.changedTouches && event.changedTouches[0])
-    if (!touch || !this._activityPlot || !this._activityPlot.xs.length || typeof touch.x !== 'number') return
-    const index = nearest(this._activityPlot.xs, touch.x)
-    const curveY = this._activityPlot.ys[index]
-    const hit = curveY != null && Math.abs(touch.y - curveY) <= 46
-    if (event.type === 'touchstart') {
-      this._originX = touch.x
-      this._originY = touch.y
-      this._moved = false
-      this._activityTracking = hit
-      if (hit) {
-        this.pickActivity(touch)
-        if (!this.data.lockScroll) this.setData({ lockScroll: true })
-      } else if (this.data.lockScroll) {
-        this.setData({ lockScroll: false })
-      }
-      return
-    }
-    if (event.type === 'touchmove') {
-      const dx = touch.x - this._originX
-      const dy = touch.y - this._originY
-      if (Math.abs(dx) > 8 || Math.abs(dy) > 8) this._moved = true
-      if (this._activityTracking) this.pickActivity(touch)
-      return
-    }
-    const tracking = this._activityTracking
-    const moved = this._moved
-    this._activityTracking = false
-    this._moved = false
-    if (this.data.lockScroll) this.setData({ lockScroll: false })
-    if (!tracking && !moved) this.onBlank()
+    this.trackScrub(event, this._activityRect, this._activityPlot, (index) => {
+      const bucket = this._activityBundle && this._activityBundle.buckets[index]
+      if (bucket) this.selectDay(bucket)
+    })
   },
 
   onOnlineScrub(event) {
-    const touch = (event.touches && event.touches[0]) || (event.changedTouches && event.changedTouches[0])
-    if (!touch || !this._onlinePlot || !this._onlinePlot.xs.length || typeof touch.x !== 'number') return
-    const index = nearest(this._onlinePlot.xs, touch.x)
-    const curveY = this._onlinePlot.ys[index]
-    const hit = curveY != null && Math.abs(touch.y - curveY) <= 46
-    if (event.type === 'touchstart') {
-      this._originX = touch.x
-      this._originY = touch.y
-      this._moved = false
-      this._onlineTracking = hit
-      if (hit) {
-        this.pickOnline(touch)
-        if (!this.data.lockScroll) this.setData({ lockScroll: true })
-      } else if (this.data.lockScroll) {
-        this.setData({ lockScroll: false })
-      }
-      return
-    }
-    if (event.type === 'touchmove') {
-      const dx = touch.x - this._originX
-      const dy = touch.y - this._originY
-      if (Math.abs(dx) > 8 || Math.abs(dy) > 8) this._moved = true
-      if (this._onlineTracking) this.pickOnline(touch)
-      return
-    }
-    const tracking = this._onlineTracking
-    const moved = this._moved
-    this._onlineTracking = false
-    this._moved = false
-    if (this.data.lockScroll) this.setData({ lockScroll: false })
-    if (!tracking && !moved) this.onBlank()
-  },
-
-  pickOnline(touch) {
-    const index = nearest(this._onlinePlot.xs, touch.x)
-    this._pickedAt = Date.now()
-    if (index === this._onlineActive) return
-    this._onlineActive = index
-    try { wx.vibrateShort({ type: 'light' }) } catch (error) { /* 模拟器可能没有振动 */ }
-    this.drawOnlineChart()
-  },
-
-  pickActivity(touch) {
-    const index = nearest(this._activityPlot.xs, touch.x)
-    this._pickedAt = Date.now()
-    if (index === this._activityActive) return
-    this._activityActive = index
-    try { wx.vibrateShort({ type: 'light' }) } catch (error) { /* 模拟器可能没有振动 */ }
-    this.drawActivityChart()
+    this.trackScrub(event, this._onlineRect, this._onlinePlot, (index) => {
+      this.selectOnline(index)
+    })
   },
 
   onScrub(event) {
-    const touch = (event.touches && event.touches[0]) || (event.changedTouches && event.changedTouches[0])
-    if (!touch || !this._plot || !this._plot.xs.length || typeof touch.x !== 'number') return
-    const index = nearest(this._plot.xs, touch.x)
-    const curveY = this._plot.ys[index]
-    const hit = curveY != null && Math.abs(touch.y - curveY) <= 46
-    if (event.type === 'touchstart') {
-      this._originX = touch.x
-      this._originY = touch.y
-      this._moved = false
-      this._tracking = hit
-      if (hit) {
-        this.pickPoint(touch)
-        if (!this.data.lockScroll) this.setData({ lockScroll: true })
-      } else if (this.data.lockScroll) {
-        this.setData({ lockScroll: false })
-      }
-      return
-    }
-    if (event.type === 'touchmove') {
-      const dx = touch.x - this._originX
-      const dy = touch.y - this._originY
-      if (Math.abs(dx) > 8 || Math.abs(dy) > 8) this._moved = true
-      if (this._tracking) this.pickPoint(touch)
-      return
-    }
-    const tracking = this._tracking
-    const moved = this._moved
-    this._tracking = false
-    this._moved = false
-    if (this.data.lockScroll) this.setData({ lockScroll: false })
-    if (!tracking && !moved) this.onBlank()
-  },
-
-  pickPoint(touch) {
-    const index = nearest(this._plot.xs, touch.x)
-    this._pickedAt = Date.now()
-    if (index === this._active && !this._sparkKey) return
-    this._active = index
-    this._sparkKey = ''
-    this._sparkIndex = -1
-    try { wx.vibrateShort({ type: 'light' }) } catch (error) { /* 模拟器可能没有振动 */ }
-    this.setData(Object.assign({
-      pinned: true,
-      trendNote: '',
-      sparkKey: '',
-      sparkIndex: -1,
-    }, this.pointHero(this._bundle, index, this._channel || 'total')))
-    this.drawChart()
+    this.trackScrub(event, this._trendRect, this._plot, (index) => {
+      const bucket = this._bundle && this._bundle.buckets[index]
+      if (bucket) this.selectDay(bucket)
+    })
   },
 
   onSpark(event) {
-    const key = event.currentTarget.dataset.key
     const index = event.detail.index
-    if (key == null || index == null) return
-    if (this._sparkKey === key && this._sparkIndex === index && this._active == null) return
-    this._pickedAt = Date.now()
-    const wasPinned = this._active != null
-    this._active = null
-    this._sparkKey = key
-    this._sparkIndex = index
-    const data = this._raw
-    const bundle = this._bundle
-    const note = bundle ? endNote(bundle.primary, bundle.byMonth) : { text: '', up: true }
-    const patch = { sparkKey: key, sparkIndex: index, pinned: false, tip: { show: false, left: 0, top: 0, date: '', value: '' } }
-    if (wasPinned && data && bundle) {
-      Object.assign(patch, this.rangeHero(data, bundle, this._grain || 'mtd', this._channel || 'total'), {
-        trendNote: note.text,
-        trendUp: note.up,
-      })
-    }
-    this.setData(patch, () => {
-      if (wasPinned) this.drawChart()
-    })
+    const bucket = this._bundle && this._bundle.buckets[index]
+    if (!bucket) return
+    this.selectDay(bucket)
   },
 
   onGame(event) {
@@ -593,10 +533,35 @@ Page({
 
   onIconError(event) {
     const key = event.currentTarget.dataset.key
-    const games = (this.data.games || []).map((item) => (
-      item.key === key ? Object.assign({}, item, { icon: '' }) : item
-    ))
-    this.setData({ games })
+    if (!key) return
+    const current = ((this.data.games || []).find((item) => item.key === key) || {}).icon || ''
+    icons.ensure([key]).then(() => {
+      let src = icons.savedSrc(key)
+      if (!src || src === current) src = icons.markBroken(key)
+      const games = (this.data.games || []).map((item) => (
+        item.key === key ? Object.assign({}, item, { icon: src }) : item
+      ))
+      this.setData({ games })
+    })
+  },
+
+  syncIcons() {
+    const keys = ((this._raw && this._raw.games) || []).map((game) => game.game_key).filter(Boolean)
+    const mark = keys.join(',')
+    if (!mark || this._iconMark === mark) return
+    this._iconMark = mark
+    icons.ensure(keys).then(() => {
+      if (this._iconMark !== mark) return
+      const current = this.data.games || []
+      let changed = false
+      const games = current.map((item) => {
+        const src = icons.displaySrc(item.key)
+        if (!src || src === item.icon) return item
+        changed = true
+        return Object.assign({}, item, { icon: src })
+      })
+      if (changed) this.setData({ games })
+    })
   },
 
   refreshView() {
@@ -606,20 +571,14 @@ Page({
     const grain = this._grain || 'mtd'
     const bundle = seriesBundle(data, channel, grain)
     this._bundle = bundle
-    if (!bundle.primary.length) this._active = null
-    else if (this._active != null && this._active >= bundle.primary.length) this._active = bundle.primary.length - 1
-    const pinned = this._active != null
     const note = grain === 'yesterday'
       ? dayNote(data, channel, data.month_t1_date, '还没有昨日结算')
       : endNote(bundle.primary, bundle.byMonth)
     const rangeName = RANGE_NAME[grain] || '当月'
+    const dayWord = bundle.byMonth ? '月' : '天'
     const activityMetric = this._activityMetric || 'dau'
     const activity = activityBundle(data, grain, activityMetric)
     this._activityBundle = activity
-    if (!activity.primary.length) this._activityActive = null
-    else if (this._activityActive != null && this._activityActive >= activity.primary.length) {
-      this._activityActive = activity.primary.length - 1
-    }
     const today = todayTotals(data)
     const online = onlineBundle(data)
     this._onlineBundle = online
@@ -627,6 +586,19 @@ Page({
     else if (this._onlineActive != null && this._onlineActive >= online.primary.length) {
       this._onlineActive = online.primary.length - 1
     }
+    let focusBucket = this._onlineActive != null ? '' : (this._focusBucket || '')
+    let revenueIndex = focusBucket ? bundle.buckets.indexOf(focusBucket) : -1
+    let activityIndex = focusBucket ? activity.buckets.indexOf(focusBucket) : -1
+    if (focusBucket && revenueIndex < 0 && activityIndex < 0) {
+      focusBucket = ''
+      revenueIndex = -1
+      activityIndex = -1
+    }
+    this._focusBucket = focusBucket
+    this._active = revenueIndex >= 0 ? revenueIndex : null
+    this._activityActive = activityIndex >= 0 ? activityIndex : null
+    const focused = !!focusBucket
+    const pinned = this._active != null
     const activityCurveText = activity.buckets.length === 0
       ? ''
       : activityMetric === 'ads'
@@ -636,72 +608,123 @@ Page({
           : activity.primary.length <= 1
             ? `曲线 ${formatNum(activity.primary[0] || 0)} 人`
             : `曲线日均 ${formatNum(average(activity.primary))} 人`
-    const hero = pinned ? this.pointHero(bundle, this._active, channel) : this.rangeHero(data, bundle, grain, channel)
-    const games = (data.games || []).slice().sort((a, b) => (
-      (b.total_dau || 0) - (a.total_dau || 0)
-      || sum(findRevenue(bundle.games, b.game_key)) - sum(findRevenue(bundle.games, a.game_key))
-    )).map((game, index) => {
-      const wxRevenue = sum(findRevenue(bundle.wechatGames, game.game_key))
-      const dyRevenue = sum(findRevenue(bundle.douyinGames, game.game_key))
-      const platforms = (game.platforms || []).map((item) => ({
+    const hero = pinned
+      ? this.pointHero(bundle, revenueIndex, channel)
+      : focused
+        ? {
+          heroLabel: `${activity.longLabels[activityIndex] || focusBucket} · 收入未结算`,
+          heroValue: '-',
+          heroWx: '-',
+          heroDy: '-',
+        }
+        : this.rangeHero(data, bundle, grain, channel)
+    const dayName = focused
+      ? (revenueIndex >= 0 ? bundle.longLabels[revenueIndex] : activity.longLabels[activityIndex])
+      : ''
+    const games = (data.games || []).map((game) => {
+      const revenueSeries = findRevenue(bundle.games, game.game_key)
+      const wxSeries = findRevenue(bundle.wechatGames, game.game_key)
+      const dySeries = findRevenue(bundle.douyinGames, game.game_key)
+      let revenueNum = sum(revenueSeries)
+      let revLabel = rangeName
+      let dauNum = Number(game.total_dau) || 0
+      let adsNum = Number(game.total_ad_show) || 0
+      let meta = `今日日活 ${formatNum(dauNum)} · 曝光 ${formatNum(adsNum)}`
+      let sortRevenue = revenueNum
+      let sortDau = dauNum
+      if (focused) {
+        if (revenueIndex >= 0) {
+          revenueNum = Number(revenueSeries[revenueIndex]) || 0
+          revLabel = bundle.labels[revenueIndex] || dayName
+          sortRevenue = revenueNum
+        } else {
+          revenueNum = null
+          revLabel = '当天未结算'
+          sortRevenue = -1
+        }
+        if (activityIndex >= 0) {
+          dauNum = atSeries(activity.dauGames, game.game_key, activityIndex)
+          adsNum = atSeries(activity.adsGames, game.game_key, activityIndex)
+          sortDau = dauNum
+          meta = `${dayName} 日活 ${formatNum(dauNum)} · 曝光 ${formatNum(adsNum)}`
+        } else {
+          meta = dayName
+        }
+      }
+      if (this._onlineActive != null) {
+        const onlineNum = atSeries(online.games, game.game_key, this._onlineActive)
+        meta = `${online.longLabels[this._onlineActive] || online.labels[this._onlineActive] || ''} 在线 ${formatNum(onlineNum)}`
+        sortDau = onlineNum
+      }
+      const platforms = focused || this._onlineActive != null ? [] : (game.platforms || []).map((item) => ({
         platform: item.platform,
         label: item.label === 'TapTap' ? '塔普' : item.label,
         dau: formatNum(item.dau),
         ads: formatNum(item.ad_show_cnt),
-        revenue: formatYuan(item.platform === 'wechat' ? wxRevenue : item.platform === 'douyin' ? dyRevenue : 0),
+        revenue: formatYuan(item.platform === 'wechat' ? sum(wxSeries) : item.platform === 'douyin' ? sum(dySeries) : 0),
       }))
       return {
         key: game.game_key,
         name: game.display_name,
         mark: String(game.display_name || '?').slice(0, 1),
-        icon: ICONS[game.game_key] || '',
-        dau: formatNum(game.total_dau),
-        ads: formatNum(game.total_ad_show),
-        revenue: formatYuan(sum(findRevenue(bundle.games, game.game_key))),
-        revLabel: rangeName,
-        spark: findRevenue(bundle.games, game.game_key),
+        icon: icons.displaySrc(game.game_key),
+        meta,
+        revenueText: revenueNum == null ? '—' : `¥${formatYuan(revenueNum)}`,
+        revLabel,
+        spark: revenueSeries,
         platforms,
         leadPlatform: leadPlatform(game.platforms || []),
-        delay: `${index * 40}ms`,
+        sortRevenue,
+        sortDau,
       }
-    })
+    }).sort((a, b) => {
+      const name = a.name.localeCompare(b.name, 'zh-CN')
+      if (this._onlineActive != null) return (b.sortDau - a.sortDau) || name
+      if (focused) return (b.sortRevenue - a.sortRevenue) || (b.sortDau - a.sortDau) || name
+      return (b.sortDau - a.sortDau) || (b.sortRevenue - a.sortRevenue) || name
+    }).map((game, index) => Object.assign(game, { delay: `${index * 40}ms` }))
+    const dauKpi = focused && activityIndex >= 0 ? Number(activity.dauTotal[activityIndex]) || 0 : today.dau
+    const adsKpi = focused && activityIndex >= 0 ? Number(activity.adsTotal[activityIndex]) || 0 : today.ads
     this.setData(Object.assign({
       channel,
       grain,
       pinned,
+      focused: focused || this._onlineActive != null,
       chartTitle: `${rangeName}收入`,
-      scrubHint: bundle.buckets.length <= 1
-        ? ''
-        : (bundle.byMonth ? '按住曲线看单月，点空白取消' : '按住曲线看单日，点空白取消'),
+      scrubHint: bundle.buckets.length <= 1 ? '' : `点曲线看这一${dayWord}，点空白取消`,
       labels: bundle.labels,
-      sparkKey: this._sparkKey || '',
-      sparkIndex: this._sparkIndex == null ? -1 : this._sparkIndex,
+      sparkKey: '',
+      sparkIndex: revenueIndex,
       rangeText: formatYuan(sum(bundle.primary)),
       trendNote: pinned ? '' : note.text,
       trendUp: note.up,
       sparkColor: COLORS[channel] || COLORS.total,
       empty: bundle.buckets.length === 0,
+      gamesNote: this._onlineActive != null ? '按这一刻在线' : focused ? `按${dayName}` : '按当日日活',
       games,
-      tip: pinned ? this.data.tip : { show: false, left: 0, top: 0, date: '', value: '' },
+      tip: pinned ? this.data.tip : { show: false, left: 0, top: 0, date: '', value: '', extra: '' },
       activityMetric,
-      todayDau: formatNum(today.dau),
-      todayAds: formatNum(today.ads),
+      dauKpiLabel: focused && activityIndex >= 0 ? `${activity.longLabels[activityIndex]}日活` : '今日总日活',
+      adsKpiLabel: focused && activityIndex >= 0 ? `${activity.longLabels[activityIndex]}曝光` : '今日总曝光',
+      todayDau: formatNum(dauKpi),
+      todayAds: formatNum(adsKpi),
       activityCurveText,
       activityEmpty: activity.buckets.length === 0,
       activityHint: activity.buckets.length <= 1
         ? '时间跟上面的昨日、当月一致'
-        : (activity.byMonth ? '按住曲线看单月，点空白取消' : '按住曲线看单日，点空白取消'),
+        : `点曲线看这一${activity.byMonth ? '月' : '天'}，点空白取消`,
       activityTip: this._activityActive != null ? this.data.activityTip : { show: false, left: 0, top: 0, date: '', value: '' },
       onlineNow: formatNum(online.now),
       onlinePeak: online.primary.length ? formatNum(online.peak) : '',
       onlinePeakAt: online.peakLabel ? clockOf(online.peakLabel) : '',
       onlineEmpty: online.primary.length === 0,
-      onlineHint: online.primary.length <= 1 ? '' : '按住曲线看某一时刻，点空白取消',
+      onlineHint: online.primary.length <= 1 ? '' : '点曲线看某一时刻，点空白取消',
       onlineTip: this._onlineActive != null ? this.data.onlineTip : { show: false, left: 0, top: 0, date: '', value: '' },
     }, hero), () => {
       this.drawChart()
       this.drawActivityChart()
       this.drawOnlineChart()
+      this.syncIcons()
     })
   },
 
@@ -773,8 +796,15 @@ Page({
         active: this._active,
         color: COLORS[channel] || COLORS.total,
       })
+      this.rememberRect('#trend', '_trendRect')
       this.placeTip()
     })
+  },
+
+  rememberRect(selector, field) {
+    wx.createSelectorQuery().in(this).select(selector).boundingClientRect((rect) => {
+      if (rect && rect.width) this[field] = rect
+    }).exec()
   },
 
   placeTip() {
@@ -783,19 +813,25 @@ Page({
     const x = this._plot.xs[index]
     const y = this._plot.ys[index]
     if (x == null) return
-    const tipW = 92
+    const bundle = this._bundle
+    const channel = this._channel || 'total'
+    const tipW = channel === 'total' ? 168 : 120
     const width = this._cssWidth || 300
     let left = x - tipW / 2
     left = Math.max(8, Math.min(left, width - tipW - 8))
-    let top = y - 54
+    let top = y - (channel === 'total' ? 72 : 54)
     if (top < 4) top = y + 16
+    const value = formatYuan(bundle.primary[index] || 0)
     this.setData({
       tip: {
         show: true,
         left,
         top,
-        date: this._bundle.labels[index] || '',
-        value: formatYuan(this._bundle.primary[index] || 0),
+        date: bundle.longLabels[index] || '',
+        value,
+        extra: channel === 'total'
+          ? `微信 ¥${formatYuan(bundle.wechat[index] || 0)}  抖音 ¥${formatYuan(bundle.douyin[index] || 0)}`
+          : '',
       },
     })
   },
@@ -836,6 +872,7 @@ Page({
         color: metric === 'ads' ? '#C2410C' : '#0F766E',
         axis: 'count',
       })
+      this.rememberRect('#activity', '_activityRect')
       this.placeActivityTip()
     })
   },
@@ -846,21 +883,26 @@ Page({
     const x = this._activityPlot.xs[index]
     const y = this._activityPlot.ys[index]
     if (x == null) return
-    const tipW = 92
+    const tipW = 120
     const width = this._activityWidth || 300
     let left = x - tipW / 2
     left = Math.max(8, Math.min(left, width - tipW - 8))
     let top = y - 54
     if (top < 4) top = y + 16
     const metric = this._activityMetric || 'dau'
-    const value = formatNum(this._activityBundle.primary[index] || 0)
+    const bundle = this._activityBundle
+    const value = formatNum(bundle.primary[index] || 0)
+    const other = metric === 'ads'
+      ? `日活 ${formatNum(bundle.dauTotal[index] || 0)} 人`
+      : `曝光 ${formatNum(bundle.adsTotal[index] || 0)} 次`
     this.setData({
       activityTip: {
         show: true,
         left,
         top,
-        date: this._activityBundle.labels[index] || '',
+        date: bundle.longLabels[index] || '',
         value: metric === 'ads' ? `${value} 次` : `${value} 人`,
+        extra: other,
       },
     })
   },
@@ -900,6 +942,7 @@ Page({
         color: '#1F4B99',
         axis: 'count',
       })
+      this.rememberRect('#online', '_onlineRect')
       this.placeOnlineTip()
     })
   },
@@ -930,6 +973,8 @@ Page({
   load() {
     const seq = (this._seq || 0) + 1
     this._seq = seq
+    this._iconMark = ''
+    icons.resetFailed()
     this._channel = this._channel || 'total'
     this._grain = this._grain || 'mtd'
     this._activityMetric = this._activityMetric || 'dau'

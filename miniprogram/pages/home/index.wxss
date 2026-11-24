@@ -194,7 +194,8 @@ page {
 
 .tip {
   position: absolute;
-  width: 196rpx;
+  width: auto;
+  max-width: 320rpx;
   padding: 8rpx 12rpx;
   border-radius: 12rpx;
   background: #241e18;
@@ -211,6 +212,14 @@ page {
   font-family: "DIN Alternate", "Avenir Next Condensed", "PingFang SC", sans-serif;
   font-size: 26rpx;
   font-weight: 700;
+}
+
+.tip-sub {
+  margin-top: 2rpx;
+  font-size: 20rpx;
+  line-height: 1.35;
+  opacity: 0.86;
+  white-space: nowrap;
 }
 
 .mask {

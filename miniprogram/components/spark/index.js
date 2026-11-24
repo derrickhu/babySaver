@@ -1,4 +1,4 @@
-const { drawSpark, nearest } = require('../../utils/curve')
+const { drawSpark, nearestOnCurve } = require('../../utils/curve')
 const { formatYuan } = require('../../utils/format')
 
 Component({
@@ -7,6 +7,7 @@ Component({
     labels: { type: Array, value: [] },
     color: { type: String, value: '#1F4B99' },
     active: { type: Number, value: -1 },
+    muteTip: { type: Boolean, value: false },
   },
 
   data: { tip: '' },
@@ -20,7 +21,7 @@ Component({
   },
 
   observers: {
-    'values, labels, color, active': function observe() {
+    'values, labels, color, active, muteTip': function observe() {
       this.syncTip()
       if (this._ready) this.draw()
     },
@@ -28,6 +29,10 @@ Component({
 
   methods: {
     syncTip() {
+      if (this.data.muteTip) {
+        if (this.data.tip) this.setData({ tip: '' })
+        return
+      }
       const active = this.data.active
       if (active == null || active < 0) {
         if (this.data.tip) this.setData({ tip: '' })
@@ -56,14 +61,21 @@ Component({
         canvas.height = Math.round(info.height * dpr)
         ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
         this._plot = drawSpark(ctx, info.width, info.height, values, color, this.data.active)
+        this.createSelectorQuery().select('#spark').boundingClientRect((rect) => {
+          if (rect && rect.width) this._rect = rect
+        }).exec()
       })
     },
 
     onTouch(event) {
       const touch = (event.touches && event.touches[0]) || (event.changedTouches && event.changedTouches[0])
-      if (!touch || !this._plot || !this._plot.xs.length || typeof touch.x !== 'number') return
-      const index = nearest(this._plot.xs, touch.x)
-      if (index === this.data.active) return
+      if (!touch || !this._plot || !this._plot.xs.length) return
+      const rect = this._rect
+      const x = rect && Number.isFinite(touch.clientX) ? touch.clientX - rect.left : touch.x
+      const y = rect && Number.isFinite(touch.clientY) ? touch.clientY - rect.top : touch.y
+      if (!Number.isFinite(x) || !Number.isFinite(y)) return
+      const index = nearestOnCurve(this._plot.xs, this._plot.ys, x, y, 28)
+      if (index < 0 || index === this.data.active) return
       this.triggerEvent('scrub', { index })
     },
   },

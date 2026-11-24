@@ -46,6 +46,7 @@
       <view wx:if="{{tip.show}}" class="tip" style="left: {{tip.left}}px; top: {{tip.top}}px;">
         <view class="tip-date">{{tip.date}}</view>
         <view class="tip-val">¥{{tip.value}}</view>
+        <view wx:if="{{tip.extra}}" class="tip-sub">{{tip.extra}}</view>
       </view>
       <view wx:if="{{loading && !games.length}}" class="mask">正在读取云上数据…</view>
       <view wx:elif="{{error}}" class="mask error">{{error}}</view>
@@ -74,11 +75,11 @@
         <view class="sheet-title">全部游戏</view>
         <view class="activity-kpis">
           <view class="activity-kpi">
-            <text class="activity-k">今日总日活</text>
+            <text class="activity-k">{{dauKpiLabel}}</text>
             <text class="activity-v">{{todayDau}}<text class="activity-u"> 人</text></text>
           </view>
           <view class="activity-kpi">
-            <text class="activity-k">今日总曝光</text>
+            <text class="activity-k">{{adsKpiLabel}}</text>
             <text class="activity-v">{{todayAds}}<text class="activity-u"> 次</text></text>
           </view>
         </view>
@@ -104,6 +105,7 @@
       <view wx:if="{{activityTip.show}}" class="tip" style="left: {{activityTip.left}}px; top: {{activityTip.top}}px;">
         <view class="tip-date">{{activityTip.date}}</view>
         <view class="tip-val">{{activityTip.value}}</view>
+        <view wx:if="{{activityTip.extra}}" class="tip-sub">{{activityTip.extra}}</view>
       </view>
       <view wx:if="{{activityEmpty && !loading}}" class="mask">这段时间还没有{{activityMetric === 'ads' ? '曝光' : '日活'}}</view>
     </view>
@@ -156,7 +158,7 @@
 
   <view class="games-head">
     <text>游戏</text>
-    <text class="games-count">按当日日活</text>
+    <text class="games-count">{{gamesNote}}</text>
   </view>
   <view
     class="game"
@@ -175,10 +177,10 @@
           <text class="game-name">{{item.name}}</text>
           <text class="game-go">大盘</text>
         </view>
-        <view class="game-meta">今日日活 {{item.dau}} · 曝光 {{item.ads}}</view>
+        <view class="game-meta">{{item.meta}}</view>
       </view>
       <view class="game-side">
-        <view class="game-rev">¥{{item.revenue}}</view>
+        <view class="game-rev">{{item.revenueText}}</view>
         <view class="game-rev-k">{{item.revLabel}}</view>
       </view>
     </view>
@@ -187,7 +189,8 @@
         values="{{item.spark}}"
         labels="{{labels}}"
         color="{{sparkColor}}"
-        active="{{sparkKey === item.key ? sparkIndex : -1}}"
+        mute-tip="{{true}}"
+        active="{{sparkIndex}}"
         data-key="{{item.key}}"
         bindscrub="onSpark"
       />

@@ -110,4 +110,4 @@ function del(path, query) {
   return request('DELETE', path, query)
 }
 
-module.exports = { get, post, del }
+module.exports = { get, post, del, headers }
