@@ -11,6 +11,7 @@ const GAMES = [
   { gameKey: 'songjiang', displayName: '营救宋江', panels: ['level_progress'] },
   { gameKey: 'biehuang', displayName: '宋江别慌张', panels: ['level_progress'] },
   { gameKey: 'duanju', displayName: '翻盘女王', panels: [] },
+  { gameKey: 'mori', displayName: '末日囤货狂', panels: [] },
 ]
 
 const SNAPSHOT_GAMES = ['huahua', 'hotpot', 'petTower']

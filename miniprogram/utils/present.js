@@ -447,6 +447,7 @@ const VALUES = {
   blackrosa: '墨字防线',
   dresssort: '一裙又一裙',
   duanju: '翻盘女王',
+  mori: '末日囤货狂',
 }
 
 const HIDDEN = new Set([

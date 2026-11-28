@@ -37,7 +37,6 @@
         type="2d"
         id="trend"
         class="chart"
-        disable-scroll="{{lockScroll}}"
         bindtouchstart="onScrub"
         bindtouchmove="onScrub"
         bindtouchend="onScrub"
@@ -96,7 +95,6 @@
         type="2d"
         id="activity"
         class="chart"
-        disable-scroll="{{lockScroll}}"
         bindtouchstart="onActivityScrub"
         bindtouchmove="onActivityScrub"
         bindtouchend="onActivityScrub"
@@ -138,7 +136,6 @@
         type="2d"
         id="online"
         class="chart"
-        disable-scroll="{{lockScroll}}"
         bindtouchstart="onOnlineScrub"
         bindtouchmove="onOnlineScrub"
         bindtouchend="onOnlineScrub"
@@ -164,9 +161,6 @@
     class="game"
     wx:for="{{games}}"
     wx:key="key"
-    data-key="{{item.key}}"
-    bindtap="onGame"
-    hover-class="pressed"
     style="animation-delay: {{item.delay}}"
   >
     <view class="game-main">
@@ -175,7 +169,7 @@
       <view class="game-copy">
         <view class="game-name-row">
           <text class="game-name">{{item.name}}</text>
-          <text class="game-go">大盘</text>
+          <text class="game-go" catchtap="onGame" data-key="{{item.key}}">大盘</text>
         </view>
         <view class="game-meta">{{item.meta}}</view>
       </view>
@@ -188,28 +182,28 @@
       <spark
         values="{{item.spark}}"
         labels="{{labels}}"
+        long-labels="{{longLabels}}"
         color="{{sparkColor}}"
-        mute-tip="{{true}}"
-        active="{{sparkIndex}}"
+        active="{{sparkKey === item.key ? sparkIndex : -1}}"
         data-key="{{item.key}}"
         bindscrub="onSpark"
       />
     </view>
-    <view class="pills">
-      <view
-        class="pill pill-{{p.platform}}"
-        wx:for="{{item.platforms}}"
-        wx:for-item="p"
-        wx:key="platform"
-        catchtap="onPlatform"
-        data-key="{{item.key}}"
-        data-platform="{{p.platform}}"
-        hover-class="pill-on"
-      >
-        <text class="pill-name">{{p.label}}</text>
-        <text class="pill-dau">日活 {{p.dau}}</text>
-        <text class="pill-ads">曝光 {{p.ads}}</text>
-        <text class="pill-rev">¥{{p.revenue}}</text>
+    <view class="plats" wx:if="{{item.platforms.length}}">
+      <view class="plat plat-head">
+        <text class="plat-name">平台</text>
+        <text>今日日活</text>
+        <text>今日曝光</text>
+        <text>{{item.revLabel}}</text>
+      </view>
+      <view class="plat plat-{{p.platform}}" wx:for="{{item.platforms}}" wx:for-item="p" wx:key="platform">
+        <view class="plat-name">
+          <view class="plat-dot"></view>
+          <text>{{p.label}}</text>
+        </view>
+        <text class="plat-num">{{p.dau}}</text>
+        <text class="plat-num">{{p.ads}}</text>
+        <text class="plat-num plat-money">{{p.revenueText}}</text>
       </view>
     </view>
   </view>

@@ -141,6 +141,7 @@ const SCENE_LABELS = {
     rescue: '宋江危急 - 看广告作法救回',
     free_item: '摊子 - 看广告免费领取',
   },
+  mori: {},
   duanju: {
     rushOrder: '急单 - 看广告接一单',
     liveBoost: '直播 - 看广告开启全场翻倍',

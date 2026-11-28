@@ -1,8 +1,15 @@
-<canvas
-  type="2d"
-  id="spark"
-  class="spark"
-  catchtouchstart="onTouch"
-  catchtouchmove="onTouch"
-></canvas>
-<view wx:if="{{tip}}" class="spark-tip">{{tip}}</view>
+<view class="spark-box {{tipShow ? 'spark-open' : ''}}">
+  <canvas
+    type="2d"
+    id="spark"
+    class="spark"
+    bindtouchstart="onTouch"
+    bindtouchmove="onTouch"
+    bindtouchend="onTouch"
+    bindtouchcancel="onTouch"
+  ></canvas>
+  <view wx:if="{{tipShow}}" class="spark-tip" style="left: {{tipLeft}}px; top: {{tipTop}}px;">
+    <view class="spark-tip-date">{{tipDate}}</view>
+    <view class="spark-tip-val">¥{{tipValue}}</view>
+  </view>
+</view>

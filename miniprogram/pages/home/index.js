@@ -5,6 +5,7 @@ const filterStore = require('../../utils/filter')
 const { drawTrend, nearestOnCurve } = require('../../utils/curve')
 const { formatNum, formatYuan } = require('../../utils/format')
 const session = require('../../utils/session')
+const scroll = require('../../utils/scroll')
 
 const COLORS = {
   total: '#1F4B99',
@@ -303,6 +304,15 @@ function todayTotals(data) {
   }
 }
 
+function sizeCanvas(canvas, cssWidth, cssHeight, dpr) {
+  const width = Math.round(cssWidth * dpr)
+  const height = Math.round(cssHeight * dpr)
+  if (canvas.width !== width || canvas.height !== height) {
+    canvas.width = width
+    canvas.height = height
+  }
+}
+
 function leadPlatform(platforms) {
   let best = platforms[0]
   platforms.forEach((item) => {
@@ -318,7 +328,6 @@ Page({
     error: '',
     empty: false,
     pinned: false,
-    lockScroll: false,
     heroLabel: '当月收入',
     heroValue: '-',
     heroWx: '-',
@@ -378,6 +387,10 @@ Page({
     this.load().finally(() => wx.stopPullDownRefresh())
   },
 
+  onPageScroll(event) {
+    scroll.set(event.scrollTop)
+  },
+
   onChannel(event) {
     this._channel = event.currentTarget.dataset.v
     this.refreshView()
@@ -412,12 +425,7 @@ Page({
 
   localTouch(event, rect) {
     const touch = (event.touches && event.touches[0]) || (event.changedTouches && event.changedTouches[0])
-    if (!touch) return null
-    if (rect && Number.isFinite(touch.clientX) && Number.isFinite(touch.clientY)) {
-      return { x: touch.clientX - rect.left, y: touch.clientY - rect.top }
-    }
-    if (Number.isFinite(touch.x) && Number.isFinite(touch.y)) return { x: touch.x, y: touch.y }
-    return null
+    return scroll.pointIn(touch, rect)
   },
 
   hitIndex(plot, point) {
@@ -432,34 +440,45 @@ Page({
       this._originX = point ? point.x : 0
       this._originY = point ? point.y : 0
       this._moved = false
+      this._scrollGesture = false
       this._tracking = index >= 0
-      if (index >= 0) {
-        onHit(index)
-        if (!this.data.lockScroll) this.setData({ lockScroll: true })
-      } else if (this.data.lockScroll) {
-        this.setData({ lockScroll: false })
-      }
+      this._pendingIndex = index
       return
     }
     if (event.type === 'touchmove') {
-      if (point && (Math.abs(point.x - this._originX) > 8 || Math.abs(point.y - this._originY) > 8)) this._moved = true
-      if (this._tracking && index >= 0) onHit(index)
+      if (point) {
+        const dx = Math.abs(point.x - this._originX)
+        const dy = Math.abs(point.y - this._originY)
+        if (dx > 8 || dy > 8) this._moved = true
+        if (dy > 10 && dy > dx) this._scrollGesture = true
+      }
+      if (this._scrollGesture || !this._tracking || index < 0) return
+      this._pendingIndex = index
+      onHit(index)
       return
     }
     const tracking = this._tracking
     const moved = this._moved
+    const scrollGesture = this._scrollGesture
+    const pending = this._pendingIndex
     this._tracking = false
     this._moved = false
-    if (this.data.lockScroll) this.setData({ lockScroll: false })
-    if (!tracking && !moved) this.onBlank()
+    this._scrollGesture = false
+    if (event.type === 'touchcancel' || scrollGesture) return
+    if (tracking && pending >= 0) onHit(pending)
+    else if (!tracking && !moved) this.onBlank()
   },
 
-  selectDay(bucket) {
-    if (!bucket || (this._focusBucket === bucket && this._onlineActive == null)) return
+  selectDay(bucket, spark) {
+    const sameDay = this._focusBucket === bucket && this._onlineActive == null
+    const sameSpark = !spark
+      ? !this._sparkKey
+      : this._sparkKey === spark.key && this._sparkIndex === spark.index
+    if (!bucket || (sameDay && sameSpark)) return
     this._focusBucket = bucket
     this._onlineActive = null
-    this._sparkKey = ''
-    this._sparkIndex = -1
+    this._sparkKey = spark ? spark.key : ''
+    this._sparkIndex = spark ? spark.index : -1
     this._pickedAt = Date.now()
     try { wx.vibrateShort({ type: 'light' }) } catch (error) { /* 模拟器可能没有振动 */ }
     this.refreshView()
@@ -507,10 +526,11 @@ Page({
   },
 
   onSpark(event) {
-    const index = event.detail.index
+    const key = event.currentTarget.dataset.key
+    const index = Number(event.detail.index)
     const bucket = this._bundle && this._bundle.buckets[index]
-    if (!bucket) return
-    this.selectDay(bucket)
+    if (!key || !bucket || !Number.isInteger(index)) return
+    this.selectDay(bucket, { key, index })
   },
 
   onGame(event) {
@@ -630,6 +650,7 @@ Page({
       let dauNum = Number(game.total_dau) || 0
       let adsNum = Number(game.total_ad_show) || 0
       let meta = `今日日活 ${formatNum(dauNum)} · 曝光 ${formatNum(adsNum)}`
+      const sortOrder = Number(game.total_dau) || 0
       let sortRevenue = revenueNum
       let sortDau = dauNum
       if (focused) {
@@ -642,12 +663,12 @@ Page({
           revLabel = '当天未结算'
           sortRevenue = -1
         }
-        if (activityIndex >= 0) {
+        if (activityIndex >= 0 && !this._sparkKey) {
           dauNum = atSeries(activity.dauGames, game.game_key, activityIndex)
           adsNum = atSeries(activity.adsGames, game.game_key, activityIndex)
           sortDau = dauNum
           meta = `${dayName} 日活 ${formatNum(dauNum)} · 曝光 ${formatNum(adsNum)}`
-        } else {
+        } else if (!this._sparkKey) {
           meta = dayName
         }
       }
@@ -656,13 +677,24 @@ Page({
         meta = `${online.longLabels[this._onlineActive] || online.labels[this._onlineActive] || ''} 在线 ${formatNum(onlineNum)}`
         sortDau = onlineNum
       }
-      const platforms = focused || this._onlineActive != null ? [] : (game.platforms || []).map((item) => ({
-        platform: item.platform,
-        label: item.label === 'TapTap' ? '塔普' : item.label,
-        dau: formatNum(item.dau),
-        ads: formatNum(item.ad_show_cnt),
-        revenue: formatYuan(item.platform === 'wechat' ? sum(wxSeries) : item.platform === 'douyin' ? sum(dySeries) : 0),
-      }))
+      const platforms = (game.platforms || []).map((item) => {
+        const dau = Number(item.dau) || 0
+        const ads = Number(item.ad_show_cnt) || 0
+        let revenueNum = null
+        if (item.platform === 'wechat' || item.platform === 'douyin') {
+          const series = item.platform === 'wechat' ? wxSeries : dySeries
+          if (focused && revenueIndex < 0) revenueNum = null
+          else revenueNum = revenueIndex >= 0 ? Number(series[revenueIndex]) || 0 : sum(series)
+        }
+        if (!(dau > 0 || ads > 0 || (revenueNum != null && revenueNum > 0))) return null
+        return {
+          platform: item.platform,
+          label: item.label === 'TapTap' ? '塔普' : item.label,
+          dau: formatNum(dau),
+          ads: formatNum(ads),
+          revenueText: revenueNum == null ? '—' : `¥${formatYuan(revenueNum)}`,
+        }
+      }).filter(Boolean)
       return {
         key: game.game_key,
         name: game.display_name,
@@ -674,15 +706,13 @@ Page({
         spark: revenueSeries,
         platforms,
         leadPlatform: leadPlatform(game.platforms || []),
+        sortOrder,
         sortRevenue,
         sortDau,
       }
-    }).sort((a, b) => {
-      const name = a.name.localeCompare(b.name, 'zh-CN')
-      if (this._onlineActive != null) return (b.sortDau - a.sortDau) || name
-      if (focused) return (b.sortRevenue - a.sortRevenue) || (b.sortDau - a.sortDau) || name
-      return (b.sortDau - a.sortDau) || (b.sortRevenue - a.sortRevenue) || name
-    }).map((game, index) => Object.assign(game, { delay: `${index * 40}ms` }))
+    }).sort((a, b) => (
+      (b.sortOrder - a.sortOrder) || a.name.localeCompare(b.name, 'zh-CN')
+    )).map((game, index) => Object.assign(game, { delay: `${index * 40}ms` }))
     const dauKpi = focused && activityIndex >= 0 ? Number(activity.dauTotal[activityIndex]) || 0 : today.dau
     const adsKpi = focused && activityIndex >= 0 ? Number(activity.adsTotal[activityIndex]) || 0 : today.ads
     this.setData(Object.assign({
@@ -693,14 +723,15 @@ Page({
       chartTitle: `${rangeName}收入`,
       scrubHint: bundle.buckets.length <= 1 ? '' : `点曲线看这一${dayWord}，点空白取消`,
       labels: bundle.labels,
-      sparkKey: '',
-      sparkIndex: revenueIndex,
+      longLabels: bundle.longLabels,
+      sparkKey: this._sparkKey || '',
+      sparkIndex: this._sparkIndex == null ? -1 : this._sparkIndex,
       rangeText: formatYuan(sum(bundle.primary)),
       trendNote: pinned ? '' : note.text,
       trendUp: note.up,
       sparkColor: COLORS[channel] || COLORS.total,
       empty: bundle.buckets.length === 0,
-      gamesNote: this._onlineActive != null ? '按这一刻在线' : focused ? `按${dayName}` : '按当日日活',
+      gamesNote: '按当日日活',
       games,
       tip: pinned ? this.data.tip : { show: false, left: 0, top: 0, date: '', value: '', extra: '' },
       activityMetric,
@@ -779,8 +810,7 @@ Page({
     return this.ensureCanvas().then(() => {
       if (seq !== this._drawSeq || !this._ctx || !bundle || !this._cssWidth) return
       const dpr = (wx.getWindowInfo && wx.getWindowInfo().pixelRatio) || 2
-      this._canvas.width = Math.round(this._cssWidth * dpr)
-      this._canvas.height = Math.round(this._cssHeight * dpr)
+      sizeCanvas(this._canvas, this._cssWidth, this._cssHeight, dpr)
       this._ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
       const channel = this._channel || 'total'
       const overlays = channel === 'total'
@@ -803,7 +833,9 @@ Page({
 
   rememberRect(selector, field) {
     wx.createSelectorQuery().in(this).select(selector).boundingClientRect((rect) => {
-      if (rect && rect.width) this[field] = rect
+      if (!rect || !rect.width) return
+      rect.scrollTop = scroll.get()
+      this[field] = rect
     }).exec()
   },
 
@@ -861,8 +893,7 @@ Page({
     return this.ensureActivityCanvas().then(() => {
       if (seq !== this._activityDrawSeq || !this._activityCtx || !bundle || !this._activityWidth) return
       const dpr = (wx.getWindowInfo && wx.getWindowInfo().pixelRatio) || 2
-      this._activityCanvas.width = Math.round(this._activityWidth * dpr)
-      this._activityCanvas.height = Math.round(this._activityHeight * dpr)
+      sizeCanvas(this._activityCanvas, this._activityWidth, this._activityHeight, dpr)
       this._activityCtx.setTransform(dpr, 0, 0, dpr, 0, 0)
       const metric = this._activityMetric || 'dau'
       this._activityPlot = drawTrend(this._activityCtx, this._activityWidth, this._activityHeight, {
@@ -932,8 +963,7 @@ Page({
     return this.ensureOnlineCanvas().then(() => {
       if (seq !== this._onlineDrawSeq || !this._onlineCtx || !bundle || !this._onlineWidth) return
       const dpr = (wx.getWindowInfo && wx.getWindowInfo().pixelRatio) || 2
-      this._onlineCanvas.width = Math.round(this._onlineWidth * dpr)
-      this._onlineCanvas.height = Math.round(this._onlineHeight * dpr)
+      sizeCanvas(this._onlineCanvas, this._onlineWidth, this._onlineHeight, dpr)
       this._onlineCtx.setTransform(dpr, 0, 0, dpr, 0, 0)
       this._onlinePlot = drawTrend(this._onlineCtx, this._onlineWidth, this._onlineHeight, {
         primary: bundle.primary,

@@ -1,3 +1,11 @@
+.spark-box {
+  position: relative;
+}
+
+.spark-open {
+  margin-bottom: 76rpx;
+}
+
 .spark {
   width: 100%;
   height: 88rpx;
@@ -5,9 +13,26 @@
 }
 
 .spark-tip {
-  margin-top: 4rpx;
-  color: #241e18;
+  position: absolute;
+  z-index: 3;
+  width: 132px;
+  padding: 6rpx 12rpx;
+  border-radius: 12rpx;
+  background: #241e18;
+  color: #fffdf8;
+  pointer-events: none;
+  box-sizing: border-box;
+}
+
+.spark-tip-date {
+  font-size: 20rpx;
+  line-height: 1.3;
+  opacity: 0.72;
+}
+
+.spark-tip-val {
   font-family: "DIN Alternate", "Avenir Next Condensed", "PingFang SC", sans-serif;
-  font-size: 22rpx;
-  line-height: 1.4;
+  font-size: 26rpx;
+  font-weight: 700;
+  line-height: 1.3;
 }
